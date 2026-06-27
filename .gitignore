@@ -1,0 +1,41 @@
+**/wallust.*
+rofi/.config/rofi/themes/wallust-todo.rasi
+**/.claude/
+**/.codex
+**/.codex/
+**/CLAUDE.md
+**/PLAN.md
+*/.stow-local-ignore
+legacy/**/AGENTS.md
+/.pi/
+
+# Local logs and traces
+*.log
+*.log.*
+*.out
+*.err
+__pycache__/
+*.py[cod]
+.nvimlog
+
+# Local screenshots and recordings can capture personal information
+assets/screenshots/
+*.screencast
+*.cast
+pi-session-*.html
+
+# Common personal or machine-local artifacts
+.env
+.env.*
+*.local
+*.sqlite
+*.sqlite3
+*.db
+*.db-*
+*.pem
+*.p12
+*.ovpn
+*.pcap
+*.pid
+*.pid.lock
+hyprland/.config/hypr/generated/

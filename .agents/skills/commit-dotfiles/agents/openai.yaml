@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Dotfiles"
+  short_description: "Audit, document, validate, and commit dotfiles"
+  default_prompt: "Use $commit-dotfiles to review and commit the entire current dotfiles worktree."

@@ -1,0 +1,349 @@
+;; =============================================================================
+;; EWW BAR - Replaces Waybar
+;; =============================================================================
+
+;; =============================================================================
+;; LISTENER VARIABLES (IPC-based, zero idle CPU)
+;; Direct listeners stream updates from scripts/eww-bar.
+;; =============================================================================
+
+(deflisten bar_workspaces :initial "[]"
+  "scripts/eww-bar workspaces")
+
+(deflisten bar_window_title_0 :initial ""
+  "scripts/eww-bar window-title 0")
+
+(deflisten bar_window_title_1 :initial ""
+  "scripts/eww-bar window-title 1")
+
+(deflisten bar_submap :initial ""
+  "scripts/eww-bar submap")
+
+;; =============================================================================
+;; POLL VARIABLES
+;; =============================================================================
+
+
+(defpoll bar_weather :interval "1800s" :initial '{"text":"...","icon":"","class":""}' "scripts/eww-bar weather")
+(defpoll bar_vpn :interval "10s" :initial '{"status":"disconnected","icon":"󰒙","location":""}' "scripts/eww-bar vpn")
+
+(defpoll bar_idle_inhibit :interval "2s" :initial "false"
+  "[ -f /tmp/idle-inhibit.pid ] && kill -0 $(cat /tmp/idle-inhibit.pid 2>/dev/null) 2>/dev/null && echo true || echo false")
+
+;; System vitals (only poll when popup is open)
+(defpoll cpu_usage :interval "2s" :initial "0" :run-while popup_visible
+  "scripts/eww-bar cpu-usage")
+(defpoll cpu_freq :interval "2s" :initial "0.00" :run-while popup_visible
+  "scripts/eww-bar cpu-freq")
+(defpoll cpu_temp :interval "5s" :initial "0" :run-while popup_visible
+  "scripts/eww-bar cpu-temp")
+(defpoll gpu :interval "5s" :initial '{"usage":"0","vram_used":"0.0","vram_total":"0.0","temp":"0"}' :run-while popup_visible
+  "scripts/eww-bar gpu")
+(defpoll memory_used :interval "5s" :initial "0.0" :run-while popup_visible
+  "scripts/eww-bar memory-used")
+(defpoll memory_total :interval "5s" :initial "0.0" :run-while popup_visible
+  "scripts/eww-bar memory-total")
+(defpoll download_speed :interval "2s" :initial "00.00" :run-while popup_visible
+  "scripts/eww-bar download-speed")
+(defpoll upload_speed :interval "2s" :initial "00.00" :run-while popup_visible
+  "scripts/eww-bar upload-speed")
+(defpoll wifi_strength :interval "10s" :initial "0" :run-while popup_visible
+  "scripts/eww-bar wifi-strength")
+(defpoll disk_main :interval "30s" :initial "0/0G" :run-while popup_visible
+  "scripts/eww-bar disk-usage /")
+(defpoll disk_fast :interval "30s" :initial "0/0G" :run-while popup_visible
+  "scripts/eww-bar disk-usage /mnt/Fast")
+(defpoll disk_extra :interval "30s" :initial "0/0G" :run-while popup_visible
+  "scripts/eww-bar disk-usage /mnt/Extra")
+(defpoll disk_extra2 :interval "30s" :initial "0/0G" :run-while popup_visible
+  "scripts/eww-bar disk-usage /mnt/Extra2")
+(defpoll pending_update :interval "60s" :initial "0" :run-while popup_visible
+  "scripts/eww-bar updates")
+
+;; =============================================================================
+;; STATE VARIABLES
+;; =============================================================================
+
+(defvar popup_visible false)
+(defvar popup_monitor 0)
+(defvar calendar_visible false)
+(defvar calendar_monitor 0)
+(defvar calendar_pinned false)
+
+(deflisten bar_layout_0 :initial "MASTER"
+  "scripts/eww-bar layout 0")
+
+(deflisten bar_layout_1 :initial "MASTER"
+  "scripts/eww-bar layout 1")
+
+(deflisten bar_wincount_0 :initial "0"
+  "scripts/eww-bar wincount 0")
+
+(deflisten bar_wincount_1 :initial "0"
+  "scripts/eww-bar wincount 1")
+
+(deflisten bar_language :initial "EN"
+  "scripts/eww-bar language")
+(deflisten bar_volume :initial "{\"volume\":0,\"muted\":false,\"icon\":\"\"}"
+  "scripts/eww-bar volume")
+(deflisten mpd_data :initial "{\"state\":\"stopped\",\"artist\":\"\",\"title\":\"\",\"elapsed\":\"0:00\",\"total\":\"0:00\",\"progress\":0}"
+  "scripts/eww-bar mpd")
+
+;; =============================================================================
+;; BAR WIDGETS
+;; =============================================================================
+
+;; Left section: arch icon (toggles popup), submap, window title
+(defwidget bar-left []
+  (box :class "bar-left" :orientation "h" :space-evenly false :halign "start"
+    (eventbox :onclick "scripts/toggle_popup.sh 0"
+      (label :class "bar-archicon ${popup_visible && popup_monitor == 0 ? 'bar-archicon-active' : ''}" :text "󰣇"))
+    (eventbox :onclick "~/.config/hypr/scripts/cycle-layout.sh"
+      (box :class "bar-layout layout-${bar_layout_0}" :orientation "h" :space-evenly false
+        (label :class "bar-layout-name" :halign "center" :hexpand true :text bar_layout_0)))
+    (label :class "bar-wincount" :text bar_wincount_0)
+    (label :class "bar-submap" :text bar_submap
+           :visible {bar_submap != ""})
+    (label :class "bar-window-title" :text bar_window_title_0
+           :limit-width 40
+           :visible {bar_window_title_0 != ""})))
+
+;; Center section: workspace buttons
+(defwidget bar-center []
+  (box :class "bar-center" :orientation "h" :space-evenly false :halign "center"
+    (for ws in bar_workspaces
+      (eventbox :onclick "hyprctl dispatch workspace ${ws.name}"
+                :class "bar-workspace-btn"
+        (label :class "bar-workspace ${ws.active ? 'ws-active' :
+                       ws.visible ? 'ws-visible' :
+                       ws.occupied ? 'ws-occupied' : 'ws-empty'}"
+               :text {ws.label})))))
+
+;; Right section: date only
+(defwidget bar-right []
+  (box :class "bar-right" :orientation "h" :space-evenly false :halign "end" :valign "center"
+    (systray :class "bar-tray" :icon-size 16 :spacing 6)))
+
+;; Right section for secondary monitor
+(defwidget bar-right-secondary []
+  (box :class "bar-right" :orientation "h" :space-evenly false :halign "end"
+    (eventbox :onclick "sh -c 'if [ \"$(eww get calendar_pinned)\" = \"true\" ] && [ \"$(eww get calendar_monitor)\" = \"1\" ]; then eww update calendar_pinned=false calendar_visible=false; else eww update calendar_pinned=true calendar_visible=true calendar_monitor=1; fi'"
+              :onhover "eww update calendar_visible=true calendar_monitor=1"
+              :onhoverlost "sh -c '[ \"$(eww get calendar_pinned)\" = \"true\" ] || eww update calendar_visible=false'"
+      (box :class "bar-datetime" :orientation "h" :space-evenly false :valign "center"
+        (label :class "bar-date" :text bar_date)
+        (label :class "bar-datetime-sep" :text "│")
+        (label :class "bar-clock" :text bar_time)))))
+
+(defwidget calendar-popup []
+  (box :class "calendar-popup" :orientation "v" :space-evenly false
+    (calendar :class "calendar-widget"
+              :show-heading true
+              :show-day-names true
+              :show-week-numbers false
+              :show-details false)))
+
+;; =============================================================================
+;; POPUP PANEL WIDGETS
+;; =============================================================================
+
+(defwidget popup-row [icon label value ?css-class]
+  (box :class "popup-row ${css-class}" :orientation "h" :space-evenly false
+    (label :class "popup-icon" :text icon)
+    (label :class "popup-label" :text label :hexpand true :halign "start")
+    (label :class "popup-value" :text value :halign "end")))
+
+(defwidget popup-panel []
+  (box :class "popup-panel" :orientation "h" :space-evenly false
+    ;; Controls + Weather (left column)
+    (box :class "popup-column" :orientation "v" :space-evenly false
+      (eventbox :onclick "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+        (popup-row :icon {bar_volume.icon}
+                   :label "Volume"
+                   :value {bar_volume.muted ? "Muted" : "${bar_volume.volume}%"}
+                   :css-class "popup-row-volume"))
+      (popup-row :icon {mpd_data.state == "playing" ? "󰐊" : mpd_data.state == "paused" ? "󰏤" : "󰓛"}
+                 :label "Music"
+                 :value {mpd_data.state == "stopped" ? "Stopped" :
+                         "${mpd_data.artist != '' ? '${mpd_data.artist} - ' : ''}${mpd_data.title}"}
+                 :css-class "popup-row-mpd")
+      (popup-row :icon "󰌌"
+                 :label "Keyboard"
+                 :value bar_language
+                 :css-class "popup-row-language")
+      (eventbox :onclick "~/.config/waybar/scripts/expressvpn.sh toggle"
+        (popup-row :icon {bar_vpn.icon}
+                   :label "VPN"
+                   :value {bar_vpn.status == "connected" ? bar_vpn.location : "Disconnected"}
+                   :css-class "popup-row-vpn"))
+      (eventbox :onclick "~/.config/waybar/scripts/idle-inhibit.sh toggle && eww update bar_idle_inhibit=$([ -f /tmp/idle-inhibit.pid ] && echo true || echo false)"
+        (popup-row :icon {bar_idle_inhibit == "true" ? "󰈈" : "󰈉"}
+                   :label "Idle Inhibit"
+                   :value {bar_idle_inhibit == "true" ? "ON" : "OFF"}
+                   :css-class "popup-row-idle ${bar_idle_inhibit == 'true' ? 'idle-active' : ''}"))
+      ;; Weather (fills all remaining space)
+      (box :class "popup-weather" :orientation "v" :space-evenly false :vexpand true
+        (box :class "popup-weather-top" :orientation "v" :space-evenly false :vexpand true :valign "center" :halign "center"
+          (label :class "popup-weather-icon" :text {bar_weather.icon})
+          (label :class "popup-weather-temp" :text {bar_weather.text})
+          (label :class "popup-weather-desc" :text {bar_weather.desc}))
+        (box :class "popup-weather-details" :orientation "h" :space-evenly true
+          (box :orientation "v" :space-evenly false :halign "center"
+            (label :class "popup-weather-detail-val" :text "${bar_weather.feels}°C")
+            (label :class "popup-weather-detail-label" :text "Feels like"))
+          (box :orientation "v" :space-evenly false :halign "center"
+            (label :class "popup-weather-detail-val" :text "${bar_weather.humidity}%")
+            (label :class "popup-weather-detail-label" :text "Humidity"))
+          (box :orientation "v" :space-evenly false :halign "center"
+            (label :class "popup-weather-detail-val" :text "${bar_weather.wind} km/h")
+            (label :class "popup-weather-detail-label" :text "Wind")))))
+    ;; System vitals (right column)
+    (box :class "popup-column" :orientation "v" :space-evenly false
+      ;; CPU
+      (box :class "popup-subheader" :orientation "h" :space-evenly false
+        (label :class "popup-subheader-icon" :text "󰻠")
+        (label :class "popup-subheader-label" :text "CPU"))
+      (popup-row :icon "" :label "Usage" :value "${cpu_usage}%")
+      (popup-row :icon "" :label "Frequency" :value "${cpu_freq} GHz")
+      (popup-row :icon "" :label "Temperature" :value "${cpu_temp}°C")
+      ;; GPU
+      (box :class "popup-subheader" :orientation "h" :space-evenly false
+        (label :class "popup-subheader-icon" :text "󰢮")
+        (label :class "popup-subheader-label" :text "GPU"))
+      (popup-row :icon "" :label "Usage" :value "${gpu.usage}%")
+      (popup-row :icon "" :label "VRAM" :value "${gpu.vram_used}/${gpu.vram_total}G")
+      (popup-row :icon "" :label "Temperature" :value "${gpu.temp}°C")
+      ;; Memory
+      (box :class "popup-subheader" :orientation "h" :space-evenly false
+        (label :class "popup-subheader-icon" :text "")
+        (label :class "popup-subheader-label" :text "Memory"))
+      (popup-row :icon "" :label "Used / Total" :value "${memory_used}/${memory_total}G")
+      ;; Network
+      (box :class "popup-subheader" :orientation "h" :space-evenly false
+        (label :class "popup-subheader-icon" :text "󰛳")
+        (label :class "popup-subheader-label" :text "Network"))
+      (popup-row :icon "" :label "Download" :value "${download_speed} MB/s")
+      (popup-row :icon "" :label "Upload" :value "${upload_speed} MB/s")
+      (popup-row :icon "" :label "WiFi Signal" :value "${wifi_strength}%")
+      ;; Storage
+      (box :class "popup-subheader" :orientation "h" :space-evenly false
+        (label :class "popup-subheader-icon" :text "󰋊")
+        (label :class "popup-subheader-label" :text "Storage"))
+      (popup-row :icon "" :label "MAIN (/)" :value disk_main)
+      (popup-row :icon "" :label "FAST" :value disk_fast)
+      (popup-row :icon "" :label "EXTRA" :value disk_extra)
+      (popup-row :icon "" :label "EXTRA2" :value disk_extra2)
+      ;; Updates
+      (box :class "popup-subheader" :orientation "h" :space-evenly false
+        (label :class "popup-subheader-icon" :text "󰚰")
+        (label :class "popup-subheader-label" :text "Updates"))
+      (popup-row :icon "" :label "Pending" :value "${pending_update}"))))
+
+;; =============================================================================
+;; BAR COMPOSITIONS
+;; =============================================================================
+
+(defwidget bar-primary-widget []
+  (centerbox :class "bar" :orientation "h"
+    (bar-left)
+    (bar-center)
+    (bar-right)))
+
+(defwidget bar-secondary-widget []
+  (centerbox :class "bar" :orientation "h"
+    (box :class "bar-left" :orientation "h" :space-evenly false :halign "start"
+      (eventbox :onclick "scripts/toggle_popup.sh 1"
+        (label :class "bar-archicon ${popup_visible && popup_monitor == 1 ? 'bar-archicon-active' : ''}" :text "󰣇"))
+      (eventbox :onclick "~/.config/hypr/scripts/cycle-layout.sh"
+        (box :class "bar-layout layout-${bar_layout_1}" :orientation "h" :space-evenly false
+          (label :class "bar-layout-name" :halign "center" :hexpand true :text bar_layout_1)))
+      (label :class "bar-wincount" :text bar_wincount_1)
+      (label :class "bar-window-title" :text bar_window_title_1
+             :limit-width 40
+             :visible {bar_window_title_1 != ""}))
+    (bar-center)
+    (bar-right-secondary)))
+
+;; =============================================================================
+;; WINDOWS
+;; =============================================================================
+
+(defwindow bar-primary
+  :monitor 0
+  :geometry (geometry
+              :x "0px"
+              :y "0px"
+              :width "100%"
+              :height "26px"
+              :anchor "top center")
+  :stacking "fg"
+  :exclusive true
+  :focusable false
+  :namespace "eww_bar"
+  (bar-primary-widget))
+
+(defwindow bar-secondary
+  :monitor 1
+  :geometry (geometry
+              :x "0px"
+              :y "0px"
+              :width "100%"
+              :height "26px"
+              :anchor "top center")
+  :stacking "fg"
+  :exclusive true
+  :focusable false
+  :namespace "eww_bar"
+  (bar-secondary-widget))
+
+(defwindow bar-popup-0
+  :monitor 0
+  :geometry (geometry
+              :x "10px"
+              :y "10px"
+              :anchor "top left")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  :namespace "eww_bar_popup"
+  (revealer :transition "slidedown" :reveal {popup_visible && popup_monitor == 0} :duration "75ms"
+    (popup-panel)))
+
+(defwindow bar-popup-1
+  :monitor 1
+  :geometry (geometry
+              :x "10px"
+              :y "10px"
+              :anchor "top left")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  :namespace "eww_bar_popup"
+  (revealer :transition "slidedown" :reveal {popup_visible && popup_monitor == 1} :duration "75ms"
+    (popup-panel)))
+
+(defwindow bar-calendar-0
+  :monitor 0
+  :geometry (geometry
+              :x "10px"
+              :y "10px"
+              :anchor "top right")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  :namespace "eww_bar_calendar"
+  (revealer :transition "slidedown" :reveal {(calendar_visible || calendar_pinned) && calendar_monitor == 0} :duration "60ms"
+    (calendar-popup)))
+
+(defwindow bar-calendar-1
+  :monitor 1
+  :geometry (geometry
+              :x "10px"
+              :y "10px"
+              :anchor "top right")
+  :stacking "overlay"
+  :exclusive false
+  :focusable false
+  :namespace "eww_bar_calendar"
+  (revealer :transition "slidedown" :reveal {(calendar_visible || calendar_pinned) && calendar_monitor == 1} :duration "60ms"
+    (calendar-popup)))

@@ -1,0 +1,131 @@
+@import "wallust.css";
+
+/* ALL */
+* {
+    border: none;
+    border-radius: 0;
+    font-family: Liberation Mono;
+    font-size: 9pt;
+    color: @fg;
+    padding: 0px;
+    margin: 0px;
+    min-height: 0;
+    min-width: 0;
+    box-shadow: none;
+}
+
+/* BAR WINDOW */
+window#waybar {
+  background-color: @bg;
+  border-bottom: 2px solid @c8;
+}
+
+/* TOOLTIP */
+tooltip {
+  background: @bg;
+  border: 2px solid @c14;
+}
+
+/* MAIN MENU ICON */
+#custom-archicon {
+  font-family: "Symbols Nerd Font Mono";
+  font-size: 12pt;
+  color: @c14;
+}
+
+/* IDLE INHIBITOR */
+#custom-idle-inhibit.activated {
+  color: @c14;
+}
+
+/* EXPRESSVPN WIDGET */
+#custom-expressvpn.vpn-connected {
+  color: @c14;
+}
+
+#custom-expressvpn.vpn-disconnected {
+  color: @fg;
+}
+
+/* JUBOTAI WIDGET */
+#custom-jubotai.jubotai-on {
+  color: @c14;
+}
+
+#custom-jubotai.jubotai-partial {
+  color: @c11;
+}
+
+#custom-jubotai.jubotai-off {
+  color: @fg;
+}
+
+/* STATUS NOTIFIER (SYSTRAY) */
+#tray menu {
+  background-color: @bg;
+  border: solid 2px @c14;
+  padding: 5px;
+  outline: none;
+  box-shadow: none;
+}
+
+#tray menuitem:hover {
+  background-color: @bg-light;
+}
+
+#tray menuitem:hover label {
+  color: @c14;
+  font-weight: bold;
+}
+
+/* MODE */
+#mode {
+  color: @c11;
+}
+
+/* SEPARATOR */
+#custom-separator {
+  color: @c8;
+}
+
+/* CLOCK AND DATE */
+#clock.clock {
+  font-size: 11pt;
+  font-weight: bold;
+}
+
+/* WORKSPACES */
+#workspaces button {
+  padding: 0px 5px;
+}
+
+#workspaces button:hover {
+  background-image: none;
+}
+
+#workspaces button label {
+  font-family: "Liberation Mono";
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+#workspaces button.empty label {
+  color: @c8;
+}
+
+#workspaces button:not(.empty):not(.active):not(.visible) label {
+  color: @fg;
+}
+
+
+#workspaces button.visible label {
+  color: @c13;
+}
+
+#workspaces button.active {
+  background-color: @bg-light;
+}
+
+#workspaces button.active label {
+  color: @c14;
+}

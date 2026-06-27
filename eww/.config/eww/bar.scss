@@ -1,0 +1,301 @@
+// =============================================================================
+// EWW BAR STYLES
+// =============================================================================
+
+// Bar container
+.bar {
+  background-color: $bg;
+  font-family: "Liberation Mono", monospace;
+  font-size: 9pt;
+  margin: 5px 10px 0px 10px;
+  border-bottom: 2px solid $c8;
+}
+
+// Left section
+.bar-left {
+  margin-left: 0px;
+}
+
+.bar-archicon {
+  font-family: "Symbols Nerd Font Mono";
+  font-size: 12pt;
+  color: $bg;
+  background-color: $c14;
+  margin-right: 10px;
+  padding: 0 6px;
+  min-width: 20px;
+}
+
+.bar-submap {
+  color: $c11;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.bar-window-title {
+  color: $fg;
+}
+
+// Center section — workspaces
+.bar-center {
+  // no extra spacing
+}
+
+.bar-workspace {
+  font-size: 12pt;
+  font-weight: bold;
+  padding: 0 5px;
+  min-width: 20px;
+}
+
+.ws-empty {
+  color: $c8;
+}
+
+.ws-occupied {
+  color: $fg;
+}
+
+.ws-visible {
+  color: $c13;
+}
+
+.ws-active {
+  background-color: $bg-light;
+  color: $c14;
+}
+
+// Right section
+.bar-right {
+  margin-right: 0px;
+}
+
+.bar-clock {
+  font-size: 11pt;
+  font-weight: bold;
+  color: $bg;
+}
+
+.bar-tray {
+  margin-right: 10px;
+}
+
+.bar-layout {
+  margin-right: 10px;
+  min-width: 80px; // fixed width to fit "SCROLLING"
+  border-radius: 0px;
+  padding: 0px 6px;
+  transition: background-color 200ms ease;
+
+  &.layout-MASTER    { background-color: $c4; }
+  &.layout-DWINDLE   { background-color: $c14; }
+  &.layout-SCROLLING { background-color: $c13; }
+  &.layout-MONOCLE   { background-color: $c3; }
+}
+
+.bar-layout-name {
+  color: $bg;
+  font-weight: bold;
+}
+
+.bar-wincount {
+  background-color: $c4;
+  color: $bg;
+  font-weight: bold;
+  min-width: 20px;
+  padding: 0 6px;
+  margin-right: 10px;
+}
+
+.bar-datetime {
+  background-color: $c4;
+  padding: 0 6px;
+}
+
+.bar-datetime-sep {
+  color: $bg;
+  margin: 0 6px;
+}
+
+.bar-date {
+  font-size: 9pt;
+  color: $bg;
+  padding-top: 1px;
+}
+
+.bar-archicon-active {
+  background-color: $c3;
+}
+
+.calendar-popup {
+  background-color: $bg;
+  border: 2px solid $c14;
+  padding: 10px 12px 8px 12px;
+}
+
+.calendar-widget {
+  color: $fg;
+  background-color: transparent;
+  font-family: "Liberation Mono", monospace;
+  font-size: 10pt;
+  min-width: 260px;
+  padding: 4px 6px 2px 6px;
+
+  &:selected {
+    background-color: $c4;
+    color: $bg;
+  }
+
+  header {
+    margin-bottom: 8px;
+  }
+
+  button {
+    color: $c14;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 2px;
+  }
+
+  .highlight {
+    color: $c14;
+    font-weight: bold;
+  }
+
+  grid {
+    margin-top: 6px;
+  }
+
+  label {
+    min-width: 28px;
+    margin: 0 3px;
+    padding: 2px 5px;
+    color: $fg;
+  }
+
+  &:indeterminate {
+    color: $c8;
+  }
+}
+
+// =============================================================================
+// POPUP PANEL
+// =============================================================================
+
+.popup-panel {
+  background-color: $bg;
+  border: 2px solid $c14;
+}
+
+.popup-row {
+  padding: 6px 12px;
+}
+
+.popup-icon {
+  font-family: "Symbols Nerd Font Mono";
+  font-size: 12pt;
+  color: $c14;
+  margin-right: 10px;
+  min-width: 18px;
+}
+
+.popup-label {
+  color: $fg;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.popup-value {
+  color: $c8;
+  font-family: "Liberation Mono", monospace;
+}
+
+// Popup columns (side by side)
+.popup-column {
+  min-width: 260px;
+
+  &:first-child {
+    border-right: 1px solid $c8;
+  }
+}
+
+// Vitals subheaders
+.popup-subheader {
+  padding: 6px 12px 2px 12px;
+  border-top: 1px solid $c8;
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.popup-subheader-icon {
+  font-family: "Symbols Nerd Font Mono";
+  font-size: 9pt;
+  color: $c14;
+  margin-right: 6px;
+}
+
+.popup-subheader-label {
+  color: $fg;
+  font-weight: bold;
+  font-size: 9pt;
+}
+
+// Weather (fills remaining left column space)
+.popup-weather {
+  padding: 12px;
+  border-top: 1px solid $c8;
+}
+
+.popup-weather-top {
+  margin-bottom: 12px;
+}
+
+.popup-weather-icon {
+  font-family: "Weather Icons";
+  font-size: 40pt;
+  color: $c14;
+  margin-bottom: 8px;
+}
+
+.popup-weather-temp {
+  color: $fg;
+  font-size: 18pt;
+  font-weight: bold;
+}
+
+.popup-weather-desc {
+  color: $c8;
+  font-size: 9pt;
+  margin-top: 2px;
+}
+
+.popup-weather-details {
+  padding: 8px 4px;
+  border-top: 1px solid $c8;
+}
+
+.popup-weather-detail-val {
+  color: $fg;
+  font-weight: bold;
+  font-size: 9pt;
+  font-family: "Liberation Mono", monospace;
+}
+
+.popup-weather-detail-label {
+  color: $c8;
+  font-size: 7pt;
+  margin-top: 2px;
+}
+
+// Idle inhibitor active state
+.idle-active {
+  .popup-value {
+    color: $c3;
+    font-weight: bold;
+  }
+  .popup-icon {
+    color: $c3;
+  }
+}

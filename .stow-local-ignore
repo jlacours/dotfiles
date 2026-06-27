@@ -1,0 +1,39 @@
+(^|/)\.git($|/)
+(^|/)\.gitignore$
+(^|/)\.stow-local-ignore$
+(^|/)\.claude($|/)
+(^|/)\.codex($|/)
+(^|/)\.pi($|/)
+(^|/)AGENTS\.md$
+(^|/)CLAUDE\.md$
+(^|/)PLAN\.md$
+(^|/)README[^/]*$
+(^|/)LICENSE[^/]*$
+(^|/)pi-session-.*\.html$
+
+# Local logs and traces
+\.log(\..*)?$
+\.out$
+\.err$
+(^|/)__pycache__($|/)
+\.py[cod]$
+(^|/)\.nvimlog$
+
+# Local screenshots and recordings
+(^|/)assets/screenshots($|/)
+\.screencast$
+\.cast$
+
+# Common personal or machine-local artifacts
+(^|/)\.env(\..*)?$
+\.local$
+\.sqlite3?$
+\.db(-.*)?$
+\.pem$
+\.p12$
+\.ovpn$
+\.pcap$
+\.pid(\.lock)?$
+(^|/)\.config/hypr/generated($|/)
+(^|/)\.config/eww/scripts/(pids|state)($|/)
+(^|/)\.config/rofi/themes/wallust-todo\.rasi$
