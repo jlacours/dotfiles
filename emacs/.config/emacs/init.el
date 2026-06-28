@@ -54,11 +54,12 @@
 ;; appearance.el still own the colours and hot-reload keeps working.
 (let ((juju/font-family "Comic Code"))
   (add-to-list 'default-frame-alist
-               (cons 'font (format "%s-11" juju/font-family)))
-  (set-face-attribute 'default nil :family juju/font-family :height 110)
+               (cons 'font (format "%s-10" juju/font-family)))
+  (set-face-attribute 'default nil :family juju/font-family :height 100)
   (set-face-attribute 'fixed-pitch nil :family juju/font-family)
   (set-face-attribute 'variable-pitch nil :family juju/font-family))
 (add-to-list 'default-frame-alist '(internal-border-width . 5))
+(setq-default line-spacing 0.2)
 
 ;; Keep the cursor away from the window edges (like scrolloff)
 (setq scroll-margin 8)
