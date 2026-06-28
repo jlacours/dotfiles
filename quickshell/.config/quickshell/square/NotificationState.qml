@@ -8,6 +8,8 @@ import Quickshell.Services.Notifications as Notify
 Singleton {
   id: root
 
+  signal notified()
+
   property bool dnd: false
   property bool centerVisible: false
   property string centerScreenName: ""
@@ -153,6 +155,8 @@ Singleton {
         popupQueueModel.remove(popupQueueModel.count - 1)
       }
     }
+
+    root.notified()
   }
 
   function registerNotification(notification) {

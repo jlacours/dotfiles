@@ -88,6 +88,7 @@ The active desktop is Hyprland plus the square Quickshell configuration. It incl
 - an output-device-aware volume indicator and PipeWire graph-rate selector;
 - system tray, game mode, microphone, notification/DND, VPN, Tailscale, idle, and suspend controls;
 - clock/calendar, clipboard history, keybinding overlay, notification center, and OSD;
+- a katakana "digital rain" flourish that washes across the bar on new notifications;
 - Wallust theme and wallpaper selection;
 - TTS controls and local-model status.
 

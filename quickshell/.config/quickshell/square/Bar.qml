@@ -29,6 +29,18 @@ Variants {
       color: Theme.bg
       radius: 0
 
+      // Notification arrival: glitch burst across the whole bar background,
+      // painted behind the modules (first child = lowest in the stack).
+      NotificationGlitch {
+        id: notifGlitch
+        anchors.fill: parent
+      }
+
+      Connections {
+        target: Square.NotificationState
+        function onNotified() { notifGlitch.play() }
+      }
+
       // LEFT cluster: workspaces (all monitors, colour-coded)
       Workspaces {
         id: workspaces
