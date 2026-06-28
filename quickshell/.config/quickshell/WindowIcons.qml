@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
   id: root
 
-  readonly property string fallback: ""
+  readonly property string fallback: ""
   readonly property string home: Quickshell.env("HOME") || ""
   readonly property string baseDir: home + "/.dotfiles/quickshell/.config/quickshell/window-icons"
   readonly property string svgDir: baseDir + "/svg"

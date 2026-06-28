@@ -204,7 +204,13 @@
       "cmus",
       "mpd"
     ],
-    "icon": ""
+    "icon": ""
+  },
+  {
+    "patterns": [
+      "tidal"
+    ],
+    "svg": "tidal.svg"
   },
   {
     "patterns": [
@@ -479,12 +485,6 @@
       "brave"
     ],
     "icon": "󰕥"
-  },
-  {
-    "patterns": [
-      "firefox"
-    ],
-    "icon": ""
   },
   {
     "patterns": [

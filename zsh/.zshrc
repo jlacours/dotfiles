@@ -4,9 +4,9 @@
 
 # --- Environment Variables ---
 # Attach to the always-on Emacs daemon (systemd --user emacs.service).
-# -t: terminal frame (git commits, etc.); -a '': start a daemon if none is running.
-export EDITOR="emacsclient -t -a ''"
-export VISUAL="emacsclient -c -a ''"
+# -t: terminal frame; -a: fallback if no server running.
+export EDITOR="emacsclient -t -a 'emacs -nw'"
+export VISUAL="emacsclient -c -a 'emacs'"
 [[ -S "/run/user/$UID/gcr/ssh" ]] && export SSH_AUTH_SOCK="/run/user/$UID/gcr/ssh"
 
 # --- History ---
@@ -265,7 +265,7 @@ precmd() {
 function zle-line-finish {
   PROMPT='%F{%(?.green.red)}❯%f '
   # reset cursor shape + color when leaving the line
-  printf '\e[2 q\e]112\a'
+  printf '\e[0 q\e]112\a'
   zle reset-prompt
   set-full-prompt
 }

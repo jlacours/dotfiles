@@ -57,6 +57,7 @@ Every application follows the same template: a top-level package mirrors its des
 | Package | Software and purpose |
 |---|---|
 | **emacs** | Emacs daemon/client configuration with Gruber Darker and local LLM support |
+| **environment** | systemd user environment.d variables: default terminal, browser, Electron Wayland, GTK portal, Qt portal |
 | **eww** | Legacy Eww bar retained for migration reference |
 | **foot** | Foot terminal configuration and Wallust color include |
 | **ghostty** | Ghostty terminal configuration |
