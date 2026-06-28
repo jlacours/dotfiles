@@ -419,21 +419,6 @@ ex7z() {
   extract "$1"
 }
 
-# --- AIChat shell integration ---
-SCRIPTS_DIR="$HOME/.config/aichat/shell-integrations-scripts"
-
-# Optional: bind hotkey for AI-assisted commands
-export AICHAT_HOTKEY='^[e'   # Alt+e
-
-# Source CLI completions first
-[[ -f "$SCRIPTS_DIR/autocomplete.sh" ]] && source "$SCRIPTS_DIR/autocomplete.sh"
-
-# Source interactive AI hotkey integration
-[[ -f "$SCRIPTS_DIR/completions.sh" ]] && source "$SCRIPTS_DIR/completions.sh"
-
-# Override any 'journal' alias defined by aichat scripts above
-unalias journal 2>/dev/null
-alias journal='aichat --agent journal'
 alias claudev='claude --verbose'
 
 # System update: packages + Neovim plugins
