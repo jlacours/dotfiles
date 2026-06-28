@@ -50,6 +50,12 @@ sudo ~/.config/hypr/scripts/install-game-mode-governor.sh
 
 Review `MANAGED_UNITS` in `hyprland/.config/hypr/scripts/game-mode.sh` first; those user services are paused while game mode is active.
 
+hypridle runs with `ignore_dbus_inhibit = true`, so it ignores the browser's audio/video idle locks. A `hypridle-video-inhibit.service` user unit restores "stay awake while watching" by holding a `systemd-inhibit --what=idle` lock only while a window is fullscreen; audio-only playback still idles out. Stow only links the unit, so enable it once:
+
+```bash
+systemctl --user enable --now hypridle-video-inhibit.service
+```
+
 ## Stow Packages
 
 Every application follows the same template: a top-level package mirrors its destination relative to `$HOME`.
@@ -61,7 +67,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **eww** | Legacy Eww bar retained for migration reference |
 | **foot** | Foot terminal configuration and Wallust color include |
 | **ghostty** | Ghostty terminal configuration |
-| **hyprland** | Hyprland, hypridle, keybindings, game mode, and compositor helpers |
+| **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game mode, and compositor helpers |
 | **kitty** | Kitty terminal configuration retained as an alternative |
 | **qtile** | Legacy Qtile Wayland configuration |
 | **quickshell** | Active bar, overlays, notification server, OSD, and desktop scripts |

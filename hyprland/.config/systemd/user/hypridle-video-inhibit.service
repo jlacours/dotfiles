@@ -1,0 +1,14 @@
+[Unit]
+Description=Keep monitors awake during fullscreen video (audio-only still idles)
+Documentation=https://wiki.hypr.land/Hypr-Ecosystem/hypridle/
+PartOf=graphical-session.target
+After=graphical-session.target hypridle.service
+
+[Service]
+Type=simple
+ExecStart=%h/.config/hypr/scripts/hypridle-video-inhibit.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target
