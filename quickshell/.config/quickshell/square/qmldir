@@ -1,6 +1,7 @@
 AiUsageBlock AiUsageBlock.qml
 AiUsagePanel AiUsagePanel.qml
 Bar Bar.qml
+CenterToggleBlock CenterToggleBlock.qml
 Clock Clock.qml
 GameModeBlock GameModeBlock.qml
 GovBlock GovBlock.qml
@@ -16,6 +17,7 @@ NotificationPopups NotificationPopups.qml
 Osd Osd.qml
 singleton AiUsageState AiUsageState.qml
 singleton AudioRateState AudioRateState.qml
+singleton CenterModulesState CenterModulesState.qml
 singleton GameModeState GameModeState.qml
 singleton GovernorState GovernorState.qml
 singleton KeyboardState KeyboardState.qml

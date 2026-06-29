@@ -51,6 +51,9 @@ Variants {
       }
 
       // CENTER: AI usage | tmux | vitals
+      // Each unit is independently toggleable from the tray (see
+      // CenterToggleBlock / CenterModulesState); dividers hide themselves
+      // whenever an adjacent unit is hidden so no orphan hairlines remain.
       Row {
         id: centerStatus
         anchors.centerIn: parent
@@ -59,6 +62,7 @@ Variants {
         AiUsageBlock {
           anchors.verticalCenter: parent.verticalCenter
           screenName: barWindow.modelData.name
+          visible: CenterModulesState.aiUsage
         }
 
         Rectangle {
@@ -66,10 +70,12 @@ Variants {
           width: Theme.hairline
           height: 12
           color: Theme.border
+          visible: CenterModulesState.aiUsage && CenterModulesState.tmux
         }
 
         Square.TmuxSessions {
           anchors.verticalCenter: parent.verticalCenter
+          visible: CenterModulesState.tmux
         }
 
         Rectangle {
@@ -77,11 +83,13 @@ Variants {
           width: Theme.hairline
           height: 12
           color: Theme.border
+          visible: CenterModulesState.tmux && CenterModulesState.vitals
         }
 
         Row {
           anchors.verticalCenter: parent.verticalCenter
           spacing: Theme.padMd
+          visible: CenterModulesState.vitals
 
           MetricsBlock {
             anchors.verticalCenter: parent.verticalCenter
@@ -105,6 +113,18 @@ Variants {
         spacing: Theme.padMd
 
         TrayBlock {
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.hairline
+          height: 12
+          color: Theme.border
+        }
+
+        // Center-module visibility toggles (their own section, right of tray).
+        Square.CenterToggleBlock {
           anchors.verticalCenter: parent.verticalCenter
         }
 
