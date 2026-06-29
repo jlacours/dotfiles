@@ -1,8 +1,9 @@
 import QtQuick
 
 // Tray-side on/off switches for the bar's three center modules, shown as
-// nerd-font glyphs. Accent while its module is shown, dim (textDim) while
-// hidden -- so a hidden module's toggle fades into the bar. Left-click
+// nerd-font glyphs. Normal foreground while its module is shown, dim
+// (textMuted) while hidden -- so a hidden module's toggle fades into the
+// bar. Left-click
 // flips visibility through CenterModulesState, which persists the choice.
 Row {
   id: root
