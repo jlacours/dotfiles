@@ -1,0 +1,4 @@
+KeybindOverlay KeybindOverlay.qml
+KeyboardKey KeyboardKey.qml
+KeyboardView KeyboardView.qml
+singleton KeybindState KeybindState.qml

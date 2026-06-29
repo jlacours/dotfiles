@@ -1,0 +1,34 @@
+AiUsageBlock AiUsageBlock.qml
+AiUsagePanel AiUsagePanel.qml
+Bar Bar.qml
+Clock Clock.qml
+GameModeBlock GameModeBlock.qml
+GovBlock GovBlock.qml
+KeyboardBlock KeyboardBlock.qml
+MetricsBlock MetricsBlock.qml
+MicBlock MicBlock.qml
+NetSpeedBlock NetSpeedBlock.qml
+NotificationBlock NotificationBlock.qml
+NotificationCenter NotificationCenter.qml
+NotificationGlitch NotificationGlitch.qml
+NotificationItem NotificationItem.qml
+NotificationPopups NotificationPopups.qml
+Osd Osd.qml
+singleton AiUsageState AiUsageState.qml
+singleton AudioRateState AudioRateState.qml
+singleton GameModeState GameModeState.qml
+singleton GovernorState GovernorState.qml
+singleton KeyboardState KeyboardState.qml
+singleton MetricsState MetricsState.qml
+singleton MicState MicState.qml
+singleton NetSpeedState NetSpeedState.qml
+singleton NotificationState NotificationState.qml
+singleton OsdState OsdState.qml
+singleton Theme Theme.qml
+singleton VolumeState VolumeState.qml
+TmuxSessions TmuxSessions.qml
+TrayBlock TrayBlock.qml
+TrayItem TrayItem.qml
+VolumeBlock VolumeBlock.qml
+VolumeMenu VolumeMenu.qml
+Workspaces Workspaces.qml

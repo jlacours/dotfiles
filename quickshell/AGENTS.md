@@ -88,6 +88,48 @@ This package is a Stow package for the Quickshell bar config at:
   - `~/.config/quickshell/wallust.js`
 - Quickshell should consume `wallust.js` instead of hardcoded colors wherever practical.
 
+## QML Language Server (qmlls) — cursed but it works
+
+The bar runs fine, but `qmlls6` (the Qt6 QML language server) spams false
+warnings on every singleton consumer:
+
+- `Member "barHeight" not found on type "Theme"`
+- `Type Theme not declared as singleton in qmldir but using pragma Singleton`
+
+Cause: the config has many `pragma Singleton` files (`Theme.qml`, all the
+`*State.qml`). Quickshell resolves these implicitly at runtime — **no `qmldir`
+needed**. But `qmlls` refuses to resolve a singleton's *members* unless a real
+`qmldir` in the *source* directory declares it `singleton`.
+
+Quickshell's own `.qmlls.ini` tooling does **not** fix this on the current
+toolchain (Quickshell 0.3.0 + Qt 6.11): it synthesizes the qmldirs into a VFS
+using symlinks, but `qmlls` canonicalizes those symlinks back to the source dir
+(which has no qmldir) and the fix is lost. So do not bother with `.qmlls.ini`.
+
+The cursed-but-working solution: commit real, **complete** `qmldir` files in each
+source directory. They are generated, never hand-edited.
+
+### Workflow when coding
+
+After adding, removing, or renaming any `*.qml` component, regenerate:
+
+```bash
+~/.config/quickshell/scripts/gen-qmldir.sh
+```
+
+Rules baked into the generator (don't fight them):
+
+- Every directory with PascalCase `*.qml` gets a `qmldir`.
+- Each component is listed (`Foo Foo.qml`); `pragma Singleton` files get the
+  `singleton` prefix.
+- **All** components are listed, not just singletons — once a `qmldir` exists the
+  directory is a strict module, so a missing entry breaks bare-name references at
+  runtime ("X is not a type").
+- No `module` line, no version numbers (both verified unnecessary).
+
+These `qmldir` files are LSP-only sugar; the running bar does not need them, and
+Quickshell honors an explicit `qmldir` instead of synthesizing its own.
+
 ## Pending UX Note
 
 - After popup work is stable, the date should get a visual pass so it matches the rest of the bar.

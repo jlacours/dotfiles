@@ -25,7 +25,7 @@ Install a subset by naming packages:
 The active Hyprland and Quickshell setup also expects:
 
 ```bash
-yay -S --needed hyprland hypridle quickshell rofi foot jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg zen-browser-bin ttf-code2000
+yay -S --needed hyprland hypridle quickshell rofi foot jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg zen-browser-bin
 ```
 
 The interface font is `Comic Code`. It is a commercial typeface not packaged on the AUR, so install it manually into `~/.local/share/fonts/`.
@@ -93,6 +93,15 @@ The active desktop is Hyprland plus the square Quickshell configuration. It incl
 - TTS controls and local-model status.
 
 Zen Browser is the default browser. The interface font is `Comic Code` across Quickshell, Foot, Emacs, and Hyprland.
+
+The Quickshell config ships generated `qmldir` files (via
+`quickshell/.config/quickshell/scripts/gen-qmldir.sh`) purely to keep the QML
+language server quiet. Quickshell resolves its `pragma Singleton` modules
+implicitly at runtime, but `qmlls` refuses to resolve singleton members without a
+real `qmldir` in the source tree — and Quickshell's own `.qmlls.ini` tooling does
+not help, because `qmlls` canonicalizes its VFS symlinks back to the source. The
+fix is therefore a cursed-but-working pile of generated `qmldir` files; regenerate
+them after adding or renaming components. See [`quickshell/AGENTS.md`](quickshell/AGENTS.md).
 
 The editor configuration is Emacs-first, running as a user daemon with `emacsclient`. The previous Neovim configuration remains under `legacy/nvim/` and can be stowed explicitly if revived:
 

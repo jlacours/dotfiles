@@ -1,0 +1,60 @@
+ActiveWindowTitle ActiveWindowTitle.qml
+Bar Bar.qml
+Card Card.qml
+CavaBars CavaBars.qml
+Chip Chip.qml
+Clock Clock.qml
+CpuGovernor CpuGovernor.qml
+Date Date.qml
+IdleInhibitor IdleInhibitor.qml
+InlineMetric InlineMetric.qml
+JubotaiConvo JubotaiConvo.qml
+Jubotai Jubotai.qml
+KeyboardLayout KeyboardLayout.qml
+LayoutIndicator LayoutIndicator.qml
+MediaChip MediaChip.qml
+MicIndicator MicIndicator.qml
+NetworkChip NetworkChip.qml
+NotificationChip NotificationChip.qml
+OpenWindowsList OpenWindowsList.qml
+Osd Osd.qml
+SimpleBar SimpleBar.qml
+SimpleClock SimpleClock.qml
+SimpleDate SimpleDate.qml
+SimpleWindowCount SimpleWindowCount.qml
+SimpleWorkspaceChip SimpleWorkspaceChip.qml
+SimpleWorkspace SimpleWorkspace.qml
+singleton BarDetailState BarDetailState.qml
+singleton CalendarState CalendarState.qml
+singleton CavaMicState CavaMicState.qml
+singleton CavaState CavaState.qml
+singleton CavaStyleState CavaStyleState.qml
+singleton EnginePickerState EnginePickerState.qml
+singleton IdleState IdleState.qml
+singleton JubotaiConvoState JubotaiConvoState.qml
+singleton JubotaiState JubotaiState.qml
+singleton LanguageState LanguageState.qml
+singleton MediaState MediaState.qml
+singleton MetricsState MetricsState.qml
+singleton MicState MicState.qml
+singleton NetworkState NetworkState.qml
+singleton OsdState OsdState.qml
+singleton SuspendState SuspendState.qml
+singleton TailscaleState TailscaleState.qml
+singleton ThemeNameState ThemeNameState.qml
+singleton ThemePickerState ThemePickerState.qml
+singleton Theme Theme.qml
+singleton VolumeState VolumeState.qml
+singleton VpnState VpnState.qml
+singleton WaveformState WaveformState.qml
+singleton WindowIcons WindowIcons.qml
+singleton WorkspaceFlashState WorkspaceFlashState.qml
+Sound Sound.qml
+SuspendIndicator SuspendIndicator.qml
+Tailscale Tailscale.qml
+TrayItem TrayItem.qml
+Tray Tray.qml
+Vpn Vpn.qml
+WorkspaceChip WorkspaceChip.qml
+WorkspaceFlash WorkspaceFlash.qml
+Workspace Workspace.qml

@@ -1,0 +1,3 @@
+ClipboardHistory ClipboardHistory.qml
+ClipboardItem ClipboardItem.qml
+singleton ClipboardState ClipboardState.qml
