@@ -76,3 +76,17 @@
 (let ((llm-file (locate-user-emacs-file "llm.el")))
   (when (file-exists-p llm-file)
     (load llm-file nil t)))
+
+;; --- Learning helpers ---
+;; helper.el: C-c h spawns an LLM tutor that sees the current window
+;; (visible text, modes, recent keys, *Messages*) via the gptel
+;; backends from llm.el.  Loaded after llm.el on purpose.
+(let ((helper-file (locate-user-emacs-file "helper.el")))
+  (when (file-exists-p helper-file)
+    (load helper-file nil t)))
+
+;; tips.el: juju/tips-mode, a rotating fixed-width Emacs tip in the
+;; mode-line (on by default; M-x juju/tips-mode toggles it).
+(let ((tips-file (locate-user-emacs-file "tips.el")))
+  (when (file-exists-p tips-file)
+    (load tips-file nil t)))
