@@ -219,9 +219,6 @@ Scope {
 
               delegate: Menus.MenuItem {
                 width: menuList.width
-                rowIndex: index
-                text: model.text
-                sub: model.sub
                 selected: ListView.isCurrentItem
                 onActivated: Menus.MenuState.activateCurrent(index)
               }

@@ -19,7 +19,7 @@ import "../wallust.js" as Wallust
 Rectangle {
   id: root
 
-  required property int rowIndex
+  required property int index
   required property string text
   required property string sub
   property bool selected: false
