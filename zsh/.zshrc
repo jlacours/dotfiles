@@ -138,6 +138,16 @@ alias sysinfo='macchina'
 alias cdx='codex-tmux'
 alias codex-ssh='codex-tmux'
 
+# NoPayStation — defaults to /mnt/Extra/ for downloads
+unalias npsget 2>/dev/null
+npsget() {
+  if [[ "$*" != *-o* ]]; then
+    command npsget -o /mnt/Extra "$@"
+  else
+    command npsget "$@"
+  fi
+}
+
 mkcd() {
   if (( $# != 1 )); then
     print -u2 "usage: mkcd <directory>"
