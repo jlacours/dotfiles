@@ -3,9 +3,13 @@
 set -euo pipefail
 
 HYPR_CONFIG="${HYPR_CONFIG:-$HOME/.config/hypr/hyprland.conf}"
+DMENU="$HOME/.config/quickshell/scripts/qs-dmenu.sh"
 
+# The rofi version showed these via `rofi -e` (a modal error dialog). The
+# quickshell overlay has no message-box mode, so errors go to a
+# notification instead — see handoff for this simplification.
 die() {
-    rofi -e "$1"
+    notify-send -u critical "Screens" "$1" 2>/dev/null || true
     exit 1
 }
 
@@ -78,7 +82,7 @@ entries="$(
     }
 )"
 
-selection="$(printf '%s\n' "$entries" | rofi -dmenu -i -p "Screens")"
+selection="$(printf '%s\n' "$entries" | "$DMENU" -i -p "Screens")"
 [ -n "$selection" ] || exit 0
 
 case "$selection" in

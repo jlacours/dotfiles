@@ -35,8 +35,8 @@ case "$1" in
         ;;
     "Custom Task")
         if [ -z "$TASK_DESC" ]; then
-            # Launch rofi again to get custom task description
-            CUSTOM=$(rofi -dmenu -p "Describe your task:" -theme wallust)
+            # Launch the quickshell dmenu overlay again to get custom task description
+            CUSTOM=$("$HOME/.config/quickshell/scripts/qs-dmenu.sh" -p "Describe your task:")
             if [ -z "$CUSTOM" ]; then
                 exit 1
             fi

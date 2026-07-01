@@ -10,13 +10,8 @@ else
   export QT_LOGGING_RULES="qt.qpa.services.warning=false"
 fi
 
-# qs-switch.sh persists which config (classic|square) should be running.
-state_file="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/active-config"
-active="classic"
-[[ -r "$state_file" ]] && active="$(<"$state_file")"
-
-# NOTE: a root-level shell.qml disables named configs (-c), so use -p.
-if [[ "$active" == "square" ]]; then
-  exec quickshell -p "$HOME/.config/quickshell/square" --no-duplicate
-fi
-exec quickshell --no-duplicate
+# square is the sole live variant. The classic variant was retired to
+# legacy/quickshell-classic/ (archived, no longer launchable). A root-level
+# shell.qml would disable named configs (-c), so launch the square profile by
+# path with -p. qs-switch.sh restart relaunches through this script.
+exec quickshell -p "$HOME/.config/quickshell/square" --no-duplicate

@@ -11,33 +11,88 @@ This package is a Stow package for the Quickshell bar config at:
 - Do not collapse the bar into one giant QML file.
 - Prefer small focused components and grouped subdirectories.
 
-## Current Structure
+## Variants
 
-- `shell.qml`: root entrypoint
-- `Bar.qml`: top bar window composition
-- `Workspace.qml` / `WorkspaceChip.qml`: Hyprland workspace module
-- `Clock.qml`: centered clock chip
-- `Date.qml`: right-side date
-- `Tray.qml` / `TrayItem.qml`: systray
-- `Vpn.qml`: bar VPN indicator
-- `IdleInhibitor.qml`: bar idle inhibitor indicator
-- `popup/`: popup shell and popup content modules
+- **`square/` is the sole live variant.** It is a self-contained config rooted at
+  `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`, `qmldir`,
+  and `wallust.js`). `scripts/launch.sh` runs it via `quickshell -p .../square`;
+  `scripts/qs-switch.sh` only knows how to `restart` / `status` (`square`).
+- **The classic variant is retired**, archived at `legacy/quickshell-classic/`
+  (repo-root `legacy/`, which `install.sh` lists in `SKIP_DIRS` so it is never
+  stowed). It is reference-only; do not wire anything into it. Before any bar
+  work, confirm the live variant with `qs-switch.sh status` (or
+  `pgrep -af quickshell`) and edit under `square/`.
 
-## Styling Rules
+## Current Structure (square/)
 
-- Sharp corners only by default. Do not add rounded corners unless explicitly requested.
-- Use `Theme.fontFamily` for bar text; it currently resolves to `Comic Code`.
-- Use Wallust-generated colors from `wallust.js`.
-- Prefer the base16-style palette keys exposed there:
-  - `base00`: bar background
-  - `base01`: lighter surface / outline color
-  - `base03`: muted text / inactive indicators
-  - `base05`: normal foreground
-  - `base0D`: accent
-- Current visual language:
-  - clock: filled accent chip
-  - vpn / idle: outlined chips
-  - workspaces: outlined when inactive, accent-filled when focused/active
+- `shell.qml`: root entrypoint (mounts the bar, OSD, notifications, panels).
+- `Bar.qml`: top bar composition — left cluster (workspaces), centre cluster
+  (AI usage / tmux / vitals), right cluster (tray, toggles, notifications,
+  keyboard, volume, clock) separated by hairline `Rectangle` dividers.
+- `Theme.qml`: singleton with the design tokens (see Styling Rules).
+- Components follow a `*Block.qml` (bar widget) + `*State.qml` (singleton
+  backing logic) split — e.g. `GameModeBlock`/`GameModeState`,
+  `NetSpeedBlock`/`NetSpeedState`, `VolumeBlock`/`VolumeState`.
+- `Workspaces.qml`, `Clock.qml`, `TmuxSessions.qml`, `TrayBlock`/`TrayItem`,
+  `Osd.qml`/`OsdState.qml`: standalone modules.
+- Panels/popovers: `AiUsagePanel.qml`, `VolumeMenu.qml`, `NotificationCenter.qml`.
+- Notifications: `NotificationState`, `NotificationBlock`, `NotificationCenter`,
+  `NotificationItem`, `NotificationPopups`, `NotificationGlitch`.
+- `clipboard/`, `keybinds/`, `menus/`, `scripts/` are shared (symlinked into
+  `square/`).
+- `wallust.js` is the generated palette (see Wallust).
+
+## Menus (rofi replacement)
+
+- `menus/` is the quickshell replacement for the retired `rofi` package
+  (now `legacy/rofi/`, unstowed — see `install.sh`'s `SKIP_DIRS`). Every
+  former rofi menu (drun, favourites, tools, power, window switcher, and the
+  dmenu-piped scripts) now goes through this module.
+- `menus/MenuState.qml` (singleton): all data + logic — item list, filter,
+  per-mode `show*()` populators (`showApps`, `showFavorites`, `showTools`,
+  `showPower`, `showWindows`, `showDmenu`), and `activateCurrent()` /
+  `cancelCurrent()` dispatch.
+- `menus/CenterMenu.qml`: the visual overlay — `PanelWindow` + `Variants`
+  over `Quickshell.screens` (same shape as `clipboard/ClipboardHistory.qml`),
+  but **centered both axes** (`anchors.centerIn`) and wide
+  (`~55% of screen width`, clamped 480–920px) instead of fullscreen — that's
+  the whole point versus the old rofi theme (`juju-default.rasi`,
+  `fullscreen: true`). Hosts the `menu` `IpcHandler` (`openApps`,
+  `openFavorites`, `openTools`, `openPower`, `openWindows`, `openDmenu`,
+  `hide`) — called via `scripts/qs-ipc.sh menu <function> ...` from
+  `hyprland.conf` and from `scripts/qs-dmenu.sh`.
+- `menus/MenuItem.qml`: list delegate (mirrors `clipboard/ClipboardItem.qml`).
+- `scripts/qs-dmenu.sh`: dmenu-compatible CLI shim (stdin lines in → chosen
+  line on stdout, via a one-shot FIFO) so the scripts that used to pipe into
+  `rofi -dmenu` (`todo.sh`, `wallpaper.sh`, `emojis.sh`, `cliphist.sh`,
+  `screenshot.sh`, `screenrecord.sh`, `deactivate-screens.sh`, `claude.sh`,
+  `speak.sh`, `rofi-configs.py`) needed only a one-line substitution. It
+  supports a deliberately small subset of rofi's dmenu flags — see the
+  script's header comment.
+- Text-only by design: app/window/favourite icons and the old
+  wallpaper/cliphist image previews were dropped rather than ported, to keep
+  this module's scope bounded. Revisit if the user wants icons back.
+
+## Styling Rules (square)
+
+- Brutalist: **zero radius everywhere** (`Theme.radius === 0`). Do not add
+  rounded corners unless explicitly requested.
+- Consume colors via `Theme` semantic tokens, not raw palette keys:
+  - `Theme.bg` (bar background), `Theme.surface`, `Theme.border`,
+    `Theme.foreground`, `Theme.text`, `Theme.textMuted`, `Theme.textDim`
+  - `Theme.accent` / `Theme.accentAlt`, plus status colours
+    `Theme.critical` / `Theme.success` / `Theme.warning` / `Theme.info`
+  - (`wallust.js` still derives these from its base16 vars underneath, but bar
+    code should go through `Theme`.)
+- Typography: `Theme.fontFamily` ("Comic Code") for text, `Theme.iconFamily`
+  ("Symbols Nerd Font Mono") for glyphs; sizes are `Theme.fontSm` / `fontMd` /
+  `fontLg` (10 / 11 / 13).
+- Geometry tokens: `Theme.hairline` (1px) for dividers, `Theme.stripe` (2px),
+  `Theme.barHeight` (24), spacing `padXs/padSm/padMd/padLg`, `gapLg`.
+- Right-cluster neighbours are separated by a hairline `Rectangle`
+  (`width: Theme.hairline; height: 12; color: Theme.border`).
+- Visual language: values in fixed-width slots so they never nudge neighbours;
+  accent colour = active/on, `textDim` = inactive/off, `critical` = fault.
 
 ## Workspace Rules
 
@@ -49,6 +104,12 @@ This package is a Stow package for the Quickshell bar config at:
 - Other `special:*` workspaces should sort after normal workspaces.
 
 ## Popup Direction
+
+> Note: this section documents the **archived classic** `popup/` module (now in
+> `legacy/quickshell-classic/popup/`). The live `square/` variant has no
+> `popup/` tree; its equivalent surfaces are `AiUsagePanel.qml`,
+> `VolumeMenu.qml`, and `NotificationCenter.qml`. Keep these notes only as
+> historical intent for any future square popup work.
 
 - Popup opens from hovering the centered clock.
 - Left click on the clock pins/unpins the popup.
@@ -71,22 +132,22 @@ This package is a Stow package for the Quickshell bar config at:
 - Prioritize low-overhead data sources.
 - Reuse existing optimized scripts when they already exist.
 - Prefer listener/socket-based sources over polling when practical.
-- Only run expensive refreshes while the popup is visible.
-- Current reused sources:
-  - `waybar/scripts/expressvpn.sh`
-  - `waybar/scripts/idle-inhibit.sh`
-  - `eww/shell/bar_volume.sh`
-  - `eww/shell/bar_language.sh`
-  - `eww/shell/bar_weather.sh`
-  - `eww/scripts/eww-bar` for one-shot system metrics
+- Only run expensive refreshes while a panel is visible.
+- `square/` ships its own helpers via the shared `scripts/` dir (symlinked in
+  as `square/scripts/`) — e.g. `ai-usage.sh`, `network-status.sh`,
+  `audio-rate.sh`, `game-mode` via `~/.config/hypr/scripts/game-mode.sh`.
+  (The old `waybar/` and `eww/` script paths below are legacy references from
+  the pre-square era; prefer the in-tree `scripts/` helpers for new modules.)
 
 ## Wallust
 
 - Wallust template lives at:
   - `~/.config/wallust/templates/quickshell-colors.js`
-- Wallust generates:
-  - `~/.config/quickshell/wallust.js`
-- Quickshell should consume `wallust.js` instead of hardcoded colors wherever practical.
+- Wallust generates the palette consumed by the live variant:
+  - `~/.config/quickshell/square/wallust.js` (imported by `square/Theme.qml`)
+  - (a top-level `~/.config/quickshell/wallust.js` also exists; it is leftover
+    from the retired classic variant and is not consumed by `square/`.)
+- Quickshell should consume `wallust.js` via `Theme` tokens, not hardcoded colors.
 
 ## QML Language Server (qmlls) — cursed but it works
 

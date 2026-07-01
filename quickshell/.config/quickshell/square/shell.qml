@@ -5,6 +5,7 @@ import Quickshell.Io
 import "." as Square
 import "clipboard" as Clipboard
 import "keybinds" as Keybinds
+import "menus" as Menus
 
 Scope {
   // Hot-reload the config when wallust re-renders the palette (inotify via
@@ -25,4 +26,5 @@ Scope {
   Bar {}
   Keybinds.KeybindOverlay {}
   Clipboard.ClipboardHistory {}
+  Menus.CenterMenu {}
 }

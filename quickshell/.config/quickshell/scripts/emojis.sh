@@ -200,7 +200,7 @@ get_formatted_list() {
 
 formatted_list="$(get_formatted_list)"
 
-selected=$(printf '%s' "$formatted_list" | rofi -i -dmenu -p "Unicode" -no-custom)
+selected=$(printf '%s' "$formatted_list" | "$HOME/.config/quickshell/scripts/qs-dmenu.sh" -i -p "Unicode" -no-custom)
 
 if [ -z "$selected" ]; then
     exit 0

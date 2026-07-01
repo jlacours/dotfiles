@@ -2,13 +2,14 @@
 
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
 HYPRPAPER_CONF="$HOME/.config/hypr/hyprpaper.conf"
+DMENU="$HOME/.config/quickshell/scripts/qs-dmenu.sh"
 
-# List images with thumbnail:// prefix for preview
+# Note: the rofi version showed a thumbnail:// icon preview per entry; the
+# quickshell overlay is text-only for now (see handoff), so this just lists
+# filenames.
 selected=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
     \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.jxl' \) \
-    -printf '%f\n' | sort | while read -r file; do
-        echo -en "$file\0icon\x1fthumbnail://$WALLPAPER_DIR/$file\n"
-    done | rofi -dmenu -i -p "Wallpaper" -theme ~/.config/rofi/themes/wallpaper.rasi -show-icons)
+    -printf '%f\n' | sort | "$DMENU" -i -p "Wallpaper")
 
 [ -z "$selected" ] && exit 0
 

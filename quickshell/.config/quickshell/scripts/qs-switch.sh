@@ -1,54 +1,42 @@
 #!/usr/bin/env bash
 #
-# qs-switch.sh — switch between quickshell configs (classic <-> square).
+# qs-switch.sh — manage the single live quickshell config: square.
 #
-# Usage: qs-switch.sh [classic|square|toggle|restart|status]
-#   classic  switch to the default config (~/.config/quickshell/shell.qml)
-#   square   switch to the square config  (~/.config/quickshell/square/)
-#   toggle   flip between the two (default action)
-#   restart  kill and relaunch the currently active config
-#   status   print the active config name
+# The classic variant was retired to legacy/quickshell-classic/. square is now
+# the only live config, so there is nothing left to switch between; this script
+# survives as the entrypoint callers already depend on (hyprland $restart_bar,
+# scripts/restart.sh, muscle memory) for restart + status.
 #
-# The active config is persisted so launch.sh (hyprland exec-once) honours it.
+# Usage: qs-switch.sh [restart|status]
+#   restart  kill and relaunch the square bar (default)
+#   status   print the active config name (always "square")
+#   classic  legacy alias; prints a retired notice and exits non-zero
+#
+# "toggle" is intentionally gone — there is no second variant to flip to.
 
 set -euo pipefail
 
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
-state_file="$state_dir/active-config"
 launch="$HOME/.config/quickshell/scripts/launch.sh"
 
-current() {
-  local val="classic"
-  [[ -r "$state_file" ]] && val="$(<"$state_file")"
-  case "$val" in classic|square) ;; *) val="classic" ;; esac
-  printf '%s' "$val"
-}
-
-action="${1:-toggle}"
-active="$(current)"
+action="${1:-restart}"
 
 case "$action" in
   status)
-    echo "$active"
+    echo "square"
     exit 0
     ;;
-  toggle)
-    [[ "$active" == "classic" ]] && target="square" || target="classic"
+  restart|square)
+    : # restart path — kill + relaunch below
     ;;
-  restart)
-    target="$active"
-    ;;
-  classic|square)
-    target="$action"
+  classic|toggle)
+    echo "qs-switch: the classic variant is retired (legacy/quickshell-classic/); square is the only live config" >&2
+    exit 1
     ;;
   *)
-    echo "usage: ${0##*/} [classic|square|toggle|restart|status]" >&2
+    echo "usage: ${0##*/} [restart|status]" >&2
     exit 2
     ;;
 esac
-
-mkdir -p "$state_dir"
-printf '%s\n' "$target" > "$state_file"
 
 # Kill every running quickshell instance and wait for them to exit.
 mapfile -t pids < <(pgrep -x quickshell || true)
@@ -62,4 +50,4 @@ if ((${#pids[@]})); then
 fi
 
 setsid -f "$launch" >/dev/null 2>&1
-echo "quickshell: $target"
+echo "quickshell: square"

@@ -1,0 +1,3 @@
+CenterMenu CenterMenu.qml
+MenuItem MenuItem.qml
+singleton MenuState MenuState.qml

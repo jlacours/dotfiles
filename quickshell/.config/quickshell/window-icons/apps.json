@@ -241,6 +241,12 @@
   },
   {
     "patterns": [
+      "rpcs3"
+    ],
+    "svg": "rpcs3.svg"
+  },
+  {
+    "patterns": [
       "nautilus",
       "thunar",
       "dolphin",

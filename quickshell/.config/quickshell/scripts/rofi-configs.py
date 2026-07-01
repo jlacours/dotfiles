@@ -11,8 +11,10 @@ configs = {
 
 menu = "\n".join(configs.keys())
 
+qs_dmenu = os.path.expanduser("~/.config/quickshell/scripts/qs-dmenu.sh")
+
 result = subprocess.run(
-    ["rofi", "-dmenu", "-p", "Config"],
+    [qs_dmenu, "-p", "Config"],
     input = menu,
     text = True,
     capture_output = True,

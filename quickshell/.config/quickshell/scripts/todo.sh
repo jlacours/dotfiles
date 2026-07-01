@@ -4,7 +4,7 @@ set -euo pipefail
 
 TODO_CMD="${TODO_CMD:-$HOME/.local/bin/todo}"
 TODO_CONFIG="${TODO_CONFIG:-$HOME/.config/todoman/config.py}"
-THEME="$HOME/.config/rofi/themes/todo.rasi"
+DMENU="$HOME/.config/quickshell/scripts/qs-dmenu.sh"
 
 todo_json() {
     "$TODO_CMD" --config "$TODO_CONFIG" --porcelain list 2>/dev/null || echo "[]"
@@ -12,7 +12,7 @@ todo_json() {
 
 add_task() {
     local task
-    task=$(rofi -dmenu -p "New task" -theme "$THEME" -lines 0 || true)
+    task=$("$DMENU" -p "New task" -lines 0 || true)
     [[ -z "$task" ]] && return 0
     local priority
     priority=$(choose_priority "Priority") || return 0
@@ -40,7 +40,7 @@ choose_priority() {
     local prompt=${1:-Priority}
     local selected
 
-    selected=$(printf "None\nLow\nMedium\nHigh" | rofi -dmenu -p "$prompt" -theme "$THEME" -i || true)
+    selected=$(printf "None\nLow\nMedium\nHigh" | "$DMENU" -p "$prompt" -i || true)
     [[ -z "$selected" ]] && return 1
 
     case "$selected" in
@@ -85,7 +85,7 @@ main_menu() {
             entries+="$(build_task_entry "$task")\n"
         done < <(jq -c '.[]' <<<"$json")
 
-        chosen=$(printf "%b" "$entries" | head -c -1 | rofi -dmenu -p "Todo" -theme "$THEME" -i -format 'i s' -selected-row 1 || true)
+        chosen=$(printf "%b" "$entries" | head -c -1 | "$DMENU" -p "Todo" -i -format 'i s' -selected-row 1 || true)
         [[ -z "$chosen" ]] && exit 0
 
         index="${chosen%% *}"
@@ -99,7 +99,7 @@ main_menu() {
         task_id=$(jq -r ".[$task_index].id" <<<"$json")
         [[ -z "$task_id" || "$task_id" == "null" ]] && continue
 
-        action=$(printf "Mark done\nSet priority\nDelete task" | rofi -dmenu -p "Action" -theme "$THEME" -i || true)
+        action=$(printf "Mark done\nSet priority\nDelete task" | "$DMENU" -p "Action" -i || true)
         [[ -z "$action" ]] && continue
 
         case "$action" in

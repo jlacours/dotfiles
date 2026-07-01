@@ -59,17 +59,16 @@ is_recording() {
     return 1
 }
 
-# Function to show rofi menu and get selection
+# Function to show the quickshell dmenu overlay and get selection
 # $1 = prompt text
 # $2 = options (newline-separated string)
 show_menu() {
     local prompt=$1
     local options=$2
-    # -dmenu: dmenu compatibility mode
-    # -i: case insensitive
+    # -i: case insensitive (accepted, always on)
     # -p: prompt text
     # -no-custom: only allow selecting from list, no custom input
-    echo -e "$options" | rofi -dmenu -i -p "$prompt" -no-custom
+    echo -e "$options" | "$HOME/.config/quickshell/scripts/qs-dmenu.sh" -i -p "$prompt" -no-custom
 }
 
 # Function to select recording area

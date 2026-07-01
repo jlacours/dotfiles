@@ -3,6 +3,7 @@ AiUsagePanel AiUsagePanel.qml
 Bar Bar.qml
 CenterToggleBlock CenterToggleBlock.qml
 Clock Clock.qml
+ExpressVpnBlock ExpressVpnBlock.qml
 GameModeBlock GameModeBlock.qml
 GovBlock GovBlock.qml
 KeyboardBlock KeyboardBlock.qml
@@ -15,9 +16,17 @@ NotificationGlitch NotificationGlitch.qml
 NotificationItem NotificationItem.qml
 NotificationPopups NotificationPopups.qml
 Osd Osd.qml
+SearxngVpnBlock SearxngVpnBlock.qml
+TmuxSessions TmuxSessions.qml
+TrayBlock TrayBlock.qml
+TrayItem TrayItem.qml
+VolumeBlock VolumeBlock.qml
+VolumeMenu VolumeMenu.qml
+Workspaces Workspaces.qml
 singleton AiUsageState AiUsageState.qml
 singleton AudioRateState AudioRateState.qml
 singleton CenterModulesState CenterModulesState.qml
+singleton ExpressVpnState ExpressVpnState.qml
 singleton GameModeState GameModeState.qml
 singleton GovernorState GovernorState.qml
 singleton KeyboardState KeyboardState.qml
@@ -26,11 +35,6 @@ singleton MicState MicState.qml
 singleton NetSpeedState NetSpeedState.qml
 singleton NotificationState NotificationState.qml
 singleton OsdState OsdState.qml
+singleton SearxngVpnState SearxngVpnState.qml
 singleton Theme Theme.qml
 singleton VolumeState VolumeState.qml
-TmuxSessions TmuxSessions.qml
-TrayBlock TrayBlock.qml
-TrayItem TrayItem.qml
-VolumeBlock VolumeBlock.qml
-VolumeMenu VolumeMenu.qml
-Workspaces Workspaces.qml

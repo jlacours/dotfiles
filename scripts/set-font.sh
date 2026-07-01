@@ -10,6 +10,10 @@
 # Reads both "Spaced Family" and collapsed "SpacedFamily" forms (legacy rofi),
 # but always writes the spaced form — pango and rofi accept it.
 # State file tracks the last family so repeated swaps work without re-specifying.
+#
+# rofi is retired (moved to legacy/rofi/, replaced by the quickshell menus/
+# module — see quickshell/AGENTS.md); its theme files are no longer live and
+# were dropped from this list on purpose.
 
 set -euo pipefail
 
@@ -18,11 +22,6 @@ STATE_FILE="$DOTFILES/scripts/.current-font"
 
 FILES=(
   "$DOTFILES/hyprland/.config/hypr/hyprland.conf"
-  "$DOTFILES/rofi/.config/rofi/themes/dmenu.rasi"
-  "$DOTFILES/rofi/.config/rofi/themes/dmenu-vertical.rasi"
-  "$DOTFILES/rofi/.config/rofi/themes/juju-default.rasi"
-  "$DOTFILES/rofi/.config/rofi/themes/todo.rasi"
-  "$DOTFILES/rofi/.config/rofi/themes/wallpaper.rasi"
   "$DOTFILES/eww/.config/eww/eww.scss"
   "$DOTFILES/eww/.config/eww/bar.scss"
   "$DOTFILES/sway/.config/sway/config"

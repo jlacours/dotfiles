@@ -18,7 +18,7 @@ for f in "${txt_files[@]}"; do
 done
 
 selection="$(
-    printf '%s\n' "${displays[@]}" | rofi -dmenu \
+    printf '%s\n' "${displays[@]}" | "$HOME/.config/quickshell/scripts/qs-dmenu.sh" \
         -i \
         -p "speak" \
         -format 'i s' \

@@ -170,6 +170,29 @@ Variants {
           color: Theme.border
         }
 
+        // SearXNG + gluetun VPN sidecar: left-click toggles, right-click logs.
+        SearxngVpnBlock {
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.hairline
+          height: 12
+          color: Theme.border
+        }
+
+        ExpressVpnBlock {
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Theme.hairline
+          height: 12
+          color: Theme.border
+        }
+
         Clock {
           anchors.verticalCenter: parent.verticalCenter
         }

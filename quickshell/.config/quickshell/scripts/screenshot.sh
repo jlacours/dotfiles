@@ -18,13 +18,13 @@ QUALITY_PRESETS[best]="-l 9"
 # Ensure screenshots directory exists
 mkdir -p "$SCREENSHOTS_DIR"
 
-# Function to show rofi menu and get selection
+# Function to show the quickshell dmenu overlay and get selection
 # $1 = prompt text
 # $2 = options (newline-separated string)
 show_menu() {
     local prompt=$1
     local options=$2
-    echo -e "$options" | rofi -dmenu -i -p "$prompt" -no-custom
+    echo -e "$options" | "$HOME/.config/quickshell/scripts/qs-dmenu.sh" -i -p "$prompt" -no-custom
 }
 
 # Function to select screenshot area

@@ -88,7 +88,7 @@ Row {
       }
     }
 
-    return ""
+    return "󰣆"
   }
 
   function isSvgRef(text) {
