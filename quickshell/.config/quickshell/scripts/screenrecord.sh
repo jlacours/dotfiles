@@ -24,13 +24,25 @@ get_active_window() {
     fi
 }
 
-# Function to get active output (monitor) geometry
-get_active_output() {
+# Function to get the focused output's NAME (for wf-recorder -o).
+#
+# We capture whole monitors by name, NOT by geometry. hyprctl reports a
+# monitor's position in *logical* layout units but its size in *physical*
+# pixels, so on a scaled output (e.g. a 4K at scale 1.6) a "\(.x),\(.y)
+# \(.width)x\(.height)" rectangle is wrong and wf-recorder either grabs the
+# wrong region or falls back to its interactive "select an output" stdin
+# prompt — which hangs when launched from the Quickshell menu (no tty).
+# `-o <name>` sidesteps all of that and is scale-correct.
+get_active_output_name() {
+    local name
     if is_hyprland; then
-        hyprctl monitors -j | jq -r '.[] | select(.focused) | "\(.x),\(.y) \(.width)x\(.height)"'
+        name=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
+        [ -z "$name" ] && name=$(hyprctl monitors -j | jq -r '.[0].name // empty')
     else
-        swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .rect | "\(.x),\(.y) \(.width)x\(.height)"'
+        name=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name')
+        [ -z "$name" ] && name=$(swaymsg -t get_outputs | jq -r '.[0].name // empty')
     fi
+    echo "$name"
 }
 
 # Quality presets
@@ -75,8 +87,16 @@ show_menu() {
 select_area() {
     local area=$1
     case $area in
-        "Fullscreen")
-            echo ""  # Empty string means fullscreen
+        "Fullscreen"|"Active output")
+            # Both mean "record the whole focused monitor". Emit an
+            # OUTPUT:<name> sentinel so start_recording uses `wf-recorder -o`
+            # instead of a geometry rectangle (scale-safe, no stdin prompt).
+            output_name=$(get_active_output_name)
+            if [ -n "$output_name" ]; then
+                echo "OUTPUT:$output_name"
+            else
+                echo "CANCEL"
+            fi
             ;;
         "Active window")
             geometry=$(get_active_window)
@@ -88,14 +108,6 @@ select_area() {
             ;;
         "Select region")
             geometry=$(slurp 2>/dev/null)
-            if [ -n "$geometry" ]; then
-                echo "$geometry"
-            else
-                echo "CANCEL"
-            fi
-            ;;
-        "Active output")
-            geometry=$(get_active_output)
             if [ -n "$geometry" ]; then
                 echo "$geometry"
             else
@@ -186,8 +198,13 @@ start_recording() {
     # Build command arguments as array (avoids eval issues with PID tracking)
     local -a cmd_args=()
 
-    # Add geometry if recording a region
-    if [ -n "$geometry" ]; then
+    # Select what to capture:
+    #   OUTPUT:<name> -> a whole monitor via -o (scale-safe, no stdin prompt)
+    #   "x,y WxH"     -> a region/window rectangle via -g
+    #   empty         -> let wf-recorder pick (single-monitor fallback only)
+    if [[ "$geometry" == OUTPUT:* ]]; then
+        cmd_args+=(-o "${geometry#OUTPUT:}")
+    elif [ -n "$geometry" ]; then
         cmd_args+=(-g "$geometry")
     fi
 
