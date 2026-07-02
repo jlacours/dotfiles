@@ -6,6 +6,15 @@ import "." as Clipboard
 import "../wallust.js" as Wallust
 
 Scope {
+  id: root
+
+  readonly property color bgBase: Wallust.bg
+  readonly property color surfaceBase: Wallust.surfaceElevated
+  readonly property color borderBase: Wallust.border
+  readonly property color panelSurface: Qt.rgba(bgBase.r, bgBase.g, bgBase.b, 0.90)
+  readonly property color cardSurface: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 0.64)
+  readonly property color borderSubtle: Qt.rgba(borderBase.r, borderBase.g, borderBase.b, 0.48)
+
   Variants {
     model: Quickshell.screens
 
@@ -90,14 +99,14 @@ Scope {
       Rectangle {
         id: panel
 
-        width: 480
+        width: 520
         height: Math.min(clipboardWindow.maxPanelHeight, Math.max(clipboardWindow.minPanelHeight, clipboardWindow.desiredPanelHeight))
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 10
-        color: Wallust.base00
-        border.width: 2
-        border.color: Wallust.accent
+        anchors.topMargin: 16
+        color: root.panelSurface
+        border.width: 1
+        border.color: root.borderSubtle
 
         transform: Translate {
           y: clipboardWindow.overlayVisible ? 0 : -(panel.height + 12)
@@ -113,7 +122,7 @@ Scope {
 
         Column {
           anchors.fill: parent
-          anchors.margins: 12
+          anchors.margins: 16
           spacing: 12
 
           Item {
@@ -126,8 +135,8 @@ Scope {
               anchors.left: parent.left
               anchors.verticalCenter: parent.verticalCenter
               text: "CLIPBOARD"
-              color: Wallust.base04
-              font.family: "Liberation Mono"
+              color: Wallust.textMuted
+              font.family: "Comic Code"
               font.pixelSize: 10
               font.bold: true
             }
@@ -139,15 +148,15 @@ Scope {
               width: Math.max(24, countLabel.implicitWidth + 10)
               height: 20
               color: "transparent"
-              border.width: 2
-              border.color: Wallust.accent
+              border.width: 1
+              border.color: root.borderSubtle
 
               Text {
                 id: countLabel
                 anchors.centerIn: parent
                 text: Clipboard.ClipboardState.entries.count
-                color: Wallust.base05
-                font.family: "Liberation Mono"
+                color: Wallust.textMuted
+                font.family: "Comic Code"
                 font.pixelSize: 10
                 font.bold: true
               }
@@ -159,15 +168,15 @@ Scope {
               width: wipeLabel.implicitWidth + 14
               height: 24
               color: "transparent"
-              border.width: 2
-              border.color: Wallust.base01
+              border.width: 1
+              border.color: root.borderSubtle
 
               Text {
                 id: wipeLabel
                 anchors.centerIn: parent
                 text: "WIPE"
-                color: Wallust.base05
-                font.family: "Liberation Mono"
+                color: Wallust.text
+                font.family: "Comic Code"
                 font.pixelSize: 10
                 font.bold: true
               }
@@ -183,21 +192,22 @@ Scope {
             id: filterBox
             width: parent.width
             height: 34
-            color: Wallust.base01
-            border.width: 2
-            border.color: filterInput.activeFocus ? Wallust.accent : Wallust.base03
+            color: root.cardSurface
+            border.width: 1
+            border.color: filterInput.activeFocus ? Wallust.accentPrimary : root.borderSubtle
 
             TextInput {
               id: filterInput
               anchors.fill: parent
               anchors.margins: 8
-              color: Wallust.base05
-              font.family: "Liberation Mono"
+              color: Wallust.text
+              font.family: "Comic Code"
               font.pixelSize: 11
+              verticalAlignment: Text.AlignVCenter
               clip: true
               selectByMouse: true
-              selectedTextColor: Wallust.base00
-              selectionColor: Wallust.accent
+              selectedTextColor: Wallust.bg
+              selectionColor: Wallust.accentPrimary
               onTextChanged: Clipboard.ClipboardState.setFilterText(text)
             }
 
@@ -207,8 +217,8 @@ Scope {
               anchors.leftMargin: 8
               visible: filterInput.text === "" && !filterInput.activeFocus
               text: "FILTER"
-              color: Wallust.base03
-              font.family: "Liberation Mono"
+              color: Wallust.textDim
+              font.family: "Comic Code"
               font.pixelSize: 11
             }
           }
@@ -221,7 +231,7 @@ Scope {
               id: historyList
               anchors.fill: parent
               clip: true
-              spacing: 8
+              spacing: 6
               model: Clipboard.ClipboardState.filteredEntries
               currentIndex: count > 0 ? 0 : -1
               visible: count > 0
@@ -241,15 +251,15 @@ Scope {
               Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "󰅌"
-                color: Wallust.base03
+                color: Wallust.textDim
                 font.family: "Symbols Nerd Font Mono"
                 font.pixelSize: 24
               }
 
               Text {
                 text: "CLIPBOARD EMPTY"
-                color: Wallust.base03
-                font.family: "Liberation Mono"
+                color: Wallust.textDim
+                font.family: "Comic Code"
                 font.pixelSize: 11
                 font.bold: true
               }

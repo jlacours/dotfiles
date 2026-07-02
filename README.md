@@ -65,10 +65,8 @@ Every application follows the same template: a top-level package mirrors its des
 | **emacs** | Emacs daemon/client configuration with Gruber Darker and local LLM support |
 | **environment** | systemd user environment.d variables: default terminal, browser, Electron Wayland, GTK portal, Qt portal |
 | **eww** | Legacy Eww bar retained for migration reference |
-| **foot** | Foot terminal configuration and Wallust color include |
-| **ghostty** | Ghostty terminal configuration |
+| **foot** | Foot terminal — the default terminal across Hyprland, quickshell scripts, and rofi; Wallust color include |
 | **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game mode, and compositor helpers |
-| **kitty** | Kitty terminal configuration retained as an alternative |
 | **qtile** | Legacy Qtile Wayland configuration |
 | **quickshell** | Active bar, overlays, notification server, OSD, and desktop scripts |
 | **rofi** | Application, clipboard, power, screenshot, OCR, wallpaper, and utility menus |
@@ -81,18 +79,18 @@ Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agen
 
 ## Current Desktop
 
-The active desktop is Hyprland plus the square Quickshell configuration. It includes:
+The active desktop is Hyprland plus the square Quickshell configuration, with
+Wallust-derived translucent surfaces and compositor blur. It includes:
 
 - workspace chips with per-window icons;
 - AI usage, tmux, CPU governor, system metrics, and network-rate blocks;
 - an output-device-aware volume indicator and PipeWire graph-rate selector;
 - system tray, game mode, microphone, notification/DND, VPN, Tailscale, idle, and suspend controls;
 - clock/calendar, clipboard history, keybinding overlay, notification center, and OSD;
-- a katakana "digital rain" flourish that washes across the bar on new notifications;
 - Wallust theme and wallpaper selection;
 - TTS controls and local-model status.
 
-Zen Browser is the default browser. The interface font is `Comic Code` across Quickshell, Foot, Emacs, and Hyprland.
+Zen Browser is the default browser. Default programs (terminal, browser, editor, file manager) are centralized in `environment/.config/environment.d/`; Hyprland's `$terminal`/`$webbrowser` mirror those, and every other terminal launcher composes from `$terminal`. The interface font is `Comic Code` across Quickshell, Foot, Emacs, and Hyprland.
 
 The Quickshell config ships generated `qmldir` files (via
 `quickshell/.config/quickshell/scripts/gen-qmldir.sh`) purely to keep the QML

@@ -25,13 +25,15 @@ Rectangle {
   property bool selected: false
 
   property bool hovered: hoverArea.containsMouse
+  readonly property color surfaceBase: Wallust.surfaceElevated
+  readonly property color softSurface: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 0.62)
 
   signal activated()
 
-  color: root.selected ? Wallust.surfaceElevated : "transparent"
+  color: root.selected ? root.softSurface : "transparent"
   border.width: 1
   border.color: (root.selected || root.hovered) ? Wallust.accentPrimary : "transparent"
-  implicitHeight: content.implicitHeight + 16
+  implicitHeight: content.implicitHeight + 20
 
   MouseArea {
     id: hoverArea
@@ -44,8 +46,8 @@ Rectangle {
   Column {
     id: content
     anchors.fill: parent
-    anchors.margins: 8
-    spacing: 2
+    anchors.margins: 10
+    spacing: 4
 
     Text {
       width: parent.width

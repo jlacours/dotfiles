@@ -39,14 +39,14 @@ Scope {
         height: Math.min(modelData.height - Theme.barHeight - Theme.padLg * 2, 430)
         anchors.top: parent.top
         anchors.right: parent.right
-        color: Theme.surface
+        color: Theme.panelSurface
         border.width: Theme.hairline
-        border.color: Theme.border
+        border.color: Theme.borderSubtle
 
         Column {
           anchors.fill: parent
-          anchors.margins: Theme.padMd
-          spacing: Theme.padMd
+          anchors.margins: Theme.panelPadding
+          spacing: Theme.panelGap
 
           Row {
             width: parent.width
@@ -114,7 +114,7 @@ Scope {
           Rectangle {
             width: parent.width
             height: Theme.hairline
-            color: Theme.border
+            color: Theme.borderSubtle
           }
 
           Item {
@@ -125,7 +125,7 @@ Scope {
               id: list
               anchors.fill: parent
               clip: true
-              spacing: Theme.padSm
+              spacing: Theme.padMd
               model: Square.NotificationState.history
               visible: count > 0
 

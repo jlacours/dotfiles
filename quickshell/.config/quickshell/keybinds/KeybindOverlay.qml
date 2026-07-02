@@ -9,6 +9,13 @@ import "../wallust.js" as Wallust
 Scope {
   id: root
 
+  readonly property color bgBase: Wallust.bg
+  readonly property color surfaceBase: Wallust.surfaceElevated
+  readonly property color borderBase: Wallust.border
+  readonly property color panelSurface: Qt.rgba(bgBase.r, bgBase.g, bgBase.b, 0.90)
+  readonly property color cardSurface: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 0.60)
+  readonly property color borderSubtle: Qt.rgba(borderBase.r, borderBase.g, borderBase.b, 0.48)
+
   component LegendChip: Rectangle {
     required property string label
     required property color chipColor
@@ -16,15 +23,15 @@ Scope {
     width: legendLabel.implicitWidth + 28
     height: 28
     color: chipColor
-    border.width: 2
-    border.color: Wallust.base00
+    border.width: 1
+    border.color: root.panelSurface
 
     Text {
       id: legendLabel
       anchors.centerIn: parent
       text: parent.label
       color: Wallust.base00
-      font.family: "Liberation Mono"
+      font.family: "Comic Code"
       font.pixelSize: 10
       font.bold: true
     }
@@ -44,9 +51,9 @@ Scope {
 
     width: parent ? Math.floor((parent.width - 12) / 3) : 120
     height: 86
-    color: bindData ? Wallust.base0F : Wallust.base01
-    border.width: 2
-    border.color: bindData ? Wallust.base0F : Wallust.base02
+    color: bindData ? Wallust.base0F : root.cardSurface
+    border.width: 1
+    border.color: bindData ? Wallust.base0F : root.borderSubtle
 
     Text {
       anchors.left: parent.left
@@ -57,7 +64,7 @@ Scope {
       visible: !!parent.bindData
       text: parent.bindData ? parent.bindData.desc : ""
       color: Wallust.base00
-      font.family: "Liberation Mono"
+      font.family: "Comic Code"
       font.pixelSize: 7
       wrapMode: Text.Wrap
       maximumLineCount: 3
@@ -73,8 +80,8 @@ Scope {
       anchors.bottomMargin: 6
       width: parent.width - 16
       text: parent.title.replace("BUTTON", "BUTTON\n")
-      color: parent.bindData ? Wallust.base00 : Wallust.base05
-      font.family: "Liberation Mono"
+      color: parent.bindData ? Wallust.base00 : Wallust.text
+      font.family: "Comic Code"
       font.pixelSize: 8
       font.bold: true
       horizontalAlignment: Text.AlignHCenter
@@ -113,8 +120,8 @@ Scope {
 
       Rectangle {
         anchors.fill: parent
-        color: "#000000"
-        opacity: Keybinds.KeybindState.visible && Keybinds.KeybindState.screenName === modelData.name ? 0.45 : 0
+        color: root.bgBase
+        opacity: Keybinds.KeybindState.visible && Keybinds.KeybindState.screenName === modelData.name ? 0.26 : 0
 
         Behavior on opacity {
           NumberAnimation {
@@ -140,9 +147,9 @@ Scope {
         width: panelWidth
         height: panelHeight
         anchors.centerIn: parent
-        color: Wallust.base00
-        border.width: 2
-        border.color: Wallust.accent
+        color: root.panelSurface
+        border.width: 1
+        border.color: root.borderSubtle
         opacity: overlayVisible ? 1 : 0
 
         transform: Translate {
@@ -167,7 +174,7 @@ Scope {
         Item {
           id: panelContent
           anchors.fill: parent
-          anchors.margins: 18
+          anchors.margins: 22
           focus: true
           Keys.onEscapePressed: Keybinds.KeybindState.hide()
 
@@ -195,8 +202,8 @@ Scope {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 text: "HYPRLAND KEYBINDS"
-                color: Wallust.base05
-                font.family: "Liberation Mono"
+                color: Wallust.text
+                font.family: "Comic Code"
                 font.pixelSize: 16
                 font.bold: true
               }
@@ -208,8 +215,8 @@ Scope {
                 text: "MODIFIERS: " + (Keybinds.KeybindState.selectedModifierMode === "PLAIN"
                   ? "NONE"
                   : Keybinds.KeybindState.selectedModifierMode.toLowerCase().split("+").join(", "))
-                color: Wallust.base04
-                font.family: "Liberation Mono"
+                color: Wallust.textMuted
+                font.family: "Comic Code"
                 font.pixelSize: 11
               }
 
@@ -219,8 +226,8 @@ Scope {
                 anchors.leftMargin: 320
                 anchors.topMargin: 26
                 text: "SUBMAP: " + Keybinds.KeybindState.selectedSubmap.toUpperCase()
-                color: Wallust.base03
-                font.family: "Liberation Mono"
+                color: Wallust.textDim
+                font.family: "Comic Code"
                 font.pixelSize: 11
                 font.bold: true
               }
@@ -231,15 +238,15 @@ Scope {
                 width: closeText.implicitWidth + 18
                 height: 28
                 color: "transparent"
-                border.width: 2
-                border.color: Wallust.base02
+                border.width: 1
+                border.color: root.borderSubtle
 
                 Text {
                   id: closeText
                   anchors.centerIn: parent
                   text: "ESC"
-                  color: Wallust.base05
-                  font.family: "Liberation Mono"
+                  color: Wallust.text
+                  font.family: "Comic Code"
                   font.pixelSize: 10
                   font.bold: true
                 }
@@ -270,16 +277,16 @@ Scope {
 
                     width: label.implicitWidth + 20
                     height: 30
-                    color: selected ? Wallust.accent : Wallust.base01
-                    border.width: 2
-                    border.color: selected ? Wallust.accent : Wallust.base02
+                    color: selected ? Wallust.accentPrimary : root.cardSurface
+                    border.width: 1
+                    border.color: selected ? Wallust.accentPrimary : root.borderSubtle
 
                     Text {
                       id: label
                       anchors.centerIn: parent
                       text: modelData
-                      color: parent.selected ? Wallust.base00 : Wallust.base05
-                      font.family: "Liberation Mono"
+                      color: parent.selected ? Wallust.base00 : Wallust.text
+                      font.family: "Comic Code"
                       font.pixelSize: 10
                       font.bold: true
                     }
@@ -312,16 +319,16 @@ Scope {
 
                     width: label.implicitWidth + 18
                     height: 26
-                    color: selected ? Wallust.base01 : "transparent"
-                    border.width: 2
-                    border.color: selected ? Wallust.accent : Wallust.base02
+                    color: selected ? root.cardSurface : "transparent"
+                    border.width: 1
+                    border.color: selected ? Wallust.accentPrimary : root.borderSubtle
 
                     Text {
                       id: label
                       anchors.centerIn: parent
                       text: modelData.toUpperCase()
-                      color: selected ? Wallust.accent : Wallust.base04
-                      font.family: "Liberation Mono"
+                      color: selected ? Wallust.accentPrimary : Wallust.textMuted
+                      font.family: "Comic Code"
                       font.pixelSize: 9
                       font.bold: true
                     }
@@ -348,9 +355,9 @@ Scope {
 
                 Rectangle {
                   anchors.fill: parent
-                  color: Wallust.base01
-                  border.width: 2
-                  border.color: Wallust.base02
+                  color: root.cardSurface
+                  border.width: 1
+                  border.color: root.borderSubtle
                 }
 
                 Text {
@@ -359,8 +366,8 @@ Scope {
                   anchors.leftMargin: 14
                   anchors.topMargin: 12
                   text: "KEYBOARD"
-                  color: Wallust.base04
-                  font.family: "Liberation Mono"
+                  color: Wallust.textMuted
+                  font.family: "Comic Code"
                   font.pixelSize: 10
                   font.bold: true
                 }
@@ -419,9 +426,9 @@ Scope {
                   Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 160
-                    color: Wallust.base01
-                    border.width: 2
-                    border.color: Wallust.base02
+                    color: root.cardSurface
+                    border.width: 1
+                    border.color: root.borderSubtle
 
                     Column {
                       anchors.fill: parent
@@ -431,8 +438,8 @@ Scope {
 
                       Text {
                         text: "ACTIVE KEYS"
-                        color: Wallust.base04
-                        font.family: "Liberation Mono"
+                        color: Wallust.textMuted
+                        font.family: "Comic Code"
                         font.pixelSize: 10
                         font.bold: true
                       }
@@ -445,8 +452,8 @@ Scope {
 
                           width: parent.width
                           text: modelData.combo + "  " + modelData.desc
-                          color: Wallust.base05
-                          font.family: "Liberation Mono"
+                          color: Wallust.text
+                          font.family: "Comic Code"
                           font.pixelSize: 9
                           wrapMode: Text.WordWrap
                           maximumLineCount: 2
@@ -459,9 +466,9 @@ Scope {
                   Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 220
-                    color: Wallust.base01
-                    border.width: 2
-                    border.color: Wallust.base02
+                    color: root.cardSurface
+                    border.width: 1
+                    border.color: root.borderSubtle
 
                     Column {
                       anchors.fill: parent
@@ -471,8 +478,8 @@ Scope {
 
                       Text {
                         text: "MOUSE"
-                        color: Wallust.base04
-                        font.family: "Liberation Mono"
+                        color: Wallust.textMuted
+                        font.family: "Comic Code"
                         font.pixelSize: 10
                         font.bold: true
                       }
@@ -492,9 +499,9 @@ Scope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
-                    color: Wallust.base01
-                    border.width: 2
-                    border.color: Wallust.base02
+                    color: root.cardSurface
+                    border.width: 1
+                    border.color: root.borderSubtle
                     visible: Keybinds.KeybindState.unplacedBinds().length > 0
 
                     Column {
@@ -505,8 +512,8 @@ Scope {
 
                       Text {
                         text: "UNPLACED"
-                        color: Wallust.base04
-                        font.family: "Liberation Mono"
+                        color: Wallust.textMuted
+                        font.family: "Comic Code"
                         font.pixelSize: 10
                         font.bold: true
                       }
@@ -519,8 +526,8 @@ Scope {
 
                           width: parent.width
                           text: modelData.combo + "  " + modelData.desc
-                          color: Wallust.base05
-                          font.family: "Liberation Mono"
+                          color: Wallust.text
+                          font.family: "Comic Code"
                           font.pixelSize: 9
                           wrapMode: Text.WordWrap
                           maximumLineCount: 2

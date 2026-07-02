@@ -37,7 +37,7 @@ This package is a Stow package for the Quickshell bar config at:
   `Osd.qml`/`OsdState.qml`: standalone modules.
 - Panels/popovers: `AiUsagePanel.qml`, `VolumeMenu.qml`, `NotificationCenter.qml`.
 - Notifications: `NotificationState`, `NotificationBlock`, `NotificationCenter`,
-  `NotificationItem`, `NotificationPopups`, `NotificationGlitch`.
+  `NotificationItem`, and `NotificationPopups`.
 - `clipboard/`, `keybinds/`, `menus/`, `scripts/` are shared (symlinked into
   `square/`).
 - `wallust.js` is the generated palette (see Wallust).
@@ -88,9 +88,12 @@ This package is a Stow package for the Quickshell bar config at:
   ("Symbols Nerd Font Mono") for glyphs; sizes are `Theme.fontSm` / `fontMd` /
   `fontLg` (10 / 11 / 13).
 - Geometry tokens: `Theme.hairline` (1px) for dividers, `Theme.stripe` (2px),
-  `Theme.barHeight` (24), spacing `padXs/padSm/padMd/padLg`, `gapLg`.
-- Right-cluster neighbours are separated by a hairline `Rectangle`
-  (`width: Theme.hairline; height: 12; color: Theme.border`).
+  `Theme.barHeight` (28), spacing `padXs/padSm/padMd/padLg`, `gapLg`.
+- Airy presentation tokens keep the square geometry while softening its mass:
+  `Theme.barSurface`, `panelSurface`, `cardSurface`, `controlSurface`, and
+  `borderSubtle`. Base semantic colors remain opaque for text and active states.
+- Right-cluster neighbours are separated by a short, subdued hairline
+  (`Theme.hairline` × `Theme.dividerHeight`, colored `Theme.borderSubtle`).
 - Visual language: values in fixed-width slots so they never nudge neighbours;
   accent colour = active/on, `textDim` = inactive/off, `critical` = fault.
 

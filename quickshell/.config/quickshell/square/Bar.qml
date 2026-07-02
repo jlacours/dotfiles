@@ -3,7 +3,7 @@ import QtQuick
 import "." as Square
 
 // Flat swaybar-like bar, docked flush to the top edge.
-// No per-module boxes, no hairline dividers, no borders.
+// No per-module boxes; short, subtle hairlines separate logical groups.
 Variants {
   model: Quickshell.screens
 
@@ -26,20 +26,8 @@ Variants {
     Rectangle {
       id: barBg
       anchors.fill: parent
-      color: Theme.bg
+      color: Theme.barSurface
       radius: 0
-
-      // Notification arrival: glitch burst across the whole bar background,
-      // painted behind the modules (first child = lowest in the stack).
-      NotificationGlitch {
-        id: notifGlitch
-        anchors.fill: parent
-      }
-
-      Connections {
-        target: Square.NotificationState
-        function onNotified() { notifGlitch.play() }
-      }
 
       // LEFT cluster: workspaces (all monitors, colour-coded)
       Workspaces {
@@ -68,8 +56,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
           visible: CenterModulesState.aiUsage && CenterModulesState.tmux
         }
 
@@ -81,8 +69,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
           visible: CenterModulesState.tmux && CenterModulesState.vitals
         }
 
@@ -108,9 +96,9 @@ Variants {
           right: parent.right
           top: parent.top
           bottom: parent.bottom
-          rightMargin: Theme.padMd
+          rightMargin: Theme.padLg
         }
-        spacing: Theme.padMd
+        spacing: Theme.panelGap
 
         TrayBlock {
           anchors.verticalCenter: parent.verticalCenter
@@ -119,8 +107,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         // Center-module visibility toggles (their own section, right of tray).
@@ -131,8 +119,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         Square.NotificationBlock {
@@ -143,8 +131,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         KeyboardBlock {
@@ -154,8 +142,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         VolumeBlock {
@@ -166,8 +154,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         // SearXNG + gluetun VPN sidecar: left-click toggles, right-click logs.
@@ -178,8 +166,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         ExpressVpnBlock {
@@ -189,8 +177,8 @@ Variants {
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           width: Theme.hairline
-          height: 12
-          color: Theme.border
+          height: Theme.dividerHeight
+          color: Theme.borderSubtle
         }
 
         Clock {

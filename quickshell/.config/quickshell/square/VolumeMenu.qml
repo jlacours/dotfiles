@@ -36,17 +36,17 @@ Scope {
         anchors.top: parent.top
         anchors.right: parent.right
         width: 250
-        implicitHeight: content.implicitHeight + Theme.padMd * 2
+        implicitHeight: content.implicitHeight + Theme.panelPadding * 2
         height: implicitHeight
-        color: Theme.surface
+        color: Theme.panelSurface
         border.width: Theme.hairline
-        border.color: Theme.border
+        border.color: Theme.borderSubtle
 
         Column {
           id: content
           anchors.fill: parent
-          anchors.margins: Theme.padMd
-          spacing: Theme.padMd
+          anchors.margins: Theme.panelPadding
+          spacing: Theme.panelGap
 
           Item {
             width: parent.width
@@ -91,7 +91,7 @@ Scope {
           Rectangle {
             width: parent.width
             height: Theme.hairline
-            color: Theme.border
+            color: Theme.borderSubtle
           }
 
           Row {

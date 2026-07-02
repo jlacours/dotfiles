@@ -131,19 +131,19 @@ Scope {
         anchors.top: parent.top
         anchors.right: parent.right
         width: 320
-        implicitHeight: content.implicitHeight + Theme.padMd * 2
+        implicitHeight: content.implicitHeight + Theme.panelPadding * 2
         height: implicitHeight
-        color: Theme.surface
+        color: Theme.panelSurface
         border.width: Theme.hairline
-        border.color: Theme.border
+        border.color: Theme.borderSubtle
 
         Column {
           id: content
           anchors.left: parent.left
           anchors.right: parent.right
           anchors.top: parent.top
-          anchors.margins: Theme.padMd
-          spacing: Theme.padMd
+          anchors.margins: Theme.panelPadding
+          spacing: Theme.panelGap
 
           // Header: title + provider tabs.
           Row {
@@ -198,7 +198,7 @@ Scope {
           Rectangle {
             width: parent.width
             height: Theme.hairline
-            color: Theme.border
+            color: Theme.borderSubtle
           }
 
           // Detail rows. The leading reads of `now`/`data` are dependency hooks

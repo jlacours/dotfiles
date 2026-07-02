@@ -213,8 +213,10 @@ zstyle ':vcs_info:git:*' formats '%b%u%c%m'
 zstyle ':vcs_info:git:*' actionformats '%b%u%c%m (%a)'
 
 # Reset extended keyboard modes that TUIs can leave enabled after a crash/kill.
+# Run unconditionally: terminals that don't implement the kitty keyboard
+# protocol ignore these sequences, and foot (the default terminal) supports it.
 reset_terminal_input_modes() {
-  [[ $TERM == xterm-ghostty* ]] && printf '\e[<u\e[<u\e[<u\e[>4;0m'
+  printf '\e[<u\e[<u\e[<u\e[>4;0m'
 }
 
 # Hook to detect untracked files and show ** indicator
@@ -453,17 +455,43 @@ function llm-approve() {
   fi
 }
 
-# Open a short sudo window without storing passwords.
+# Toggle passwordless pacman (sudoers drop-in) so non-interactive agent
+# subprocesses without a TTY can run `yay` / `sudo pacman`. Run these from your
+# interactive shell — you enter your password once to flip the drop-in on/off.
+# (Plain `sudo -v` doesn't work for this: the cached timestamp is TTY/session
+# scoped and does NOT transfer to agent-harness subprocesses.)
+SUDOERS_PACMAN=/etc/sudoers.d/pacman-nopasswd
+
 function sudo-on() {
-  sudo -v || return
+  local tmp
+  tmp=$(mktemp) || return 1
+  echo 'juju ALL=(ALL) NOPASSWD: /usr/bin/pacman' > "$tmp"
+  # Validate BEFORE installing: a malformed sudoers file can lock out sudo.
+  if ! sudo visudo -cf "$tmp" >/dev/null; then
+    rm -f "$tmp"
+    echo "sudo-on: sudoers syntax invalid — aborted, sudo unchanged" >&2
+    return 1
+  fi
+  if ! sudo install -m 440 -o root -g root "$tmp" "$SUDOERS_PACMAN"; then
+    rm -f "$tmp"
+    echo "sudo-on: failed to install sudoers drop-in (auth cancelled?)" >&2
+    return 1
+  fi
+  rm -f "$tmp"
   export SUDO_READY=1
-  echo "sudo window enabled"
+  echo "passwordless pacman ON — agents can run yay / sudo pacman"
 }
 
 function sudo-off() {
+  # rm -f is idempotent: a non-root user can't stat /etc/sudoers.d/, so an
+  # existence pre-check would always report "absent". Just remove and rely on
+  # the exit code.
+  if ! sudo rm -f "$SUDOERS_PACMAN"; then
+    echo "sudo-off: failed to remove sudoers drop-in (auth cancelled?)" >&2
+    return 1
+  fi
   unset SUDO_READY
-  sudo -k
-  echo "sudo window disabled"
+  echo "passwordless pacman OFF — agents will prompt for sudo again"
 }
 
 # Hermes Agent — ensure ~/.local/bin is on PATH

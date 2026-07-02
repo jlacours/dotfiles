@@ -49,9 +49,9 @@ Scope {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         radius: 0
-        color: Theme.bg
+        color: Theme.panelSurface
         border.width: Theme.hairline
-        border.color: Theme.border
+        border.color: Theme.borderSubtle
         implicitWidth: content.implicitWidth + Theme.padLg * 2
         implicitHeight: Theme.barHeight + Theme.padSm * 2
 

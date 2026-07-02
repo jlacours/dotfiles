@@ -22,6 +22,17 @@ QtObject {
   readonly property color warning: Wallust.warning
   readonly property color info: Wallust.info
 
+  // Presentation surfaces — translucent without weakening semantic base colors.
+  function withAlpha(baseColor, alpha) {
+    return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha)
+  }
+
+  readonly property color barSurface: withAlpha(bg, 0.82)
+  readonly property color panelSurface: withAlpha(surface, 0.90)
+  readonly property color cardSurface: withAlpha(surface, 0.66)
+  readonly property color controlSurface: withAlpha(bg, 0.54)
+  readonly property color borderSubtle: withAlpha(border, 0.48)
+
   // Typography
   readonly property string fontFamily: "Comic Code"
   readonly property string iconFamily: "Symbols Nerd Font Mono"
@@ -34,6 +45,8 @@ QtObject {
   readonly property int padSm: 4
   readonly property int padMd: 8
   readonly property int padLg: 12
+  readonly property int panelPadding: 12
+  readonly property int panelGap: 10
 
   // Brutalist: zero radius, everywhere.
   readonly property int radius: 0
@@ -41,9 +54,10 @@ QtObject {
   // Strokes
   readonly property int hairline: 1
   readonly property int stripe: 2
+  readonly property int dividerHeight: 8
 
   // Bar geometry
-  readonly property int barHeight: 24
+  readonly property int barHeight: 28
 
   // Right-side module gap (swaybar-like generous spacing)
   readonly property int gapLg: 18

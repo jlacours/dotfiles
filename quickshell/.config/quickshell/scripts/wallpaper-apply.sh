@@ -45,8 +45,8 @@ if command -v hyprctl >/dev/null 2>&1; then
   hyprctl reload >/dev/null 2>&1 || true
 fi
 
-if command -v ghostty >/dev/null 2>&1; then
-  ghostty +validate-config >/dev/null 2>&1 || true
+if command -v foot >/dev/null 2>&1; then
+  foot --check-config >/dev/null 2>&1 || true
 fi
 
 if [[ -x "$home/.config/quickshell/scripts/reload-gtk.sh" ]]; then

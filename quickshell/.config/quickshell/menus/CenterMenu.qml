@@ -19,6 +19,15 @@ import "../wallust.js" as Wallust
 // spacing, hairline, animation duration) are literal copies of
 // square/Theme.qml's current values.
 Scope {
+  id: root
+
+  readonly property color bgBase: Wallust.bg
+  readonly property color surfaceBase: Wallust.surfaceElevated
+  readonly property color borderBase: Wallust.border
+  readonly property color panelSurface: Qt.rgba(bgBase.r, bgBase.g, bgBase.b, 0.90)
+  readonly property color cardSurface: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 0.64)
+  readonly property color borderSubtle: Qt.rgba(borderBase.r, borderBase.g, borderBase.b, 0.48)
+
   Variants {
     model: Quickshell.screens
 
@@ -100,9 +109,9 @@ Scope {
         width: menuWindow.panelWidth
         height: Math.min(menuWindow.maxPanelHeight, Math.max(menuWindow.minPanelHeight, menuWindow.desiredPanelHeight))
         anchors.centerIn: parent
-        color: Wallust.bg
+        color: root.panelSurface
         border.width: 1
-        border.color: Wallust.border
+        border.color: root.borderSubtle
 
         opacity: menuWindow.overlayVisible ? 1 : 0
         scale: menuWindow.overlayVisible ? 1 : 0.96
@@ -131,8 +140,8 @@ Scope {
 
         Column {
           anchors.fill: parent
-          anchors.margins: 12
-          spacing: 8
+          anchors.margins: 16
+          spacing: 10
 
           Item {
             id: headerRow
@@ -156,7 +165,7 @@ Scope {
               height: 20
               color: "transparent"
               border.width: 1
-              border.color: Wallust.border
+              border.color: root.borderSubtle
 
               Text {
                 id: countLabel
@@ -174,9 +183,9 @@ Scope {
             id: filterBox
             width: parent.width
             height: 34
-            color: Wallust.surfaceElevated
+            color: root.cardSurface
             border.width: 1
-            border.color: filterInput.activeFocus ? Wallust.accentPrimary : Wallust.border
+            border.color: filterInput.activeFocus ? Wallust.accentPrimary : root.borderSubtle
 
             TextInput {
               id: filterInput
@@ -185,6 +194,7 @@ Scope {
               color: Wallust.text
               font.family: "Comic Code"
               font.pixelSize: 11
+              verticalAlignment: Text.AlignVCenter
               clip: true
               selectByMouse: true
               selectedTextColor: Wallust.bg
@@ -212,15 +222,20 @@ Scope {
               id: menuList
               anchors.fill: parent
               clip: true
-              spacing: 1
+              spacing: 4
               model: Menus.MenuState.filteredItems
               currentIndex: count > 0 ? 0 : -1
               visible: count > 0
 
               delegate: Menus.MenuItem {
+                id: menuItem
+                required property var modelData
+
                 width: menuList.width
+                text: String(modelData.text || "")
+                sub: String(modelData.sub || "")
                 selected: ListView.isCurrentItem
-                onActivated: Menus.MenuState.activateCurrent(index)
+                onActivated: Menus.MenuState.activateCurrent(menuItem.index)
               }
             }
 

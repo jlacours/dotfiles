@@ -20,6 +20,7 @@ Singleton {
   readonly property var zai:        (data && data.zai)        ? data.zai        : ({ ok: false })
   readonly property var openrouter: (data && data.openrouter) ? data.openrouter : ({ ok: false })
   property bool ready: false
+  readonly property bool refreshing: proc.running
 
   // Expand-panel state.
   property bool panelVisible: false

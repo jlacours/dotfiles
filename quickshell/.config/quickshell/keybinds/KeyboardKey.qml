@@ -35,6 +35,10 @@ Rectangle {
     }
   }
   readonly property color textColor: active || modifierActive ? Wallust.base00 : Wallust.base05
+  readonly property color surfaceBase: Wallust.surfaceElevated
+  readonly property color borderBase: Wallust.border
+  readonly property color softSurface: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 0.60)
+  readonly property color borderSubtle: Qt.rgba(borderBase.r, borderBase.g, borderBase.b, 0.48)
   readonly property string description: active ? bindData.desc : ""
   readonly property string displayDescription: hyphenateText(description, 9)
 
@@ -66,9 +70,9 @@ Rectangle {
       .join("\n")
   }
 
-  color: active || modifierActive ? fillColor : Wallust.base01
-  border.width: 2
-  border.color: active || modifierActive ? fillColor : Wallust.base02
+  color: active || modifierActive ? fillColor : root.softSurface
+  border.width: 1
+  border.color: active || modifierActive ? fillColor : root.borderSubtle
   implicitWidth: Math.round(60 * (keyModel.width || 1))
   implicitHeight: 64
 
@@ -81,7 +85,7 @@ Rectangle {
     visible: !!root.description
     text: root.displayDescription
     color: root.textColor
-    font.family: "Liberation Mono"
+    font.family: "Comic Code"
     font.pixelSize: 8
     wrapMode: Text.Wrap
     maximumLineCount: 3
@@ -96,7 +100,7 @@ Rectangle {
     anchors.bottomMargin: 6
     text: keyModel.label
     color: root.textColor
-    font.family: "Liberation Mono"
+    font.family: "Comic Code"
     font.pixelSize: 11
     font.bold: true
   }

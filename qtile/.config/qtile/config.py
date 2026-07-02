@@ -7,7 +7,7 @@ from qtile_extras import widget as extra_widget
 from colors import colors
 
 mod = "mod4"
-terminal = "ghostty"
+terminal = "foot"
 webbrowser = "firefox"
 
 @hook.subscribe.startup_once

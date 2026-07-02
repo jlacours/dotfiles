@@ -12,11 +12,15 @@ Rectangle {
   property bool selected: false
 
   property bool hovered: hoverArea.containsMouse
+  readonly property color surfaceBase: Wallust.surfaceElevated
+  readonly property color borderBase: Wallust.border
+  readonly property color softSurface: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 0.62)
+  readonly property color borderSubtle: Qt.rgba(borderBase.r, borderBase.g, borderBase.b, 0.48)
 
-  color: Wallust.base01
-  border.width: 2
-  border.color: (selected || hovered) ? Wallust.accent : Wallust.base03
-  implicitHeight: content.implicitHeight + 20
+  color: root.softSurface
+  border.width: 1
+  border.color: (selected || hovered) ? Wallust.accentPrimary : root.borderSubtle
+  implicitHeight: content.implicitHeight + 24
   height: implicitHeight
 
   MouseArea {
@@ -30,9 +34,9 @@ Rectangle {
   Column {
     id: content
     anchors.fill: parent
-    anchors.margins: 10
-    anchors.rightMargin: 32
-    spacing: 8
+    anchors.margins: 12
+    anchors.rightMargin: 36
+    spacing: 6
 
     Image {
       width: parent.width
@@ -46,8 +50,8 @@ Rectangle {
     Text {
       width: parent.width
       text: root.preview
-      color: root.isImage ? Wallust.base04 : Wallust.base05
-      font.family: "Liberation Mono"
+      color: root.isImage ? Wallust.textMuted : Wallust.text
+      font.family: "Comic Code"
       font.pixelSize: 11
       wrapMode: Text.Wrap
       maximumLineCount: root.isImage ? 1 : 3
@@ -64,13 +68,13 @@ Rectangle {
     height: 18
     visible: root.hovered
     color: "transparent"
-    border.width: 2
-    border.color: Wallust.base03
+    border.width: 1
+    border.color: root.borderSubtle
 
     Text {
       anchors.centerIn: parent
       text: "󰅖"
-      color: Wallust.base05
+      color: Wallust.text
       font.family: "Symbols Nerd Font Mono"
       font.pixelSize: 10
     }

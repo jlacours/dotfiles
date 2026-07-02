@@ -74,9 +74,9 @@ Rectangle {
     return actions
   }
 
-  color: critical ? Theme.bg : Theme.surface
+  color: critical ? Theme.controlSurface : Theme.cardSurface
   border.width: Theme.hairline
-  border.color: critical ? Theme.critical : Theme.border
+  border.color: critical ? Theme.critical : Theme.borderSubtle
   implicitWidth: compact ? 392 : 360
   implicitHeight: content.implicitHeight + Theme.padLg * 2
   height: implicitHeight
@@ -227,9 +227,9 @@ Rectangle {
           anchors.rightMargin: Theme.padMd
           anchors.verticalCenter: parent.verticalCenter
           height: 5
-          color: Theme.bg
+          color: Theme.controlSurface
           border.width: Theme.hairline
-          border.color: Theme.border
+          border.color: Theme.borderSubtle
 
           Rectangle {
             anchors.left: parent.left
@@ -266,7 +266,7 @@ Rectangle {
             height: 22
             color: "transparent"
             border.width: Theme.hairline
-            border.color: Theme.border
+            border.color: Theme.borderSubtle
 
             Text {
               id: actionLabel
@@ -302,9 +302,9 @@ Rectangle {
           anchors.right: replySend.left
           anchors.rightMargin: Theme.padMd
           height: 22
-          color: Theme.bg
+          color: Theme.controlSurface
           border.width: Theme.hairline
-          border.color: Theme.border
+          border.color: Theme.borderSubtle
 
           TextInput {
             id: replyInput
@@ -348,7 +348,7 @@ Rectangle {
           height: 22
           color: "transparent"
           border.width: Theme.hairline
-          border.color: replySendArea.containsMouse ? Theme.accent : Theme.border
+          border.color: replySendArea.containsMouse ? Theme.accent : Theme.borderSubtle
 
           Text {
             anchors.centerIn: parent
@@ -395,7 +395,7 @@ Rectangle {
     visible: root.closeVisible
     color: "transparent"
     border.width: Theme.hairline
-    border.color: Theme.border
+    border.color: Theme.borderSubtle
 
     Text {
       anchors.centerIn: parent

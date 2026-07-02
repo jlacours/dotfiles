@@ -8,7 +8,7 @@ BOT_DIR="$HOME/Projects/JuBotAI-Convo"
 BOT_CMD_MATCH='JuBotAI-Convo/\.venv/bin/python -u bot\.py'
 LLAMA_BIN=llama-server
 LLAMA_PORT=3002
-GHOSTTY_BOT_CLASS=jubotai-convo-bot
+FOOT_BOT_APPID=jubotai-convo-bot
 
 bot_pid()   { pgrep -f "$BOT_CMD_MATCH" | head -n1; }
 llama_pid() { pgrep -x "$LLAMA_BIN"      | head -n1; }
@@ -40,8 +40,8 @@ status() {
 }
 
 start() {
-    ghostty --class="$GHOSTTY_BOT_CLASS" --title="jubotai-convo-bot" \
-          --wait-after-command=true -e bash -lc "
+    foot --app-id="$FOOT_BOT_APPID" --title="jubotai-convo-bot" \
+          --hold -e bash -lc "
               cd '$BOT_DIR' || exit 1
               for i in {1..60}; do
                   if ss -tln 2>/dev/null | grep -q ':${LLAMA_PORT}'; then break; fi
@@ -60,7 +60,7 @@ stop() {
     sleep 1
     b=$(bot_pid); [[ -n "$b" ]] && kill -9 "$b" 2>/dev/null
     if command -v hyprctl >/dev/null 2>&1; then
-        hyprctl dispatch closewindow "class:^${GHOSTTY_BOT_CLASS}$" >/dev/null 2>&1
+        hyprctl dispatch closewindow "class:^${FOOT_BOT_APPID}$" >/dev/null 2>&1
     fi
 }
 

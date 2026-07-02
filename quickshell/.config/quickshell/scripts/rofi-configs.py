@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shlex
 import subprocess
 
 configs = {
@@ -28,13 +29,21 @@ path = configs.get(choice)
 if not path:
     exit(1)
 
-terminal = os.environ.get("TERMINAL", "ghostty")
-editor = os.environ.get("EDITOR", "nvim")
+terminal = os.environ.get("TERMINAL", "foot")
+editor = os.environ.get("EDITOR", "emacsclient -c -a emacs")
 
-cmd = f'exec "{editor}" "{path}"'
+# Terminal editors must run inside a terminal; GUI editors (emacsclient -c,
+# code, ...) are spawned directly. Decide by the editor's first token.
+TUI_EDITORS = {"nvim", "vim", "vi", "nano", "micro", "neovim", "joe", "mg"}
+editor_prog = editor.split()[0] if editor else ""
+
+if editor_prog in TUI_EDITORS or editor_prog.endswith("vim"):
+    argv = [terminal, "-e", "sh", "-c", f'exec {editor} "$1"', "rofi-configs", path]
+else:
+    argv = shlex.split(editor) + [path]
 
 subprocess.Popen(
-    [terminal, "-e", "sh", "-c", cmd],
+    argv,
     stdout = subprocess.DEVNULL,
     stderr = subprocess.DEVNULL,
 )

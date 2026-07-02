@@ -14,7 +14,7 @@
 #   status  emit KEY=value lines (passthrough to the canonical status script,
 #           or a synthetic "not-installed" set when the stack is absent)
 #   toggle  start/stop searxng-vpn.service + searxng.service (user systemd)
-#   logs    open the combined service log in a terminal (ghostty)
+#   logs    open the combined service log in a terminal (foot)
 
 set -uo pipefail
 
@@ -79,20 +79,12 @@ cmd_logs() {
   local log_cmd
   log_cmd="journalctl --user -u $GLUETUN_UNIT -u $SEARXNG_UNIT -f"
 
-  if command -v ghostty >/dev/null 2>&1; then
-    setsid -f ghostty --title="searxng-vpn-logs" \
-      --wait-after-command=true -e bash -lc "$log_cmd" >/dev/null 2>&1
-  elif [[ -n "${TERMINAL:-}" ]] && command -v "$TERMINAL" >/dev/null 2>&1; then
-    setsid -f "$TERMINAL" -e bash -lc "$log_cmd" >/dev/null 2>&1
-  elif command -v foot >/dev/null 2>&1; then
-    setsid -f foot --title="searxng-vpn-logs" -e bash -lc "$log_cmd" >/dev/null 2>&1
-  elif command -v kitty >/dev/null 2>&1; then
-    setsid -f kitty --title="searxng-vpn-logs" -e bash -lc "$log_cmd" >/dev/null 2>&1
-  else
-    echo "searxng-vpn: no terminal found to open logs" >&2
-    echo "             (tried ghostty, \$TERMINAL, foot, kitty)" >&2
+  local term="${TERMINAL:-foot}"
+  if ! command -v "$term" >/dev/null 2>&1; then
+    echo "searxng-vpn: terminal '$term' not found (set \$TERMINAL or install foot)" >&2
     return 1
   fi
+  setsid -f "$term" --title="searxng-vpn-logs" --hold -e bash -lc "$log_cmd" >/dev/null 2>&1
 }
 
 case "${1:-status}" in

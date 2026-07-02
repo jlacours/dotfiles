@@ -24,16 +24,16 @@ case "$selection" in
         exec rofi -show drun
         ;;
     "Terminal")
-        exec ghostty
+        exec foot
         ;;
     "Dropdown terminal")
-        exec ghostty --class=scratchpad --background-opacity=0.9 -e zsh
+        exec foot --app-id=scratchpad -o colors-dark.alpha=0.9 -e zsh
         ;;
     "Ranger")
-        exec ghostty -e ranger
+        exec foot -e ranger
         ;;
     "Neovim")
-        exec ghostty --class=nvim -e nvim
+        exec foot --app-id=nvim -e nvim
         ;;
     "Emacs")
         exec emacsclient -c
@@ -45,9 +45,9 @@ case "$selection" in
         exec zen-browser --new-window
         ;;
     "Newsboat")
-        exec ghostty --class=newsboat -e newsboat
+        exec foot --app-id=newsboat -e newsboat
         ;;
     "Music player")
-        exec ghostty -e rmpc
+        exec foot -e rmpc
         ;;
 esac

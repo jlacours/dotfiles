@@ -104,5 +104,37 @@ Item {
         }
       }
     }
+
+    // Manual refresh for the usage poller.
+    Item {
+      anchors.verticalCenter: parent.verticalCenter
+      implicitHeight: Theme.barHeight
+      implicitWidth: refreshGlyph.implicitWidth + Theme.padSm
+
+      Text {
+        id: refreshGlyph
+        anchors.centerIn: parent
+        text: "\uf021"
+        color: refreshArea.containsMouse ? Theme.accent : Theme.textDim
+        font.family: Theme.iconFamily
+        font.pixelSize: Theme.fontMd
+        RotationAnimator on rotation {
+          running: AiUsageState.refreshing
+          from: 0
+          to: 360
+          loops: Animation.Infinite
+          duration: 700
+        }
+      }
+
+      MouseArea {
+        id: refreshArea
+        anchors.fill: parent
+        anchors.margins: -Theme.padXs
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: AiUsageState.refresh()
+      }
+    }
   }
 }

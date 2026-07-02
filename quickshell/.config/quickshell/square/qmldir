@@ -12,7 +12,6 @@ MicBlock MicBlock.qml
 NetSpeedBlock NetSpeedBlock.qml
 NotificationBlock NotificationBlock.qml
 NotificationCenter NotificationCenter.qml
-NotificationGlitch NotificationGlitch.qml
 NotificationItem NotificationItem.qml
 NotificationPopups NotificationPopups.qml
 Osd Osd.qml
