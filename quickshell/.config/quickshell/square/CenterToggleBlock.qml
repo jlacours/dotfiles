@@ -1,10 +1,13 @@
 import QtQuick
 
-// Tray-side on/off switches for the bar's three center modules, shown as
-// nerd-font glyphs. Normal foreground while its module is shown, dim
-// (textMuted) while hidden -- so a hidden module's toggle fades into the
-// bar. Left-click
-// flips visibility through CenterModulesState, which persists the choice.
+// On/off switches for the bar's four center-area modules, shown as nerd-font
+// glyphs. Lives in the left cluster, right after the workspaces widget.
+// Normal foreground while its module is shown, dim (textMuted) while hidden
+// -- so a hidden module's toggle fades into the bar. The ticker (4th glyph)
+// is exclusive: activating any status module (AI/tmux/vitals) leaves ticker
+// mode, and vice versa. The ticker glyph is grouped behind a hairline
+// divider. Left-click flips visibility through CenterModulesState, which
+// persists the choice.
 Row {
   id: root
 
@@ -20,7 +23,7 @@ Row {
       id: aiIcon
       anchors.centerIn: parent
       text: "󰚩"
-      color: CenterModulesState.aiUsage ? Theme.foreground : Theme.textMuted
+      color: (!CenterModulesState.news && CenterModulesState.aiUsage) ? Theme.foreground : Theme.textMuted
       font.family: Theme.iconFamily
       font.pixelSize: 13
     }
@@ -43,7 +46,7 @@ Row {
       id: tmuxIcon
       anchors.centerIn: parent
       text: ""
-      color: CenterModulesState.tmux ? Theme.foreground : Theme.textMuted
+      color: (!CenterModulesState.news && CenterModulesState.tmux) ? Theme.foreground : Theme.textMuted
       font.family: Theme.iconFamily
       font.pixelSize: 13
     }
@@ -66,7 +69,7 @@ Row {
       id: vitIcon
       anchors.centerIn: parent
       text: "󰗶"
-      color: CenterModulesState.vitals ? Theme.foreground : Theme.textMuted
+      color: (!CenterModulesState.news && CenterModulesState.vitals) ? Theme.foreground : Theme.textMuted
       font.family: Theme.iconFamily
       font.pixelSize: 13
     }
@@ -77,6 +80,38 @@ Row {
       acceptedButtons: Qt.LeftButton
       cursorShape: Qt.PointingHandCursor
       onClicked: CenterModulesState.toggle("vitals")
+    }
+  }
+
+  // Hairline divider visually groups the status toggles apart from the ticker.
+  Rectangle {
+    anchors.verticalCenter: parent.verticalCenter
+    width: Theme.hairline
+    height: Theme.dividerHeight
+    color: Theme.borderSubtle
+  }
+
+  // ── news ticker toggle ───────────────────────────────────────────
+  Item {
+    anchors.verticalCenter: parent.verticalCenter
+    implicitHeight: Theme.barHeight
+    implicitWidth: newsIcon.implicitWidth
+
+    Text {
+      id: newsIcon
+      anchors.centerIn: parent
+      text: "\uf1ea"
+      color: CenterModulesState.news ? Theme.foreground : Theme.textMuted
+      font.family: Theme.iconFamily
+      font.pixelSize: Theme.fontLg
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      anchors.margins: -Theme.padXs
+      acceptedButtons: Qt.LeftButton
+      cursorShape: Qt.PointingHandCursor
+      onClicked: CenterModulesState.toggle("news")
     }
   }
 }

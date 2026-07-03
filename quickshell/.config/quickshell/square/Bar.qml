@@ -29,7 +29,9 @@ Variants {
       color: Theme.barSurface
       radius: 0
 
-      // LEFT cluster: workspaces (all monitors, colour-coded)
+      // LEFT cluster: workspaces, then the center-module toggle switches
+      // (AI usage | tmux | vitals glyphs). Each glyph is dim while its module
+      // is hidden -- left-click flips visibility via CenterModulesState.
       Workspaces {
         id: workspaces
         anchors {
@@ -38,14 +40,36 @@ Variants {
         }
       }
 
+      Rectangle {
+        id: leftTogglesDivider
+        anchors {
+          left: workspaces.right
+          leftMargin: Theme.padMd
+          verticalCenter: parent.verticalCenter
+        }
+        width: Theme.hairline
+        height: Theme.dividerHeight
+        color: Theme.borderSubtle
+      }
+
+      Square.CenterToggleBlock {
+        anchors {
+          left: leftTogglesDivider.right
+          leftMargin: Theme.padMd
+          verticalCenter: parent.verticalCenter
+        }
+      }
+
       // CENTER: AI usage | tmux | vitals
-      // Each unit is independently toggleable from the tray (see
-      // CenterToggleBlock / CenterModulesState); dividers hide themselves
-      // whenever an adjacent unit is hidden so no orphan hairlines remain.
+      // Each unit is independently toggleable (toggles now live in the left
+      // cluster, via CenterToggleBlock / CenterModulesState); dividers hide
+      // themselves whenever an adjacent unit is hidden so no orphan hairlines
+      // remain.
       Row {
         id: centerStatus
         anchors.centerIn: parent
         spacing: Theme.gapLg
+        visible: !CenterModulesState.news
 
         AiUsageBlock {
           anchors.verticalCenter: parent.verticalCenter
@@ -89,6 +113,12 @@ Variants {
         }
       }
 
+      // News ticker: replaces the status group when toggled on.
+      RssBlock {
+        anchors.centerIn: parent
+        visible: CenterModulesState.news
+      }
+
       // RIGHT cluster: compact status groups
       Row {
         id: rightStatus
@@ -101,18 +131,6 @@ Variants {
         spacing: Theme.panelGap
 
         TrayBlock {
-          anchors.verticalCenter: parent.verticalCenter
-        }
-
-        Rectangle {
-          anchors.verticalCenter: parent.verticalCenter
-          width: Theme.hairline
-          height: Theme.dividerHeight
-          color: Theme.borderSubtle
-        }
-
-        // Center-module visibility toggles (their own section, right of tray).
-        Square.CenterToggleBlock {
           anchors.verticalCenter: parent.verticalCenter
         }
 

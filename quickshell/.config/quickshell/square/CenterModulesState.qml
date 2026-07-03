@@ -4,8 +4,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Visibility for the square bar's three center modules, shared across every
-// monitor (singleton => one instance per engine, no cross-Variants sync).
+// Visibility for the square bar's three center modules + news ticker, shared
+// across every monitor (singleton => one instance per engine, no cross-Variants
+// sync). The news ticker is exclusive: activating any status module (aiUsage /
+// tmux / vitals) automatically deactivates news, and vice versa.
 // Persisted to ~/.local/state/quickshell/center-modules.json so the chosen
 // layout survives quickshell reloads and relogins. Defaults to all-shown.
 Singleton {
@@ -18,6 +20,7 @@ Singleton {
   property bool aiUsage: true
   property bool tmux: true
   property bool vitals: true
+  property bool news: false     // ticker is off by default
 
   function readKey(obj, key) {
     const v = obj[key]
@@ -31,6 +34,7 @@ Singleton {
       root.aiUsage = root.readKey(data, "aiUsage")
       root.tmux = root.readKey(data, "tmux")
       root.vitals = root.readKey(data, "vitals")
+      root.news = root.readKey(data, "news")
     } catch (e) {
       console.warn("CenterModulesState: failed to parse state:", e)
     }
@@ -40,7 +44,8 @@ Singleton {
     const json = JSON.stringify({
       aiUsage: root.aiUsage,
       tmux: root.tmux,
-      vitals: root.vitals
+      vitals: root.vitals,
+      news: root.news
     })
     // mkdir -p then write atomically enough for a tiny toggle file. $1=dir,
     // $2=json, $3=path ($0 is the throwaway "sh" slot for `sh -c`).
@@ -52,9 +57,15 @@ Singleton {
   }
 
   function toggle(key) {
-    if (key === "aiUsage") root.aiUsage = !root.aiUsage
-    else if (key === "tmux") root.tmux = !root.tmux
-    else if (key === "vitals") root.vitals = !root.vitals
+    if (key === "news") {
+      root.news = !root.news
+    } else {
+      // Activating a status module leaves ticker mode.
+      root.news = false
+      if (key === "aiUsage") root.aiUsage = !root.aiUsage
+      else if (key === "tmux") root.tmux = !root.tmux
+      else if (key === "vitals") root.vitals = !root.vitals
+    }
     root.save()
   }
 

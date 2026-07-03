@@ -1,0 +1,19 @@
+# tech
+https://itsfoss.com/feed/
+https://archlinux.org/feeds/news/
+https://www.phoronix.com/rss.php
+https://lwn.net/headlines/newrss
+https://www.omgubuntu.co.uk/feed
+https://www.cyberciti.biz/atom/atom.xml
+https://distrowatch.com/news/dw.rdf
+https://www.tecmint.com/feed/
+# ai
+https://huggingface.co/blog/feed.xml
+https://simonwillison.net/atom/everything/
+https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+# world
+https://feeds.arstechnica.com/arstechnica/features/
+https://feeds.bbci.co.uk/news/world/rss.xml
+https://www.theguardian.com/world/rss
+https://www.aljazeera.com/xml/rss/all.xml
+https://rss.dw.com/rdf/rss-en-top

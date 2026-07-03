@@ -15,13 +15,8 @@ NotificationCenter NotificationCenter.qml
 NotificationItem NotificationItem.qml
 NotificationPopups NotificationPopups.qml
 Osd Osd.qml
+RssBlock RssBlock.qml
 SearxngVpnBlock SearxngVpnBlock.qml
-TmuxSessions TmuxSessions.qml
-TrayBlock TrayBlock.qml
-TrayItem TrayItem.qml
-VolumeBlock VolumeBlock.qml
-VolumeMenu VolumeMenu.qml
-Workspaces Workspaces.qml
 singleton AiUsageState AiUsageState.qml
 singleton AudioRateState AudioRateState.qml
 singleton CenterModulesState CenterModulesState.qml
@@ -34,6 +29,13 @@ singleton MicState MicState.qml
 singleton NetSpeedState NetSpeedState.qml
 singleton NotificationState NotificationState.qml
 singleton OsdState OsdState.qml
+singleton RssState RssState.qml
 singleton SearxngVpnState SearxngVpnState.qml
 singleton Theme Theme.qml
 singleton VolumeState VolumeState.qml
+TmuxSessions TmuxSessions.qml
+TrayBlock TrayBlock.qml
+TrayItem TrayItem.qml
+VolumeBlock VolumeBlock.qml
+VolumeMenu VolumeMenu.qml
+Workspaces Workspaces.qml

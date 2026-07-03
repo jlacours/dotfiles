@@ -26,9 +26,13 @@ This package is a Stow package for the Quickshell bar config at:
 ## Current Structure (square/)
 
 - `shell.qml`: root entrypoint (mounts the bar, OSD, notifications, panels).
-- `Bar.qml`: top bar composition — left cluster (workspaces), centre cluster
-  (AI usage / tmux / vitals), right cluster (tray, toggles, notifications,
-  keyboard, volume, clock) separated by hairline `Rectangle` dividers.
+- `Bar.qml`: top bar composition — left cluster (workspaces, then the
+  center-module toggle glyphs via `CenterToggleBlock`), centre cluster which is
+  **mode-switched**: shows the status group (AI usage / tmux / vitals) when
+  `CenterModulesState.news` is false, or the `RssBlock` news ticker when true
+  (the two are mutually exclusive — the ticker is too wide to share the
+  center); right cluster (tray, notifications, keyboard, volume, clock)
+  separated by hairline `Rectangle` dividers.
 - `Theme.qml`: singleton with the design tokens (see Styling Rules).
 - Components follow a `*Block.qml` (bar widget) + `*State.qml` (singleton
   backing logic) split — e.g. `GameModeBlock`/`GameModeState`,
@@ -36,6 +40,14 @@ This package is a Stow package for the Quickshell bar config at:
 - `Workspaces.qml`, `Clock.qml`, `TmuxSessions.qml`, `TrayBlock`/`TrayItem`,
   `Osd.qml`/`OsdState.qml`: standalone modules.
 - Panels/popovers: `AiUsagePanel.qml`, `VolumeMenu.qml`, `NotificationCenter.qml`.
+- News ticker: `RssBlock.qml` (center widget — arrows + scrolling marquee,
+  click-to-open) + `RssState.qml` (singleton backing it), backed by
+  `scripts/rss.sh` (feedparser + per-feed 900s cache → merged JSON array) and
+  the stowable `rss-feeds.txt` feed list. Auto-advances items every 7s.
+- `CenterModulesState.qml` also owns the center-mode flag `news`; toggling any
+  status module sets `news=false` (leaves ticker mode), so the toggle glyphs
+  double as mode switches. `CenterToggleBlock` groups the three status glyphs
+  behind a hairline divider from the 4th (news) glyph.
 - Notifications: `NotificationState`, `NotificationBlock`, `NotificationCenter`,
   `NotificationItem`, and `NotificationPopups`.
 - `clipboard/`, `keybinds/`, `menus/`, `scripts/` are shared (symlinked into
