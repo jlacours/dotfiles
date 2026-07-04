@@ -40,10 +40,11 @@ This package is a Stow package for the Quickshell bar config at:
 - `Workspaces.qml`, `Clock.qml`, `TmuxSessions.qml`, `TrayBlock`/`TrayItem`,
   `Osd.qml`/`OsdState.qml`: standalone modules.
 - Panels/popovers: `AiUsagePanel.qml`, `VolumeMenu.qml`, `NotificationCenter.qml`.
-- News ticker: `RssBlock.qml` (center widget — arrows + scrolling marquee,
-  click-to-open) + `RssState.qml` (singleton backing it), backed by
-  `scripts/rss.sh` (feedparser + per-feed 900s cache → merged JSON array) and
-  the stowable `rss-feeds.txt` feed list. Auto-advances items every 7s.
+- News ticker: `RssBlock.qml` (center widget — ‹ › arrows + continuous
+  scrolling marquee of all headlines joined into one string, click-to-open, hover
+  to pause) + `RssState.qml` (singleton backing it), backed by `scripts/rss.sh`
+  (feedparser + per-feed 900s cache → merged JSON array) and the stowable
+  `rss-feeds.txt` feed list.
 - `CenterModulesState.qml` also owns the center-mode flag `news`; toggling any
   status module sets `news=false` (leaves ticker mode), so the toggle glyphs
   double as mode switches. `CenterToggleBlock` groups the three status glyphs

@@ -53,6 +53,7 @@ Variants {
       }
 
       Square.CenterToggleBlock {
+        id: leftToggles
         anchors {
           left: leftTogglesDivider.right
           leftMargin: Theme.padMd
@@ -113,9 +114,16 @@ Variants {
         }
       }
 
-      // News ticker: replaces the status group when toggled on.
+      // News ticker: fills the center between the left toggles and the right
+      // cluster, replacing the status group when toggled on.
       RssBlock {
-        anchors.centerIn: parent
+        anchors {
+          left: leftToggles.right
+          leftMargin: Theme.gapLg
+          right: rightStatus.left
+          rightMargin: Theme.gapLg
+          verticalCenter: parent.verticalCenter
+        }
         visible: CenterModulesState.news
       }
 
