@@ -15,7 +15,7 @@ Item {
   height: Theme.barHeight
 
   readonly property string sep: "  ·  "
-  readonly property real scrollSpeed: 1.4   // px per ~16ms tick (~88px/s)
+  readonly property real scrollSpeed: 0.7   // px per ~16ms tick (~44px/s)
   readonly property int viewportW: viewport.width
 
   // Segments derived from RssState.items: {title, link, w, startX}. Widths are
