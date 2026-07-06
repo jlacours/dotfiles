@@ -7,11 +7,23 @@ Personal Arch Linux dotfiles for Hyprland, managed with [GNU Stow](https://www.g
 Install the repository prerequisites:
 
 ```bash
-yay -S --needed git stow
+yay -S --needed git stow gitleaks
 git clone https://github.com/jlacours/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 ./install.sh --dry-run
 ./install.sh
+```
+
+Install the Zsh completion dependencies:
+
+```bash
+yay -S --needed zsh zsh-completions fzf carapace-bin
+```
+
+Install local network diagnostic tools:
+
+```bash
+yay -S --needed nmap
 ```
 
 Install a subset by naming packages:
@@ -25,7 +37,7 @@ Install a subset by naming packages:
 The active Hyprland and Quickshell setup also expects:
 
 ```bash
-yay -S --needed hyprland hypridle quickshell rofi foot jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg zen-browser-bin
+yay -S --needed hyprland hypridle quickshell foot filezilla jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg grim slurp wf-recorder zen-browser-bin
 ```
 
 The interface font is `Comic Code`. It is a commercial typeface not packaged on the AUR, so install it manually into `~/.local/share/fonts/`.
@@ -62,18 +74,18 @@ Every application follows the same template: a top-level package mirrors its des
 
 | Package | Software and purpose |
 |---|---|
-| **emacs** | Emacs daemon/client configuration with Gruber Darker and local LLM support |
-| **environment** | systemd user environment.d variables: default terminal, browser, Electron Wayland, GTK portal, Qt portal |
+| **emacs** | Emacs daemon/client configuration with Gruber Darker and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output |
+| **environment** | systemd user environment.d variables and desktop MIME defaults: editor, terminal, browser, portals |
 | **eww** | Legacy Eww bar retained for migration reference |
 | **foot** | Foot terminal — the default terminal across Hyprland, quickshell scripts, and rofi; Wallust color include |
 | **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game mode, and compositor helpers |
+| **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Legacy Qtile Wayland configuration |
 | **quickshell** | Active bar, overlays, notification server, OSD, and desktop scripts |
-| **rofi** | Application, clipboard, power, screenshot, OCR, wallpaper, and utility menus |
 | **sway** | Legacy Sway configuration |
 | **tmux** | tmux terminal multiplexer configuration |
 | **wallust** | Wallust color-generation configuration |
-| **zsh** | zsh shell configuration and prompt schema |
+| **zsh** | zsh shell configuration, prompt schema, native completion, and Carapace coverage for unsupported commands |
 
 Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agents/` are not Stow packages.
 
@@ -90,7 +102,12 @@ Wallust-derived translucent surfaces and compositor blur. It includes:
 - Wallust theme and wallpaper selection;
 - TTS controls and local-model status.
 
-Zen Browser is the default browser. Default programs (terminal, browser, editor, file manager) are centralized in `environment/.config/environment.d/`; Hyprland's `$terminal`/`$webbrowser` mirror those, and every other terminal launcher composes from `$terminal`. The interface font is `Comic Code` across Quickshell, Foot, Emacs, and Hyprland.
+Zen Browser is the default browser. Default programs are centralized in the
+`environment` package: session variables live in `.config/environment.d/`, and
+desktop file associations live in `.config/mimeapps.list`. Hyprland's
+`$terminal`/`$webbrowser` mirror those defaults, and every other terminal
+launcher composes from `$terminal`. The interface font is `Comic Code` across
+Quickshell, Foot, Emacs, and Hyprland.
 
 The Quickshell config ships generated `qmldir` files (via
 `quickshell/.config/quickshell/scripts/gen-qmldir.sh`) purely to keep the QML
@@ -101,11 +118,9 @@ not help, because `qmlls` canonicalizes its VFS symlinks back to the source. The
 fix is therefore a cursed-but-working pile of generated `qmldir` files; regenerate
 them after adding or renaming components. See [`quickshell/AGENTS.md`](quickshell/AGENTS.md).
 
-The editor configuration is Emacs-first, running as a user daemon with `emacsclient`. The previous Neovim configuration remains under `legacy/nvim/` and can be stowed explicitly if revived:
-
-```bash
-stow -d ~/.dotfiles/legacy -t ~ nvim
-```
+The editor configuration is Neovim-first again. Emacs remains configured and
+available as the secondary editor. Why did this migrate back? The owner says,
+"I'm not sure about my decisions."
 
 ## Repository Automation
 

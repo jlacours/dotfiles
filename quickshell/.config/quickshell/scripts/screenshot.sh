@@ -137,9 +137,11 @@ take_screenshot() {
             fi
             ;;
         "region")
-            pkill -x slurp 2>/dev/null
-            sleep 0.2
-            geometry=$(slurp 2>/dev/null)
+            geometry=$(slurp -d \
+                -b '#00000066' \
+                -c '#ffcc00ff' \
+                -s '#ffcc0033' \
+                -w 3 </dev/null 2>/dev/null)
             if [ -z "$geometry" ]; then
                 notify-send -a "Screenshot" "Screenshot cancelled" "No region selected"
                 return 1

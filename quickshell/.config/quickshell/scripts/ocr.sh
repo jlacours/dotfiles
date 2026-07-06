@@ -9,7 +9,7 @@ TMP_IMG=$(mktemp --suffix=.png)
 trap 'rm -f "$TMP_IMG"' EXIT
 
 # Select region and capture screenshot
-if ! grim -g "$(slurp)" "$TMP_IMG" 2>/dev/null; then
+if ! grim -g "$(slurp </dev/null)" "$TMP_IMG" 2>/dev/null; then
     notify-send -a "OCR" -u low "OCR" "Selection cancelled"
     exit 1
 fi

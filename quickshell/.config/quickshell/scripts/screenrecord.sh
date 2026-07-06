@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -u
+set -o pipefail
 
 # Screen recording rofi wrapper script
 # A multi-level menu interface for wf-recorder
@@ -6,13 +9,16 @@
 
 # Configuration
 RECORDINGS_DIR="$HOME/Videos/recordings"
-PID_FILE="/tmp/wf-recorder.pid"
-STATUS_FILE="/tmp/wf-recorder-status"
-CONFIG_FILE="/tmp/wf-recorder-config"
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/quickshell-screenrecord-$UID"
+PID_FILE="$STATE_DIR/recorder.pid"
+STATUS_FILE="$STATE_DIR/output-file"
+CONFIG_FILE="$STATE_DIR/config"
+MIX_MODULES_FILE="$STATE_DIR/mix-modules"
+LOG_FILE="$STATE_DIR/wf-recorder.log"
 
 # Detect compositor
 is_hyprland() {
-    [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]
+    [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]
 }
 
 # Function to get active window geometry
@@ -45,28 +51,55 @@ get_active_output_name() {
     echo "$name"
 }
 
-# Quality presets
-# These define bitrate (-b:v) and other encoding parameters
+# Quality presets for wf-recorder's default libx264 encoder.
+# wf-recorder forwards these with `-p`; FFmpeg-style `-b:v` is not valid here.
 declare -A QUALITY_PRESETS
-QUALITY_PRESETS[low]="-b:v 2M"
-QUALITY_PRESETS[medium]="-b:v 5M"
-QUALITY_PRESETS[high]="-b:v 10M"
-QUALITY_PRESETS[ultra]="-b:v 20M"
+QUALITY_PRESETS[low]="crf=28"
+QUALITY_PRESETS[medium]="crf=23"
+QUALITY_PRESETS[high]="crf=18"
+QUALITY_PRESETS[ultra]="crf=14"
 
-# Ensure recordings directory exists
+# Runtime state is private to this login session and user.
 mkdir -p "$RECORDINGS_DIR"
+install -d -m 700 "$STATE_DIR"
+
+recorder_pid_is_ours() {
+    local pid=$1
+    local command_name
+
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    command_name=$(ps -p "$pid" -o comm= 2>/dev/null) || return 1
+    [ "$command_name" = "wf-recorder" ]
+}
+
+cleanup_audio_mix() {
+    local -a module_ids=()
+    local index
+
+    if [ -f "$MIX_MODULES_FILE" ]; then
+        mapfile -t module_ids < "$MIX_MODULES_FILE"
+        for ((index=${#module_ids[@]} - 1; index >= 0; index--)); do
+            pactl unload-module "${module_ids[index]}" >/dev/null 2>&1 || true
+        done
+        rm -f "$MIX_MODULES_FILE"
+    fi
+}
+
+clear_runtime_state() {
+    rm -f "$PID_FILE" "$STATUS_FILE" "$CONFIG_FILE"
+}
 
 # Function to check if wf-recorder is running
 is_recording() {
     if [ -f "$PID_FILE" ]; then
+        local pid
         pid=$(cat "$PID_FILE")
-        # ps -p checks if process with given PID exists
-        if ps -p "$pid" > /dev/null 2>&1; then
-            return 0  # 0 means true in bash
-        else
-            rm -f "$PID_FILE" "$STATUS_FILE" "$CONFIG_FILE"
-            return 1  # 1 means false in bash
+        if recorder_pid_is_ours "$pid"; then
+            return 0
         fi
+
+        cleanup_audio_mix
+        clear_runtime_state
     fi
     return 1
 }
@@ -80,17 +113,18 @@ show_menu() {
     # -i: case insensitive (accepted, always on)
     # -p: prompt text
     # -no-custom: only allow selecting from list, no custom input
-    echo -e "$options" | "$HOME/.config/quickshell/scripts/qs-dmenu.sh" -i -p "$prompt" -no-custom
+    printf '%b\n' "$options" | "$HOME/.config/quickshell/scripts/qs-dmenu.sh" -i -p "$prompt" -no-custom
 }
 
 # Function to select recording area
 select_area() {
     local area=$1
+    local output_name=""
+    local geometry=""
     case $area in
-        "Fullscreen"|"Active output")
-            # Both mean "record the whole focused monitor". Emit an
-            # OUTPUT:<name> sentinel so start_recording uses `wf-recorder -o`
-            # instead of a geometry rectangle (scale-safe, no stdin prompt).
+        "Active output")
+            # Emit an OUTPUT:<name> sentinel so start_recording uses
+            # `wf-recorder -o` (scale-safe and non-interactive).
             output_name=$(get_active_output_name)
             if [ -n "$output_name" ]; then
                 echo "OUTPUT:$output_name"
@@ -107,7 +141,11 @@ select_area() {
             fi
             ;;
         "Select region")
-            geometry=$(slurp 2>/dev/null)
+            geometry=$(slurp -d \
+                -b '#00000066' \
+                -c '#ffcc00ff' \
+                -s '#ffcc0033' \
+                -w 3 </dev/null 2>/dev/null)
             if [ -n "$geometry" ]; then
                 echo "$geometry"
             else
@@ -146,16 +184,16 @@ select_audio() {
 select_quality() {
     local quality=$1
     case $quality in
-        "Low (2 Mbps)")
+        "Low (small file)")
             echo "low"
             ;;
-        "Medium (5 Mbps)")
+        "Medium (balanced)")
             echo "medium"
             ;;
-        "High (10 Mbps)")
+        "High (large file)")
             echo "high"
             ;;
-        "Ultra (20 Mbps)")
+        "Ultra (very large file)")
             echo "ultra"
             ;;
         *)
@@ -166,24 +204,69 @@ select_quality() {
 
 # Function to get microphone device
 get_mic_device() {
-    # pactl lists all audio sources
-    # grep filters for input devices (sources with "input" in name)
-    # We want actual microphones, not monitor sources
-    # head -n1 takes the first match
-    pactl list sources short | grep -v monitor | grep input | head -n1 | awk '{print $2}'
+    local source
+    source=$(pactl get-default-source 2>/dev/null || true)
+
+    if [ -n "$source" ] && [[ "$source" != *.monitor ]] \
+        && pactl list sources short | awk '{print $2}' | grep -Fxq "$source"; then
+        echo "$source"
+        return
+    fi
+
+    pactl list sources short | awk '$2 !~ /\.monitor$/ {print $2; exit}'
 }
 
 # Function to get system audio monitor device
 get_system_audio_device() {
-    # Get the default sink's monitor source for capturing system audio
-    # This captures audio output (what you hear) rather than input
-    default_sink=$(pactl get-default-sink)
-    if [ -n "$default_sink" ]; then
-        echo "${default_sink}.monitor"
-    else
-        # Fallback: find any monitor source
-        pactl list sources short | grep monitor | head -n1 | awk '{print $2}'
+    local default_sink
+    local monitor_source
+
+    default_sink=$(pactl get-default-sink 2>/dev/null || true)
+    monitor_source="${default_sink}.monitor"
+
+    if [ -n "$default_sink" ] \
+        && pactl list sources short | awk '{print $2}' | grep -Fxq "$monitor_source"; then
+        echo "$monitor_source"
+        return
     fi
+
+    pactl list sources short | awk '$2 ~ /\.monitor$/ {print $2; exit}'
+}
+
+# Create a private PulseAudio-on-PipeWire sink and loop both sources into it.
+# wf-recorder can capture only one source, so the sink monitor is the real mix.
+setup_audio_mix() {
+    local system_source=$1
+    local mic_source=$2
+    local sink_name="wf_recorder_mix_${UID}_$$"
+    local module_id
+
+    cleanup_audio_mix
+    : > "$MIX_MODULES_FILE"
+
+    module_id=$(pactl load-module module-null-sink \
+        sink_name="$sink_name" \
+        sink_properties=device.description=Screen_Record_Mix) || {
+        cleanup_audio_mix
+        return 1
+    }
+    echo "$module_id" >> "$MIX_MODULES_FILE"
+
+    module_id=$(pactl load-module module-loopback \
+        source="$system_source" sink="$sink_name" latency_msec=20) || {
+        cleanup_audio_mix
+        return 1
+    }
+    echo "$module_id" >> "$MIX_MODULES_FILE"
+
+    module_id=$(pactl load-module module-loopback \
+        source="$mic_source" sink="$sink_name" latency_msec=20) || {
+        cleanup_audio_mix
+        return 1
+    }
+    echo "$module_id" >> "$MIX_MODULES_FILE"
+
+    echo "${sink_name}.monitor"
 }
 
 # Function to start recording with all parameters
@@ -192,7 +275,12 @@ start_recording() {
     local audio_mode=$2
     local quality=$3
 
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    local system_device=""
+    local mic_device=""
+    local mix_device=""
+    local recorder_pid
+    timestamp=$(date +%Y%m%d_%H%M%S_%3N)
     local output_file="$RECORDINGS_DIR/recording_${timestamp}.mp4"
 
     # Build command arguments as array (avoids eval issues with PID tracking)
@@ -208,9 +296,9 @@ start_recording() {
         cmd_args+=(-g "$geometry")
     fi
 
-    # Add quality settings (split into separate args)
-    read -ra quality_args <<< "${QUALITY_PRESETS[$quality]}"
-    cmd_args+=("${quality_args[@]}")
+    # Use wf-recorder's codec-param interface. Its `-b` flag means B-frames,
+    # not FFmpeg's `-b:v` bitrate syntax.
+    cmd_args+=(-c libx264 -p "${QUALITY_PRESETS[$quality]}")
 
     # Add audio based on mode
     # wf-recorder uses --audio=<device> format, not separate flags
@@ -220,7 +308,8 @@ start_recording() {
             if [ -n "$system_device" ]; then
                 cmd_args+=("--audio=$system_device")
             else
-                notify-send -a "Screen Recorder" "Warning" "No system audio device found, recording without audio"
+                notify-send -a "Screen Recorder" "Recording failed" "No system-audio monitor source was found"
+                return 1
             fi
             ;;
         "mic")
@@ -228,78 +317,128 @@ start_recording() {
             if [ -n "$mic_device" ]; then
                 cmd_args+=("--audio=$mic_device")
             else
-                notify-send -a "Screen Recorder" "Warning" "No microphone found, recording without audio"
+                notify-send -a "Screen Recorder" "Recording failed" "No microphone source was found"
+                return 1
             fi
             ;;
         "both")
             system_device=$(get_system_audio_device)
-            if [ -n "$system_device" ]; then
-                cmd_args+=("--audio=$system_device")
-                notify-send -a "Screen Recorder" "Info" "Recording system audio. For mic+system, use PipeWire virtual sink."
-            else
-                cmd_args+=(--audio)
+            mic_device=$(get_mic_device)
+            if [ -z "$system_device" ] || [ -z "$mic_device" ]; then
+                notify-send -a "Screen Recorder" "Recording failed" "System audio and microphone sources are both required"
+                return 1
             fi
+
+            mix_device=$(setup_audio_mix "$system_device" "$mic_device") || {
+                notify-send -a "Screen Recorder" "Recording failed" "Could not create the temporary audio mix"
+                return 1
+            }
+            cmd_args+=("--audio=$mix_device")
             ;;
     esac
 
     # Add output file
     cmd_args+=(-f "$output_file")
 
-    # Execute wf-recorder directly (not through eval) to get correct PID
-    wf-recorder "${cmd_args[@]}" &
+    # Capture diagnostics instead of leaking stderr into Quickshell. Do not
+    # claim success until wf-recorder survives initialization.
+    : > "$LOG_FILE"
+    wf-recorder "${cmd_args[@]}" > "$LOG_FILE" 2>&1 &
+    recorder_pid=$!
+    sleep 0.75
 
-    # Store PID and configuration
-    echo $! > "$PID_FILE"
-    echo "$output_file" > "$STATUS_FILE"
-    echo "Area: $geometry, Audio: $audio_mode, Quality: $quality" > "$CONFIG_FILE"
+    if ! recorder_pid_is_ours "$recorder_pid"; then
+        wait "$recorder_pid" 2>/dev/null || true
+        cleanup_audio_mix
+        rm -f "$output_file"
+        notify-send -a "Screen Recorder" "Recording failed" "wf-recorder did not start; see $LOG_FILE"
+        return 1
+    fi
+
+    printf '%s\n' "$recorder_pid" > "$PID_FILE"
+    printf '%s\n' "$output_file" > "$STATUS_FILE"
+    printf 'Area: %s, Audio: %s, Quality: %s\n' \
+        "$geometry" "$audio_mode" "$quality" > "$CONFIG_FILE"
 
     notify-send -a "Screen Recorder" "Recording started" "Quality: $quality\nSaving to: $(basename "$output_file")"
 }
 
 # Function to stop recording
 stop_recording() {
-    if [ -f "$PID_FILE" ]; then
+    local pid
+    local output_file=""
+
+    if is_recording; then
         pid=$(cat "$PID_FILE")
 
         # Send SIGINT to wf-recorder (graceful stop to finalize video)
         kill -INT "$pid" 2>/dev/null
 
-        # Wait for process to terminate (up to 5 seconds)
-        for i in {1..10}; do
-            if ! ps -p "$pid" > /dev/null 2>&1; then
+        # Wait for process to terminate (up to 10 seconds).
+        for _ in {1..20}; do
+            if ! recorder_pid_is_ours "$pid"; then
                 break
             fi
             sleep 0.5
         done
 
         # If still running, force kill
-        if ps -p "$pid" > /dev/null 2>&1; then
+        if recorder_pid_is_ours "$pid"; then
             kill -TERM "$pid" 2>/dev/null
-            sleep 0.5
+            sleep 1
         fi
 
         # Last resort: SIGKILL
-        if ps -p "$pid" > /dev/null 2>&1; then
+        if recorder_pid_is_ours "$pid"; then
             kill -KILL "$pid" 2>/dev/null
         fi
 
-        # Also kill any remaining wf-recorder processes (fallback)
-        pkill -INT wf-recorder 2>/dev/null
+        cleanup_audio_mix
 
         if [ -f "$STATUS_FILE" ]; then
             output_file=$(cat "$STATUS_FILE")
-            notify-send -a "Screen Recorder" "Recording stopped" "Saved: $(basename "$output_file")"
-            rm -f "$STATUS_FILE"
-        else
-            notify-send -a "Screen Recorder" "Recording stopped"
         fi
 
-        rm -f "$PID_FILE" "$CONFIG_FILE"
+        if [ -n "$output_file" ] && [ -s "$output_file" ]; then
+            notify-send -a "Screen Recorder" "Recording stopped" "Saved: $(basename "$output_file")"
+        else
+            notify-send -a "Screen Recorder" "Recording failed" "No playable output was produced; see $LOG_FILE"
+        fi
+
+        clear_runtime_state
     fi
 }
 
 # Main menu flow
 main() {
+    local -a required_commands=(jq notify-send pactl slurp wf-recorder)
+    local required_command
+    local -a missing_commands=()
+    local choice=""
+    local area_options area geometry
+    local audio_options audio_choice audio_mode
+    local quality_options quality_choice quality
+
+    if is_hyprland; then
+        required_commands+=(hyprctl)
+    else
+        required_commands+=(swaymsg)
+    fi
+
+    for required_command in "${required_commands[@]}"; do
+        command -v "$required_command" >/dev/null 2>&1 \
+            || missing_commands+=("$required_command")
+    done
+
+    if ((${#missing_commands[@]})); then
+        if command -v notify-send >/dev/null 2>&1; then
+            notify-send -a "Screen Recorder" "Missing dependencies" "${missing_commands[*]}"
+        else
+            printf 'screenrecord: missing dependencies: %s\n' "${missing_commands[*]}" >&2
+        fi
+        exit 1
+    fi
+
     # Check if already recording
     if is_recording; then
         # If recording, offer to stop
@@ -311,7 +450,7 @@ main() {
     fi
     
     # Step 1: Select area
-    area_options="Fullscreen\nActive window\nSelect region\nActive output"
+    area_options="Active output\nActive window\nSelect region"
     area=$(show_menu "Select Area" "$area_options")
     
     # Check for cancellation (empty selection)
@@ -340,7 +479,7 @@ main() {
     fi
     
     # Step 3: Select quality
-    quality_options="Low (2 Mbps)\nMedium (5 Mbps)\nHigh (10 Mbps)\nUltra (20 Mbps)"
+    quality_options="Low (small file)\nMedium (balanced)\nHigh (large file)\nUltra (very large file)"
     quality_choice=$(show_menu "Select Quality" "$quality_options")
     
     if [ -z "$quality_choice" ]; then
@@ -356,5 +495,6 @@ main() {
     start_recording "$geometry" "$audio_mode" "$quality"
 }
 
-# Run main function
-main
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    main
+fi

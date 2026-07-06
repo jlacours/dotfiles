@@ -27,7 +27,7 @@ shell/.shellrc
 
 - `hyprland/`: compositor, idle, and tightly coupled desktop scripts.
 - `quickshell/`: the active bar, overlays, notification server, OSD, and scripts. Read `quickshell/AGENTS.md` before substantial changes.
-- `rofi/`, `foot/`, `tmux/`, `zsh/`, `emacs/`: application packages.
+- `foot/`, `tmux/`, `zsh/`, `nvim/`, `emacs/`: application packages.
 - `eww/` and `sway/`: retained legacy configurations.
 - `legacy/`: archived material; never stowed automatically.
 - `scripts/`: repository maintenance helpers; not a Stow package.

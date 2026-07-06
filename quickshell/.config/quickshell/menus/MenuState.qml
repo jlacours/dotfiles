@@ -115,10 +115,8 @@ Singleton {
   // way rofi's drun gave them one. Not worth a bespoke terminal-wrapping path
   // for this port; flagged in the handoff instead.
 
-  function showApps(monitorName) {
-    if (!openMenu("apps", monitorName, "Applications")) return
-
-    root.noCustom = true
+  function populateApps() {
+    root.clearItems()
     const apps = DesktopEntries.applications.values
     const list = []
 
@@ -135,6 +133,13 @@ Singleton {
     list.sort((a, b) => a.text.localeCompare(b.text))
     for (const it of list) root.addItem(it.text, it.sub, "app", it.id)
     root.refreshFiltered()
+  }
+
+  function showApps(monitorName) {
+    if (!openMenu("apps", monitorName, "Applications")) return
+
+    root.noCustom = true
+    root.populateApps()
   }
 
   // --- Favourites (rofi-apps replacement) -------------------------------
@@ -273,8 +278,13 @@ Singleton {
     if (it.kind === "chain-apps") { showApps(screenName); return }
     if (it.kind === "chain-power") { showPower(screenName); return }
 
-    runAction(it.kind, it.payload)
+    // Close the current overlay before spawning an action. Some actions open a
+    // dmenu immediately; hiding afterward races with that new menu and can
+    // leave only the full-screen layer visible.
+    const kind = it.kind
+    const payload = it.payload
     hide()
+    runAction(kind, payload)
   }
 
   function cancelCurrent() {
@@ -303,6 +313,14 @@ Singleton {
 
   ListModel { id: itemsModel }
   ListModel { id: filteredModel }
+
+  Connections {
+    target: DesktopEntries.applications
+
+    function onValuesChanged() {
+      if (root.visible && root.mode === "apps") root.populateApps()
+    }
+  }
 
   Process { id: spawnProcess }
   Process { id: powerProcess }

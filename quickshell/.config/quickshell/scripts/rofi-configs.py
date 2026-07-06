@@ -30,7 +30,7 @@ if not path:
     exit(1)
 
 terminal = os.environ.get("TERMINAL", "foot")
-editor = os.environ.get("EDITOR", "emacsclient -c -a emacs")
+editor = os.environ.get("EDITOR", "nvim")
 
 # Terminal editors must run inside a terminal; GUI editors (emacsclient -c,
 # code, ...) are spawned directly. Decide by the editor's first token.

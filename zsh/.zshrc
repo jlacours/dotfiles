@@ -3,10 +3,9 @@
 # =========================
 
 # --- Environment Variables ---
-# Attach to the always-on Emacs daemon (systemd --user emacs.service).
-# -t: terminal frame; -a: fallback if no server running.
-export EDITOR="emacsclient -t -a 'emacs -nw'"
-export VISUAL="emacsclient -c -a 'emacs'"
+export EDITOR="nvim"
+export VISUAL="nvim"
+export SUDO_EDITOR="nvim"
 [[ -S "/run/user/$UID/gcr/ssh" ]] && export SSH_AUTH_SOCK="/run/user/$UID/gcr/ssh"
 
 # --- History ---
@@ -75,6 +74,7 @@ source_if_readable "$ZSH_PLUGIN_DIR/colorize/colorize.plugin.zsh"
 source_if_readable "$ZSH_PLUGIN_DIR/colored-man-pages/colored-man-pages.plugin.zsh"
 source_if_readable "$ZSH_PLUGIN_DIR/man/man.plugin.zsh"
 source_if_readable "$ZSH_PLUGIN_DIR/wallust/wallust.plugin.zsh"
+source_if_readable "$ZSH_PLUGIN_DIR/fzf-tab/fzf-tab.plugin.zsh"
 
 # command-not-found: source the platform handler when present.
 for command_not_found_file in \
@@ -304,28 +304,36 @@ set-full-prompt
 zstyle ':completion:*' verbose yes
 zstyle ':completion:*' auto-description 'specify: %d'
 
-# Fish-style fallback for commands with no completion function: when the
-# current word looks like a flag, build completions by parsing the command's
-# `--help` output (_gnu_generic); otherwise keep normal default completion.
-_help_fallback() {
-  if [[ $words[CURRENT] == -* ]]; then
-    _gnu_generic "$@" && return
-  fi
-  _default "$@"
-}
-compdef _help_fallback -default-
-
 # Remove ../ and ./ from completion results
 zstyle ':completion:*' special-dirs false
-zstyle ':completion:*' menu select
+zstyle ':completion:*' menu no
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
 zstyle ':completion:*' list-dirs-first true
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS} 'ma=48;5;238;38;5;15;1'
+# Native tmux completion documents every command; omit duplicate short aliases.
+zstyle ':completion:*:*:tmux:*:subcommands' mode 'commands'
 
 # Dart CLI Completion (if installed)
 [[ -f ~/.config/.dart-cli-completion/zsh-config.zsh ]] && . ~/.config/.dart-cli-completion/zsh-config.zsh || true
+
+# Keep Zsh's mature native completers, then use Carapace only to fill gaps.
+# Commands unsupported by both systems retain Zsh's fast built-in fallback.
+if command -v carapace >/dev/null 2>&1; then
+  typeset -A native_completers
+  native_completers=("${(@kv)_comps}")
+
+  source <(carapace _carapace zsh)
+
+  for completion_command completion_function in "${(@kv)native_completers}"; do
+    _comps[$completion_command]=$completion_function
+  done
+  unset native_completers completion_command completion_function
+fi
+
+source_if_readable "$HOME/.zfunc/_opencode"
+source_if_readable "$HOME/.zfunc/_claude"
 
 # --- FZF Setup ---
 unset FZF_DEFAULT_OPTS
