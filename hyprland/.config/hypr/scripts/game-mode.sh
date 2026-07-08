@@ -8,10 +8,11 @@ MANAGED_UNITS=(
   mcp-memory.service
   mcp-searxng.service
   mcp-time.service
-  mcp-bridge.service
   searxng.service
+  searxng-vpn.service
   hermes-gateway.service
   signal-cli-hermes.service
+  hsd-web.service
 )
 
 STATE_DIR="${HOME}/.local/state/game-mode"
@@ -89,9 +90,13 @@ game_mode_on() {
     notify-send -a "game-mode" -u normal "Game mode ON" "${body}"
   fi
 
-  # 8. Enable DND
+  # 8. Enable DND (must come after the notification above, since DND would
+  # suppress it). If this call fails, DND is not actually on, so notifications
+  # are still visible - fire a second one here so the failure isn't silently
+  # dropped into an errors array nobody sees.
   if ! "${QS_IPC}" notifications setDnd true 2>/dev/null; then
     errors+=("FAILED: enable DND via IPC")
+    notify-send -a "game-mode" -u critical "Game mode ON" "FAILED: enable DND via IPC"
   fi
 }
 
