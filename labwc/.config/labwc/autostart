@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Output layout: 4K UltraFine left at an exact 2560x1440 logical size, with
+# the 1080p display directly adjacent and bottom-aligned. Scale 1.6 is
+# quantized by wlroots and leaves a partial logical pixel that corrupts
+# DP-2's right edge.
+wlr-randr --output DP-2 --mode 3840x2160@60 --pos 0,0 --scale 1.5 \
+          --output HDMI-A-1 --mode 1920x1080@74.973 --pos 2560,360
+
+# Labwc imports its DRM-session environment into D-Bus and systemd before this
+# script runs. Restart portals so a lingering user manager cannot retain the
+# backend or Wayland socket from a previous compositor session.
+~/.config/session/reset-display-services.sh
+
+# Session service: clipboard history. The Win95 Quickshell profile owns the
+# notification D-Bus service, and the shared display reset helper starts the
+# single polkit agent after importing this session.
+wl-paste --watch cliphist store >/dev/null 2>&1 &
+
+# Tray (SNI): network applet. More candidates as needs appear.
+nm-applet --indicator >/dev/null 2>&1 &
+
+# Restore the selected Labwc/GTK/Qt Win95 variant without editing tracked
+# config files. Do this before launching Quickshell or ordinary applications.
+~/.config/labwc/scripts/win95-mode.sh restore >/dev/null 2>&1
+
+# Win95 desktop and taskbar (quickshell variant lives in
+# ~/.config/quickshell/win95/).
+~/.config/quickshell/scripts/launch.sh win95 >/dev/null 2>&1 &
+
+# Match Hyprland's 15-minute monitor timeout without importing hyprctl calls.
+hypridle -c "$HOME/.config/labwc/hypridle.conf" >/dev/null 2>&1 &

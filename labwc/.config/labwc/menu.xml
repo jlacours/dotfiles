@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<openbox_menu>
+  <menu id="root-menu" label="labwc">
+    <item label="Terminal">
+      <action name="Execute" command="foot" />
+    </item>
+    <item label="Web browser">
+      <action name="Execute" command="zen-browser" />
+    </item>
+    <item label="Emacs">
+      <action name="Execute" command="emacsclient -c" />
+    </item>
+    <item label="File manager">
+      <action name="Execute" command="pcmanfm" />
+    </item>
+    <item label="Applications">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh startmenu openPrograms" />
+    </item>
+    <item label="Favorites">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openFavorites &quot;&quot;" />
+    </item>
+    <item label="Tools">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openTools &quot;&quot;" />
+    </item>
+    <separator />
+    <menu id="theme-menu" label="Theme">
+      <item label="Light">
+        <action name="Execute" command="~/.config/labwc/scripts/win95-mode.sh light" />
+      </item>
+      <item label="Dark">
+        <action name="Execute" command="~/.config/labwc/scripts/win95-mode.sh dark" />
+      </item>
+    </menu>
+    <menu id="shot-menu" label="Screenshot">
+      <item label="Full screen">
+        <action name="Execute" command="~/.config/labwc/scripts/screenshot.sh full" />
+      </item>
+      <item label="Region">
+        <action name="Execute" command="~/.config/labwc/scripts/screenshot.sh region-save" />
+      </item>
+    </menu>
+    <!-- Built-in: all windows across workspaces -->
+    <menu id="client-list-combined-menu" />
+    <separator />
+    <item label="Reconfigure">
+      <action name="Reconfigure" />
+    </item>
+    <item label="Restart taskbar">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-switch.sh restart" />
+    </item>
+    <separator />
+    <item label="Exit labwc">
+      <action name="Exit" />
+    </item>
+  </menu>
+</openbox_menu>

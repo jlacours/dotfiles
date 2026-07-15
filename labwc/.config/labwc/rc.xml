@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<labwc_config>
+  <!-- <core> intentionally left at defaults: server decorations, gap 0,
+       adaptiveSync/allowTearing off (60 Hz monitors, no usable VRR path). -->
+
+  <placement>
+    <policy>automatic</policy>
+  </placement>
+
+  <!-- Alt-tab: defaults (classic list, live preview, focus order),
+       OSD only on the monitor under the cursor. -->
+  <windowSwitcher>
+    <osd output="cursor" />
+  </windowSwitcher>
+
+  <!-- Negative strength = magnetic snap onto edges AND resistance pushing
+       through them (positive would be resistance only). -->
+  <resistance>
+    <screenEdgeStrength>-20</screenEdgeStrength>
+    <windowEdgeStrength>-20</windowEdgeStrength>
+  </resistance>
+
+  <!-- Click-to-focus (followMouse default no); focused window always on top. -->
+  <focus>
+    <raiseOnFocus>yes</raiseOnFocus>
+  </focus>
+
+  <!-- <snapping> left at defaults: 10px drag-snap range, overlay preview on,
+       drag-to-top maximizes. -->
+
+  <!-- Workspaces span all outputs. Switch/send keybinds live in <keyboard>. -->
+  <desktops>
+    <names>
+      <name>web</name>
+      <name>code</name>
+      <name>game</name>
+      <name>misc</name>
+    </names>
+  </desktops>
+
+  <!-- win95-current is a runtime symlink switched between the tracked light
+       and dark variants. The source rc.xml therefore stays immutable when the
+       user changes mode. Titlebar text remains bold, as tradition demands. -->
+  <theme>
+    <name>win95-current</name>
+    <cornerRadius>0</cornerRadius>
+    <font>
+      <name>Comic Code</name>
+      <size>10</size>
+    </font>
+    <font place="ActiveWindow">
+      <name>Comic Code</name>
+      <size>10</size>
+      <weight>bold</weight>
+    </font>
+    <font place="InactiveWindow">
+      <name>Comic Code</name>
+      <size>10</size>
+      <weight>bold</weight>
+    </font>
+  </theme>
+
+  <!-- <default/> keeps the stock binds (A-Tab switcher, W-d show desktop,
+       A-F4 close, W-arrows snap...); everything below layers Hyprland
+       muscle memory on top. Later keybinds win on conflict. -->
+  <keyboard>
+    <default />
+    <numlock>on</numlock>
+
+    <!-- Launchers -->
+    <keybind key="W-Return">
+      <action name="Execute" command="foot" />
+    </keybind>
+    <keybind key="W-S-Return">
+      <action name="Execute" command="foot --app-id foot-scratchpad -o colors-dark.alpha=0.9" />
+    </keybind>
+    <!-- C-Escape: the authentic Win95 Start-menu key. W-space is off limits,
+         it belongs to the XKB layout toggle (grp:win_space_toggle). -->
+    <keybind key="C-Escape">
+      <action name="Execute" command="qs -p ~/.config/quickshell/win95 ipc call startmenu toggle" />
+    </keybind>
+    <!-- Used by the Quickshell desktop surface to open Labwc's root menu at
+         the pointer without replacing it with a fake QML menu. -->
+    <keybind key="W-S-F12">
+      <action name="ShowMenu" menu="root-menu" />
+    </keybind>
+    <keybind key="W-w">
+      <action name="Execute" command="zen-browser" />
+    </keybind>
+    <keybind key="W-a">
+      <action name="Execute" command="emacsclient -c" />
+    </keybind>
+    <keybind key="W-e">
+      <action name="Execute" command="foot -e ranger" />
+    </keybind>
+    <keybind key="W-S-e">
+      <action name="Execute" command="pcmanfm" />
+    </keybind>
+    <keybind key="W-S-a">
+      <action name="Execute" command="foot --app-id nvim -e nvim" />
+    </keybind>
+    <keybind key="W-S-w">
+      <action name="Execute" command="zen-browser --new-window" />
+    </keybind>
+
+    <!-- Quickshell launchers. The Win95 profile provides its own exact-size
+         native popup; no Rofi process and no fullscreen transparent layer. -->
+    <keybind key="W-d">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh startmenu openPrograms" />
+    </keybind>
+    <keybind key="W-F3">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openApps &quot;&quot;" />
+    </keybind>
+    <keybind key="W-b">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openFavorites &quot;&quot;" />
+    </keybind>
+    <keybind key="W-s">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openTools &quot;&quot;" />
+    </keybind>
+    <keybind key="W-S-q">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openPower &quot;&quot;" />
+    </keybind>
+    <keybind key="W-v">
+      <action name="Execute" command="bash ~/.config/quickshell/scripts/cliphist.sh" />
+    </keybind>
+    <keybind key="W-F1">
+      <action name="Execute" command="python3 ~/.config/labwc/scripts/keybinds.py" />
+    </keybind>
+    <keybind key="W-S-slash">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-switch.sh restart" />
+    </keybind>
+
+    <!-- Labwc already has Alt-Tab; these preserve the Super-key muscle
+         memory while using compositor-native window switching. -->
+    <keybind key="W-Tab">
+      <action name="NextWindow" workspace="current" output="all" />
+    </keybind>
+    <keybind key="W-S-Tab">
+      <action name="PreviousWindow" workspace="current" output="all" />
+    </keybind>
+
+    <!-- Window verbs -->
+    <keybind key="W-q">
+      <action name="Close" />
+    </keybind>
+    <keybind key="W-f">
+      <action name="ToggleFullscreen" />
+    </keybind>
+    <keybind key="W-S-f">
+      <action name="ToggleMaximize" />
+    </keybind>
+
+    <!-- Workspaces: W-1..4 go, W-S-1..4 send, W-z/W-x cycle -->
+    <keybind key="W-1">
+      <action name="GoToDesktop" to="1" />
+    </keybind>
+    <keybind key="W-2">
+      <action name="GoToDesktop" to="2" />
+    </keybind>
+    <keybind key="W-3">
+      <action name="GoToDesktop" to="3" />
+    </keybind>
+    <keybind key="W-4">
+      <action name="GoToDesktop" to="4" />
+    </keybind>
+    <keybind key="W-S-1">
+      <action name="SendToDesktop" to="1" />
+    </keybind>
+    <keybind key="W-S-2">
+      <action name="SendToDesktop" to="2" />
+    </keybind>
+    <keybind key="W-S-3">
+      <action name="SendToDesktop" to="3" />
+    </keybind>
+    <keybind key="W-S-4">
+      <action name="SendToDesktop" to="4" />
+    </keybind>
+    <keybind key="W-z">
+      <action name="GoToDesktop" to="left" />
+    </keybind>
+    <keybind key="W-x">
+      <action name="GoToDesktop" to="right" />
+    </keybind>
+
+    <!-- Audio -->
+    <keybind key="XF86AudioRaiseVolume">
+      <action name="Execute" command="wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 1%+" />
+    </keybind>
+    <keybind key="XF86AudioLowerVolume">
+      <action name="Execute" command="wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-" />
+    </keybind>
+    <keybind key="XF86AudioMute">
+      <action name="Execute" command="wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle" />
+    </keybind>
+    <keybind key="W-m">
+      <action name="Execute" command="wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle" />
+    </keybind>
+    <keybind key="W-S-m">
+      <action name="Execute" command="foot -e pulsemixer" />
+    </keybind>
+    <keybind key="W-C-m">
+      <action name="Execute" command="~/.local/bin/cycle-sink" />
+    </keybind>
+
+    <!-- Portable helpers retained from the Hyprland session. -->
+    <keybind key="W-i">
+      <action name="Execute" command="~/.config/quickshell/scripts/idle-inhibit.sh toggle" />
+    </keybind>
+    <keybind key="W-C-o">
+      <action name="Execute" command="~/.local/bin/tts-selection" />
+    </keybind>
+    <keybind key="W-F12">
+      <action name="Execute" command="sh -c 'loginctl lock-session; sleep 1; wlopm --off &quot;*&quot;'" />
+    </keybind>
+
+    <!-- Screenshots: Print = full file, S-Print = region file,
+         C-Print = region clipboard. The helper confirms each result. -->
+    <keybind key="Print">
+      <action name="Execute" command="~/.config/labwc/scripts/screenshot.sh full" />
+    </keybind>
+    <keybind key="S-Print">
+      <action name="Execute" command="~/.config/labwc/scripts/screenshot.sh region-save" />
+    </keybind>
+    <keybind key="C-Print">
+      <action name="Execute" command="~/.config/labwc/scripts/screenshot.sh region-copy" />
+    </keybind>
+
+    <!-- Theme: flip win95 light/dark everywhere (labwc + wallust + bar) -->
+    <keybind key="W-S-semicolon">
+      <action name="Execute" command="~/.config/labwc/scripts/win95-mode.sh" />
+    </keybind>
+  </keyboard>
+
+  <!-- Defaults already give W-Left drag = move, W-Right drag = resize,
+       double-click titlebar = maximize. Added: scroll on the desktop
+       cycles workspaces, Openbox tradition. -->
+  <mouse>
+    <default />
+    <context name="Desktop">
+      <!-- Labwc defaults open root-menu on Left, Middle, and Right. Keep only
+           Right as a fallback when the Quickshell desktop is not running. -->
+      <mousebind button="Left" action="Press" />
+      <mousebind button="Middle" action="Press" />
+      <mousebind button="Right" action="Press">
+        <action name="ShowMenu" menu="root-menu" />
+      </mousebind>
+      <mousebind direction="Up" action="Scroll">
+        <action name="GoToDesktop" to="left" />
+      </mousebind>
+      <mousebind direction="Down" action="Scroll">
+        <action name="GoToDesktop" to="right" />
+      </mousebind>
+    </context>
+  </mouse>
+
+  <!-- <libinput> left at defaults: flat desktop mouse, no accel/scroll
+       tweaks needed (Hyprland ran sensitivity 0 / default profile too). -->
+
+  <!-- <windowRules> empty on purpose. The mechanism, when needed:
+       <windowRules>
+         <windowRule identifier="app-id-glob" serverDecoration="yes" ... />
+       </windowRules>
+       First candidates: CSD holdouts that refuse the win95 titlebar. -->
+</labwc_config>

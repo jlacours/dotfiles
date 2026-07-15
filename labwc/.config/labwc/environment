@@ -1,0 +1,11 @@
+# Preserve the two keyboard layouts used on this machine without importing
+# compositor-specific Hyprland settings.
+XKB_DEFAULT_LAYOUT=us,ca(multix)
+XKB_DEFAULT_OPTIONS=caps:escape,grp:win_space_toggle,fkeys:basic_13-24
+
+# Application chrome belongs to this session. GTK follows a runtime symlink
+# switched by win95-mode.sh; Qt uses its built-in square Windows control style
+# and reads the same GTK palette through the gtk3 platform theme.
+GTK_THEME=win95-current
+QT_QPA_PLATFORMTHEME=gtk3
+QT_STYLE_OVERRIDE=Windows
