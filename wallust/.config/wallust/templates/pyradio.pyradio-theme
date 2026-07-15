@@ -1,0 +1,18 @@
+Stations            {{foreground}} {{background}}
+Active Station      {{color2}}
+
+Status Bar          {{foreground}} {{color1}}
+
+Normal Cursor       {{foreground}} {{color1}}
+
+Active Cursor       {{background}} {{color2}}
+
+Edit Cursor         {{background}} {{color3}}
+
+Extra Func          {{color4}}
+
+PyRadio URL         {{color5}}
+
+Messages Border     {{color2}}
+
+transparency        0

@@ -1,0 +1,400 @@
+// ====================
+// WINDOW PROPERTIES
+// ====================
+
+windowBg: {{background}};                   // Main background color for windows
+windowFg: {{foreground}};                   // Main text color
+windowBgOver: {{color0}};                   // Background when hovering over items (using color0 as lighter bg)
+windowBgRipple: {{color8}};                 // Ripple effect color on click (color8 is bright black)
+windowFgOver: {{foreground}};               // Text color when hovering
+windowSubTextFg: {{color8}};                // Secondary text (timestamps, statuses) - using bright black
+windowSubTextFgOver: {{color7}};            // Secondary text on hover (color7 is normal white/gray)
+windowBoldFg: {{foreground}};               // Bold text color
+windowBoldFgOver: {{foreground}};           // Bold text on hover
+windowBgActive: {{color2}};                 // Active element background (selected items) - using green
+windowFgActive: {{background}};             // Active element text color - inverted for contrast
+windowActiveTextFg: {{color4}};             // Active links and interactive text - blue
+windowShadowFg: {{color0}}18;               // Shadow color with 18 alpha for transparency
+windowShadowFgFallback: {{color8}};         // Fallback shadow for systems without transparency
+
+// ====================
+// BORDERS & DIVIDERS
+// ====================
+
+shadowFg: {{color0}}18;                     // General shadow color with transparency
+slideFadeOutBg: {{color0}}3c;               // Fade overlay when sliding panels (3c = ~24% opacity)
+slideFadeOutShadowFg: {{color0}};           // Shadow during slide animations
+
+// ====================
+// TOP BAR (Header)
+// ====================
+
+topBarBg: {{background}};                       // Top bar background color - using blue
+
+// ====================
+// MENU PROPERTIES
+// ====================
+
+menuBg: {{background}};                     // Menu background
+menuBgOver: {{color0}};                     // Menu item background on hover
+menuBgRipple: {{color8}};                   // Menu ripple effect
+menuIconFg: {{color8}};                     // Menu icon color
+menuIconFgOver: {{color7}};                 // Menu icon on hover
+menuSubmenuArrowFg: {{color8}};             // Submenu arrow color
+menuFgDisabled: {{color8}}80;               // Disabled menu item text with 80 alpha (~50% opacity)
+menuSeparatorFg: {{color8}};                // Menu separator line color
+
+// ====================
+// SCROLLBAR
+// ====================
+
+scrollBarBg: {{color0}}1a;                  // Scrollbar track background (1a = ~10% opacity)
+scrollBarBgOver: {{color0}}2a;              // Scrollbar track on hover (2a = ~16% opacity)
+scrollBg: {{color8}}4c;                     // Scrollbar thumb (4c = ~30% opacity)
+scrollBgOver: {{color8}}7f;                 // Scrollbar thumb on hover (7f = ~50% opacity)
+
+// ====================
+// INPUT FIELDS
+// ====================
+
+filterInputBorderFg: {{color8}};            // Input field border color
+filterInputInactiveBg: {{color0}};          // Inactive input background
+filterInputActiveBg: {{background}};        // Active input background
+checkboxFg: {{color8}};                     // Checkbox border when unchecked
+sliderBgInactive: {{color8}};               // Slider track (inactive)
+sliderBgActive: {{color4}};                 // Slider track (active part) - blue
+
+// ====================
+// BUTTONS
+// ====================
+
+activeButtonBg: {{color4}};                 // Active button background - blue
+activeButtonBgOver: {{color12}};            // Active button on hover - bright blue
+activeButtonBgRipple: {{color4}}cc;         // Active button ripple (cc = ~80% opacity)
+activeButtonFg: {{background}};             // Active button text - inverted
+activeButtonFgOver: {{background}};         // Active button text on hover
+activeButtonSecondaryFg: {{background}}cc;  // Secondary text on active button
+activeButtonSecondaryFgOver: {{background}};// Secondary text on active button hover
+activeLineFg: {{color4}};                   // Active line indicator - blue
+activeLineFgError: {{color1}};              // Error line indicator - red
+
+// ====================
+// LIGHT BUTTON (secondary buttons)
+// ====================
+
+lightButtonBg: {{background}};              // Light button background
+lightButtonBgOver: {{color0}};              // Light button on hover
+lightButtonBgRipple: {{color8}};            // Light button ripple
+lightButtonFg: {{foreground}};              // Light button text
+lightButtonFgOver: {{foreground}};          // Light button text on hover
+
+// ====================
+// ATTENTION/WARNING
+// ====================
+
+attentionButtonFg: {{color1}};              // Attention button text - red
+attentionButtonBgOver: {{color9}}1a;        // Attention button hover bg (color9 = bright red)
+attentionButtonBgRipple: {{color9}}33;      // Attention button ripple
+
+// ====================
+// OUTLINE BUTTON
+// ====================
+
+outlineButtonBg: {{background}};            // Outline button background
+outlineButtonBgOver: {{color0}};            // Outline button hover
+outlineButtonOutlineFg: {{color4}};         // Outline button border - blue
+outlineButtonBgRipple: {{color4}}1a;        // Outline button ripple
+
+// ====================
+// CHAT/MESSAGE LIST
+// ====================
+
+dialogsBg: {{background}};                  // Chat list background
+dialogsNameFg: {{foreground}};              // Chat name text
+dialogsChatIconFg: {{color8}};              // Chat icon color
+dialogsDateFg: {{color8}};                  // Message date/time
+dialogsTextFg: {{color7}};                  // Last message preview text
+dialogsTextFgService: {{color4}};           // Service message text - blue
+dialogsDraftFg: {{color1}};                 // Draft indicator - red
+dialogsVerifiedIconBg: {{color4}};          // Verified badge background - blue
+dialogsVerifiedIconFg: {{background}};      // Verified badge checkmark
+dialogsSendingIconFg: {{color8}};           // Sending status icon
+dialogsSentIconFg: {{color2}};              // Sent status icon - green
+dialogsUnreadBg: {{color4}};                // Unread badge background - blue
+dialogsUnreadBgMuted: {{color8}};           // Muted unread badge
+dialogsUnreadFg: {{background}};            // Unread badge text
+
+// Chat item when selected
+dialogsBgOver: {{color0}};                  // Chat item hover background
+dialogsNameFgOver: {{foreground}};          // Chat name on hover
+dialogsChatIconFgOver: {{color7}};          // Chat icon on hover
+dialogsDateFgOver: {{color7}};              // Date on hover
+dialogsTextFgOver: {{color7}};              // Text on hover
+
+// Active (selected) chat
+dialogsBgActive: {{color4}};                // Selected chat background - blue
+dialogsNameFgActive: {{background}};        // Selected chat name
+dialogsChatIconFgActive: {{background}};    // Selected chat icon
+dialogsDateFgActive: {{background}}cc;      // Selected chat date
+dialogsTextFgActive: {{background}}cc;      // Selected chat text
+
+// ====================
+// RIPPLE EFFECTS
+// ====================
+
+dialogsRippleBg: {{color8}}33;              // Chat list ripple effect
+dialogsRippleBgActive: {{background}}33;    // Active chat ripple
+
+// ====================
+// HISTORY/MESSAGE AREA
+// ====================
+
+historyBg: {{background}};                  // Chat background
+windowBgImage: none;                        // Remove background image
+chatBgImage: none;                          // Remove chat background image
+historyBgImage: none;                       // Remove history background image
+historyTextInFg: {{foreground}};            // Incoming message text
+historyTextOutFg: {{foreground}};           // Outgoing message text
+historyTextInFgSelected: {{background}};
+historyLinkInFg: {{color4}};                // Links in incoming messages - blue
+historyLinkOutFg: {{color4}};               // Links in outgoing messages - blue
+historyFileInIconFg: {{color4}};            // File icon in incoming
+historyFileOutIconFg: {{color2}};           // File icon in outgoing - green
+historyFileInRadialFg: {{background}};      // File progress in incoming
+historyFileOutRadialFg: {{background}};     // File progress in outgoing
+historyComposeAreaBg: {{background}};
+
+// ====================
+// MESSAGE BUBBLES - INCOMING
+// ====================
+
+msgInBg: {{color0}};                        // Incoming message background
+msgInBgSelected: {{color2}};              // Incoming message when selected
+msgInShadow: {{color0}}33;                  // Incoming message shadow
+msgInDateFg: {{color8}};                    // Incoming message timestamp
+msgInDateFgSelected: {{color7}};            // Incoming timestamp when selected
+msgInServiceFg: {{color8}};                 // Service text in incoming
+msgInServiceFgSelected: {{color7}};         // Service text in incoming selected
+
+// ====================
+// MESSAGE BUBBLES - OUTGOING
+// ====================
+
+msgOutBg: {{color4}};                       // Outgoing message background - blue
+msgOutBgSelected: {{color12}};              // Outgoing message when selected - bright blue
+msgOutShadow: {{color4}}33;                 // Outgoing message shadow
+msgOutDateFg: {{background}}cc;             // Outgoing message timestamp
+msgOutDateFgSelected: {{background}};       // Outgoing timestamp when selected
+msgOutServiceFg: {{background}}cc;          // Service text in outgoing
+msgOutServiceFgSelected: {{background}};    // Service text in outgoing selected
+
+// ====================
+// MESSAGE SELECTION
+// ====================
+
+msgSelectOverlay: {{color4}}4c;             // Message selection overlay
+msgStickerOverlay: {{color0}}cc;            // Sticker message overlay
+
+// ====================
+// FILE MESSAGES
+// ====================
+
+msgFileThumbLinkInFg: {{color4}};           // File thumb link incoming - blue
+msgFileThumbLinkOutFg: {{background}};      // File thumb link outgoing
+msgFileBg: {{color4}};                      // File background - blue
+msgFileBgOver: {{color12}};                 // File background hover
+msgFileBgSelected: {{color12}};             // File background selected
+
+// ====================
+// MEDIA PLAYER
+// ====================
+
+mediaPlayerBg: {{background}};              // Media player background
+mediaPlayerActiveFg: {{color4}};            // Active controls - blue
+mediaPlayerInactiveFg: {{color8}};          // Inactive controls
+mediaPlayerDisabledFg: {{color8}}80;        // Disabled controls
+
+// ====================
+// MEDIA VIEWER (when you open images)
+// ====================
+
+mediaviewFileBg: {{background}};            // Media viewer file background
+mediaviewFileNameFg: {{foreground}};        // Media viewer file name
+mediaviewFileSizeFg: {{color8}};            // Media viewer file size
+mediaviewFileRedCornerFg: {{color1}};       // Media viewer corner icon - red
+mediaviewFileYellowCornerFg: {{color3}};    // Media viewer corner icon - yellow
+mediaviewFileGreenCornerFg: {{color2}};     // Media viewer corner icon - green
+mediaviewFileBlueCornerFg: {{color4}};      // Media viewer corner icon - blue
+mediaviewMenuBg: {{background}}e6;          // Media viewer menu (e6 = ~90% opacity)
+mediaviewMenuBgOver: {{color0}}e6;          // Media viewer menu hover
+mediaviewMenuBgRipple: {{color8}}4c;        // Media viewer menu ripple
+mediaviewMenuFg: {{foreground}};            // Media viewer menu text
+
+// ====================
+// NOTIFICATIONS
+// ====================
+
+notificationBg: {{background}};             // Notification background
+notificationSampleUserpicFg: {{color8}};    // Sample userpic in notification
+notificationSampleCloseFg: {{color8}};      // Close button in notification
+notificationSampleTextFg: {{foreground}};   // Notification text
+notificationSampleNameFg: {{color4}};       // Name in notification - blue
+
+// ====================
+// MAIN MENU (hamburger menu)
+// ====================
+
+mainMenuBg: {{background}};                 // Main menu background
+mainMenuCoverBg: {{color4}};                // Main menu header background - blue
+mainMenuCoverFg: {{background}};            // Main menu header text
+mainMenuCloudFg: {{background}};            // Cloud icon in menu
+mainMenuCloudBg: {{color4}}33;              // Cloud icon background
+
+// ====================
+// INTRO SCREEN
+// ====================
+
+introBg: {{background}};                    // Intro screen background
+introTitleFg: {{foreground}};               // Intro title text
+introDescriptionFg: {{color7}};             // Intro description text
+introErrorFg: {{color1}};                   // Intro error text - red
+introCoverTopBg: {{color4}};                // Intro cover top - blue
+introCoverBottomBg: {{color12}};            // Intro cover bottom - bright blue
+introCoverIconsFg: {{background}};          // Intro cover icons
+introCoverPlaneTrace: {{background}}4c;     // Intro plane animation trace
+introCoverPlaneInner: {{background}};       // Intro plane inner
+introCoverPlaneOuter: {{background}};       // Intro plane outer
+introCoverPlaneTop: {{background}};         // Intro plane top
+
+// ====================
+// PROFILE COLORS (used in profile pages)
+// ====================
+
+profileVerifiedCheckBg: {{background}};     // Verified check background
+profileVerifiedCheckFg: {{color4}};         // Verified check icon - blue
+profileAdminStartFg: {{color8}};            // Admin star color
+
+// ====================
+// SIDE BUTTON (settings, search buttons)
+// ====================
+
+sideBarBg: {{background}};                  // Sidebar background
+sideBarBgActive: {{color0}};                // Sidebar active item
+sideBarBgRipple: {{color8}}33;              // Sidebar ripple
+sideBarTextFg: {{color7}};                  // Sidebar text
+sideBarTextFgActive: {{color4}};            // Sidebar active text - blue
+sideBarIconFg: {{color8}};                  // Sidebar icons
+sideBarIconFgActive: {{color4}};            // Sidebar active icons - blue
+
+// ====================
+// SETTINGS SECTIONS
+// ====================
+
+boxBg: {{background}};                      // Settings box background
+boxTextFg: {{foreground}};                  // Settings text
+boxTextFgGood: {{color2}};                  // Good status text - green
+boxTextFgError: {{color1}};                 // Error text - red
+boxTitleFg: {{foreground}};                 // Settings title
+boxSearchBg: {{color0}};                    // Search field background
+boxTitleAdditionalFg: {{color8}};           // Additional title info
+boxTitleCloseFg: {{color8}};                // Close button
+boxTitleCloseFgOver: {{color7}};            // Close button hover
+
+// ====================
+// LAYER BOX (popup overlays)
+// ====================
+
+layerBg: {{color0}}cc;                      // Layer overlay background
+
+// ====================
+// CANCELLED ATTACHMENT
+// ====================
+
+cancelIconFg: {{color8}};                   // Cancel icon color
+cancelIconFgOver: {{color1}};               // Cancel icon hover - red
+
+// ====================
+// CALL WINDOW
+// ====================
+
+callBg: {{background}}e6;                   // Call window background
+callNameFg: {{foreground}};                 // Call participant name
+callFingerprintFg: {{foreground}}cc;        // Call fingerprint
+callStatusFg: {{color7}};                   // Call status text
+callIconFg: {{background}};                 // Call icon color
+callAnswerBg: {{color2}};                   // Answer button - green
+callAnswerRipple: {{color10}}4c;            // Answer ripple - bright green
+callAnswerBgOther: {{color4}};              // Other answer button - blue
+callAnswerRippleOther: {{color12}}4c;       // Other answer ripple
+callHangupBg: {{color1}};                   // Hangup button - red
+callHangupRipple: {{color9}}4c;             // Hangup ripple - bright red
+callCancelBg: {{background}};               // Cancel button
+callCancelFg: {{color1}};                   // Cancel button text - red
+callCancelRipple: {{color1}}1a;             // Cancel ripple
+callMuteRipple: {{color8}}33;               // Mute ripple
+
+// ====================
+// REPORT BOX
+// ====================
+
+reportSpamBg: {{color1}};                   // Report spam background - red
+reportSpamFg: {{background}};               // Report spam text
+
+// ====================
+// TOOLTIP
+// ====================
+
+tooltipBg: {{color0}}e6;                    // Tooltip background
+tooltipFg: {{foreground}};                  // Tooltip text
+tooltipBorderFg: {{color8}};                // Tooltip border
+
+// ====================
+// TITLE BUTTON (window controls)
+// ====================
+
+titleBg: {{background}};                    // Title bar background
+titleShadow: {{color0}}33;                  // Title bar shadow
+titleButtonFg: {{color8}};                  // Title button color
+titleButtonBgOver: {{color0}};              // Title button hover
+titleButtonFgOver: {{foreground}};          // Title button text hover
+titleButtonCloseBgOver: {{color1}};         // Close button hover - red
+titleButtonCloseFgOver: {{background}};     // Close button text hover
+
+// ====================
+// EMOJI PANEL
+// ====================
+
+emojiPanBg: {{background}};                 // Emoji panel background
+emojiPanCategories: {{color0}};             // Emoji categories bar
+emojiPanHeaderFg: {{color7}};               // Emoji header text
+emojiPanHeaderBg: {{background}};           // Emoji header background
+stickerPanDeleteBg: {{color0}}cc;           // Sticker delete background
+stickerPanDeleteFg: {{foreground}};         // Sticker delete icon
+stickerPreviewBg: {{background}}e6;         // Sticker preview background
+
+// ====================
+// STATUS/TYPING INDICATORS
+// ====================
+
+historyTypingBg: {{color4}}4c;              // Typing indicator background - blue
+historyPeerUserpicFg: {{background}};       // Peer userpic text color
+
+// ====================
+// CORNERS & BORDERS (adjust for no rounding if needed)
+// ====================
+
+// Note: Telegram Desktop doesn't have direct properties for corner radius
+// The rounded corners are hardcoded in the application
+// However, shadow and border colors still apply
+
+// ====================
+// SPECIAL COLORS
+// ====================
+
+placeholderFg: {{color8}};                  // Placeholder text color
+placeholderFgActive: {{color7}};            // Active placeholder
+
+
+// ====================
+// END OF TEMPLATE
+// ====================

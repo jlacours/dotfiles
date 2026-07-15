@@ -1,0 +1,16 @@
+# Syntax: client.<class> <border> <background> <text> <indicator> <child_border>
+
+# Focused window - green accent for active
+client.focused          {{color2}} {{background}} {{foreground}} {{color5}} {{color2}}
+
+# Focused but on inactive output - muted gray
+client.focused_inactive {{color8}} {{color0}} {{foreground}} {{color8}} {{color8}}
+
+# Unfocused windows - subtle background tones
+client.unfocused        {{color0}} {{background}} {{color8}} {{color0}} {{color0}}
+
+# Urgent windows - red for attention
+client.urgent           {{color1}} {{color9}} {{foreground}} {{color9}} {{color1}}
+
+# Background fallback
+client.background       {{background}}

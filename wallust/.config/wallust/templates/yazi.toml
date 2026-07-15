@@ -1,0 +1,14 @@
+[manager]
+cwd = { fg = "{{color6}}" }
+hovered         = { fg = "{{background}}", bg = "{{color4}}", bold = true }
+selection       = { fg = "{{background}}", bg = "{{color2}}", bold = true }
+find_keyword    = { fg = "{{color3}}", italic = true }
+
+[status]
+mode_normal = { fg = "{{background}}", bg = "{{color4}}", bold = true }
+mode_select = { fg = "{{background}}", bg = "{{color2}}", bold = true }
+mode_unset  = { fg = "{{background}}", bg = "{{color1}}", bold = true }
+
+[input]
+border   = { fg = "{{color4}}" }
+title    = { fg = "{{color4}}" }

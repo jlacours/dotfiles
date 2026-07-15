@@ -1,0 +1,31 @@
+backend = "fastresize"
+color_space = "lch"
+palette = "dark"
+check_contrast = true
+
+[templates]
+emacs = { template = 'emacs.el', target = '~/.cache/wallust/juju-theme.el' }
+neovim = { template = 'neovim.lua', target = '~/.config/nvim/colors/wallust.lua' }
+neovim-lualine = { template = 'lualine.lua', target = '~/.config/nvim/lua/lualine/themes/wallust.lua' }
+waybar = { template = 'waybar.css', target = '~/.config/waybar/wallust.css' }
+pywal = { template = 'pywal.json', target = '~/.cache/wal/colors.json' }
+pyradio = { template = 'pyradio.pyradio-theme', target = '~/.config/pyradio/themes/juju.pyradio-theme' }
+eww = { template = 'eww.scss', target = '~/.config/eww/wallust.scss'}
+telegram = { template = 'telegram.tdesktop-theme', target = '~/.local/share/TelegramDesktop/themes/wallust.tdesktop-theme' }
+qtile = { template = 'qtile.py', target = '~/.config/qtile/colors.py' }
+foot = { template = 'foot.ini', target = '~/.config/foot/colors.ini' }
+sway = { template = 'sway', target = '~/.config/sway/colors' }
+startpage = { template = 'startpage.css', target = '~/Projects/startpage/theme.css' }
+ghostty = { template = 'ghostty.conf', target = '~/.config/ghostty/themes/wallust.conf' }
+pi = { template = 'pi.json', target = '~/.pi/agent/themes/wallust.json' }
+hyprland = { template = 'hyprland.conf', target = '~/.config/hypr/themes/wallust.conf' }
+hyprlock = { template = 'hyprlock.conf', target = '~/.config/hypr/themes/wallust-lock.conf' }
+fzf = { template = 'colors.sh', target = '~/.cache/wallust/colors.sh' }
+neo-matrix = { template = 'neo-matrix.color', target = '~/.config/neo/colors' }
+quickshell = { template = 'quickshell-colors.js', target = '~/.config/quickshell/wallust.js' }
+# real file (not a symlink) inside the square config root, so quickshell's
+# live-reload watcher sees the change and hot-reloads the bar
+quickshell-square = { template = 'quickshell-colors.js', target = '~/.config/quickshell/square/wallust.js' }
+gtk3 = { template = 'gtk.css.template', target = '~/.config/gtk-3.0/gtk.css' }
+gtk4 = { template = 'gtk.css.template', target = '~/.config/gtk-4.0/gtk.css' }
+zed = { template = 'zed.json', target = '~/.config/zed/themes/wallust.json' }
