@@ -1,4 +1,6 @@
 **/wallust.*
+!nvim/.config/nvim/lua/config/wallust.lua
+!wallust/.config/wallust/wallust.toml
 legacy/rofi/.config/rofi/themes/wallust-todo.rasi
 **/.claude/
 **/.codex
@@ -20,6 +22,7 @@ __pycache__/
 
 # Local screenshots and recordings can capture personal information
 assets/screenshots/
+quickshell/.config/quickshell/win95/assets/mystery-wallpaper-dark-4k.jpg
 *.screencast
 *.cast
 pi-session-*.html
@@ -28,6 +31,8 @@ pi-session-*.html
 .env
 .env.*
 *.local
+!labwc/.local/
+!labwc/.local/**
 *.sqlite
 *.sqlite3
 *.db
