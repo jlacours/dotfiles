@@ -17,11 +17,13 @@ This package is a Stow package for the Quickshell bar config at:
   rooted at `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`,
   `qmldir`, and `wallust.js`).
 - **`win95/` is the live Labwc variant.** It provides the teal desktop and
-  selection marquee, bottom taskbar, native popup Start menu,
+  selection marquee, bottom taskbar, exact-size Start window,
   desktop-entry-aware task icons, tray, clock, and its own exact-size
   application/favorites/tools/power/dmenu popup. It adapts the square menu's
-  useful state shape but does not import Hyprland-specific menu state or use a
-  fullscreen transparent dismissal surface.
+  useful state shape but does not import Hyprland-specific menu state. Its
+  Programs cascade supports
+  type-ahead selection, and its desktop root menu opens a dedicated Win95
+  Display Properties wallpaper chooser rather than the shared dmenu surface.
 - `scripts/launch.sh` runs either variant with `quickshell -p`; `qs-switch.sh`
   can restart the current session, switch explicitly, or toggle between them.
 - **The classic variant is retired**, archived at `legacy/quickshell-classic/`
@@ -150,6 +152,58 @@ This package is a Stow package for the Quickshell bar config at:
   - weather hero card
   - compact system stats
 - But it should be cleaner and more Quickshell-like than the old row-heavy `eww` panel.
+
+## Labwc Start Menu Dismissal (recurring)
+
+Do not convert `win95/StartMenu.qml` back to `PopupWindow` merely because
+`grabFocus: true` promises outside-click dismissal. On the current stack
+(Quickshell 0.3.0, Qt Wayland 6.11, Labwc 0.20), the surface can be a valid
+`xdg_popup` with no fresh warnings and still remain mapped after an outside
+click. Start alone, the Programs cascade, and multi-monitor click-away must all
+be tested with real pointer input.
+
+The durable architecture is an exact-size `FloatingWindow`, never a fullscreen
+transparent input surface:
+
+- The window is always 498×560 so opening Programs never resizes a mapped
+  Wayland surface. Transparent pixels exist only inside that small Win95
+  silhouette and have a background `MouseArea` that closes the menu.
+- Labwc rules in `rc.xml` match the per-output window titles, remove server
+  decorations, omit them from the window switcher, fix their positions above
+  the 32px bar, and prevent accidental movement. `Bar.qml` filters those titles
+  out of its task buttons while leaving their foreign-toplevel handles visible.
+- A `Connections` object watches `ToplevelManager.activeToplevel`. After the
+  menu has received activation, another active toplevel or no active toplevel
+  closes the window; this covers clicks on client windows.
+- Desktop presses are already owned by the existing background-layer
+  `Desktop.qml`, so it emits `Win95MenuState.closeStartRequested`. Task buttons
+  and tray icons emit the same signal. Every per-output `StartMenu` listens and
+  closes, including clicks on another output. Do not expect Labwc's `Desktop`
+  mouse context to see presses consumed by the Quickshell desktop surface.
+- The `startmenu.hide` IPC performs the same close for scripts and diagnostics.
+- The exact output coordinates come from `wlr-randr`. Update both Labwc rules
+  if output positions, scales, or the 32px taskbar geometry change.
+- The 15-second timer remains only as a safety exit.
+
+Two diagnostics are easy to misread:
+
+- `Failed to create grabbing popup` is emitted by Qt Wayland when the popup has
+  no transient parent **or** `lastInputDevice()` is absent. A throwaway uinput
+  device that is destroyed immediately after clicking can create this failure
+  artificially; keep the same virtual input device alive through the entire
+  open/click-away sequence.
+- `log.qslog` is binary. Read the timestamped text in the instance's `log.log`
+  or use `quickshell log`; old warnings are not evidence of a new failure.
+
+Regression test matrix:
+
+1. Start alone closes from an outside click on the same output.
+2. Programs and Settings close from an outside click.
+3. The transparent L-shaped area above the main menu closes Programs.
+4. A click on another output closes the menu.
+5. Escape closes immediately.
+6. With Programs open, typing `fo` selects Foot and Enter launches exactly one
+   new Foot process. Record existing PIDs first and terminate only the test PID.
 
 ## Performance Rules
 

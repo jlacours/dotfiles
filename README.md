@@ -61,12 +61,20 @@ confirmation.
 
 The same profile provides native Quickshell launchers rather than Rofi or a
 fullscreen click-catching layer. `Super+D` opens the authentic Start → Programs
-cascade on the active window's monitor, while Start → Find and `Super+F3` open a
-separate Win95-style application search window. `Super+B`, `Super+S`, and
-`Super+Shift+Q` open favorites, tools, and power. `Super+V` routes clipboard
-history through the Win95 dmenu-compatible popup, while `Super+F1` shows the
-active Labwc bindings. Native popup grabs dismiss on outside clicks, with Escape
-and a short timeout retained as safety exits for compositor bugs.
+cascade on the active window's monitor. Its type-ahead selection accepts program
+initials or longer prefixes, and Enter launches the highlighted application.
+Start → Find and `Super+F3` open a separate Win95-style application search
+window. `Super+B`, `Super+S`, and `Super+Shift+Q` open favorites, tools, and
+power. `Super+V` routes clipboard history through the Win95 dmenu-compatible
+popup, while `Super+F1` shows the active Labwc bindings. The exact-size Start
+window closes on client focus changes and presses handled by the Quickshell
+desktop/taskbar, with Escape and a short timeout retained as safety exits.
+
+The desktop right-click menu opens a Win95-style Display Properties wallpaper
+chooser backed by `~/Pictures/Wallpapers`, with a monitor preview, placement
+controls, and classic OK/Cancel/Apply actions. Labwc stores its selected image
+and placement under `~/.local/state/quickshell/win95-wallpaper*`; the Win95
+desktop renders it directly while preserving teal as the solid-color fallback.
 
 Labwc also ships matching `win95-light` and `win95-dark` GTK3/GTK4 themes. Its
 session-local environment gives Qt applications the built-in square Windows
@@ -166,11 +174,12 @@ Wallust-derived translucent surfaces and compositor blur. It includes:
 
 Labwc is also available as a separate SDDM session. It uses Win95 window chrome,
 a Quickshell desktop with a classic left-drag selection marquee, a taskbar with
-desktop-entry-aware application icons, a native-popup Start menu, and Foot. The
-desktop root menu opens only on right-click, and the session remains independent
-from the active Hyprland desktop. Dark mode switches the complete chrome palette
-and desktop color; light mode keeps the classic teal desktop. Quickshell also owns
-Labwc's application/favorites/tools/power,
+desktop-entry-aware application icons, an exact-size Start menu, and Foot. The
+desktop root menu opens only on right-click and includes persistent wallpaper
+selection; the session remains independent from the active Hyprland desktop.
+Dark mode switches the complete chrome palette and desktop fallback color;
+light mode keeps the classic teal fallback. Quickshell also owns Labwc's
+application/favorites/tools/power,
 clipboard, dmenu, and keybinding surfaces; the retired Rofi configuration is not
 part of the runtime path.
 
