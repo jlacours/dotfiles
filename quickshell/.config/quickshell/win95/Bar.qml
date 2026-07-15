@@ -41,6 +41,11 @@ Scope {
       if (menu)
         menu.openPrograms();
     }
+
+    function hide(): void {
+      if (scope.activeMenu)
+        scope.activeMenu.close();
+    }
   }
 
   IpcHandler {
@@ -115,7 +120,7 @@ Scope {
           id: startButton
           Layout.preferredWidth: startRow.implicitWidth + 16
           Layout.fillHeight: true
-          pressed: startMenu.visible || startMouse.pressed
+          pressed: startMenu.open || startMouse.pressed
 
           Row {
             id: startRow
@@ -163,7 +168,9 @@ Scope {
           spacing: 3
 
           Repeater {
-            model: ToplevelManager.toplevels
+            model: ToplevelManager.toplevels.values.filter(
+              toplevel => !toplevel.title.startsWith("juju95-start-menu-")
+            )
 
             TaskButton {
               Layout.fillWidth: true
@@ -174,7 +181,15 @@ Scope {
           }
 
           // Eats leftover width so few windows means small buttons on the left.
-          Item { Layout.fillWidth: true }
+          Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            MouseArea {
+              anchors.fill: parent
+              onClicked: Win95MenuState.requestStartClose()
+            }
+          }
         }
 
         // Sunken tray well: SNI icons + clock. Thin 1px bevel like the real one.
@@ -201,6 +216,7 @@ Scope {
                   anchors.fill: parent
                   acceptedButtons: Qt.LeftButton | Qt.RightButton
                   onClicked: (mouse) => {
+                    Win95MenuState.requestStartClose();
                     if (mouse.button === Qt.RightButton && modelData.hasMenu)
                       menuAnchor.open();
                     else
@@ -222,6 +238,11 @@ Scope {
               color: Win95Theme.text
               font.family: "Comic Code"
               font.pixelSize: 12
+
+              MouseArea {
+                anchors.fill: parent
+                onClicked: Win95MenuState.requestStartClose()
+              }
             }
           }
         }
@@ -231,6 +252,7 @@ Scope {
         id: startMenu
         barWindow: barWindow
         startButton: startButton
+        coordinator: scope
       }
 
       Win95Menu {
@@ -244,6 +266,7 @@ Scope {
           if (Win95MenuState.visible)
             startMenu.close();
         }
+        function onCloseStartRequested(): void { startMenu.close(); }
       }
     }
   }

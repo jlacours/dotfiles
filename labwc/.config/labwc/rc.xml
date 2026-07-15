@@ -104,7 +104,7 @@
     </keybind>
 
     <!-- Quickshell launchers. The Win95 profile provides its own exact-size
-         native popup; no Rofi process and no fullscreen transparent layer. -->
+         Start window; no Rofi process and no fullscreen transparent layer. -->
     <keybind key="W-d">
       <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh startmenu openPrograms" />
     </keybind>
@@ -256,9 +256,18 @@
   <!-- <libinput> left at defaults: flat desktop mouse, no accel/scroll
        tweaks needed (Hyprland ran sensitivity 0 / default profile too). -->
 
-  <!-- <windowRules> empty on purpose. The mechanism, when needed:
-       <windowRules>
-         <windowRule identifier="app-id-glob" serverDecoration="yes" ... />
-       </windowRules>
-       First candidates: CSD holdouts that refuse the win95 titlebar. -->
+  <windowRules>
+    <!-- Quickshell PopupWindow grabs do not dismiss reliably under Labwc.
+         Keep the exact-size normal Start window above the 32px taskbar. -->
+    <windowRule title="juju95-start-menu-DP-2" serverDecoration="no">
+      <skipWindowSwitcher>yes</skipWindowSwitcher>
+      <fixedPosition>yes</fixedPosition>
+      <action name="MoveTo" x="0" y="848" />
+    </windowRule>
+    <windowRule title="juju95-start-menu-HDMI-A-1" serverDecoration="no">
+      <skipWindowSwitcher>yes</skipWindowSwitcher>
+      <fixedPosition>yes</fixedPosition>
+      <action name="MoveTo" x="2560" y="848" />
+    </windowRule>
+  </windowRules>
 </labwc_config>

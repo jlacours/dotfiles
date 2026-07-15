@@ -230,8 +230,6 @@ Scope {
 
                   MouseArea {
                     anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: results.currentIndex = resultRow.index
                     onClicked: results.currentIndex = resultRow.index
                     onDoubleClicked: Win95MenuState.activateCurrent(resultRow.index)
                   }

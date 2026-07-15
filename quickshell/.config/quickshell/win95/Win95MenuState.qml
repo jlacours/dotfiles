@@ -10,6 +10,8 @@ import Quickshell.Wayland
 Singleton {
   id: root
 
+  signal closeStartRequested
+
   readonly property string home: Quickshell.env("HOME") || ""
   readonly property string scriptsDir: home + "/.config/quickshell/scripts"
 
@@ -273,6 +275,10 @@ Singleton {
     if (mode === "dmenu")
       writeResult("");
     hide();
+  }
+
+  function requestStartClose(): void {
+    closeStartRequested();
   }
 
   ListModel { id: itemsModel }

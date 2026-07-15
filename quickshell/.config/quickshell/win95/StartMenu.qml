@@ -1,17 +1,25 @@
 import Quickshell
+import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Controls
 
-PopupWindow {
+FloatingWindow {
   id: root
 
   required property var barWindow
   required property var startButton
+  required property var coordinator
+  property bool open: false
+  property bool wasActive: false
   property string submenu: ""
+  property string programSearch: ""
+  property int selectedProgramIndex: applications.length > 0 ? 0 : -1
+
+  readonly property bool isOwner: coordinator.activeMenu === root
 
   readonly property int mainWidth: 224
-  readonly property int mainHeight: 240
+  readonly property int mainHeight: 250
   readonly property int submenuWidth: 276
   readonly property int programsHeight: Math.min(560, barWindow.screen.height - 64)
   readonly property int settingsHeight: 104
@@ -20,25 +28,37 @@ PopupWindow {
     .sort((a, b) => a.name.localeCompare(b.name))
 
   function toggle(): void {
-    if (visible) {
+    if (open) {
       close();
       return;
     }
 
-    visible = true;
+    if (coordinator.activeMenu && coordinator.activeMenu !== root)
+      coordinator.activeMenu.close();
+    coordinator.activeMenu = root;
+    open = true;
   }
 
   function close(): void {
-    visible = false;
+    open = false;
   }
 
   function openPrograms(): void {
+    if (coordinator.activeMenu && coordinator.activeMenu !== root)
+      coordinator.activeMenu.close();
+    coordinator.activeMenu = root;
     submenu = "programs";
-    visible = true;
+    programSearch = "";
+    selectedProgramIndex = applications.length > 0 ? 0 : -1;
+    open = true;
   }
 
   function showSubmenu(name: string): void {
     submenu = submenu === name ? "" : name;
+    if (submenu === "programs") {
+      programSearch = "";
+      selectedProgramIndex = programsList.count > 0 ? 0 : -1;
+    }
   }
 
   function run(command): void {
@@ -46,29 +66,82 @@ PopupWindow {
     Quickshell.execDetached(command);
   }
 
-  anchor.window: barWindow
-  anchor.rect.x: startButton
-    ? startButton.mapToItem(barWindow.contentItem, 0, 0).x
-    : 0
-  anchor.rect.y: startButton
-    ? startButton.mapToItem(barWindow.contentItem, 0, 0).y
-    : 0
-  anchor.rect.width: startButton ? startButton.width : 1
-  anchor.rect.height: startButton ? startButton.height : 1
-  anchor.edges: Edges.Top | Edges.Left
-  anchor.gravity: Edges.Top | Edges.Right
+  function launchProgram(index): void {
+    if (index < 0 || index >= applications.length)
+      return;
+    const application = applications[index];
+    close();
+    application.execute();
+  }
 
+  function findProgram(query, startIndex): int {
+    if (applications.length === 0)
+      return -1;
+    for (let offset = 0; offset < applications.length; offset++) {
+      const index = (startIndex + offset) % applications.length;
+      if (applications[index].name.toLowerCase().startsWith(query))
+        return index;
+    }
+    return -1;
+  }
+
+  function handleProgramText(text): void {
+    if (submenu !== "programs")
+      return;
+
+    const typed = text.toLowerCase();
+    if (!/^[a-z]$/.test(typed))
+      return;
+
+    let query = typed;
+    let startIndex = selectedProgramIndex + 1;
+    if (programSearchTimer.running && programSearch !== typed) {
+      query = programSearch + typed;
+      startIndex = 0;
+    }
+
+    let match = findProgram(query, startIndex);
+    if (match < 0 && query.length > 1) {
+      query = typed;
+      match = findProgram(query, selectedProgramIndex + 1);
+    }
+
+    programSearch = query;
+    programSearchTimer.restart();
+    if (match >= 0) {
+      selectedProgramIndex = match;
+      programsList.positionViewAtIndex(match, ListView.Contain);
+    }
+  }
+
+  screen: barWindow.screen
+  title: "juju95-start-menu-" + barWindow.screen.name
   color: "transparent"
-  // Quickshell maps this to a native Qt::Popup. Labwc then dismisses the menu
-  // on an outside click and Quickshell updates visible=false for us. This is a
-  // real popup grab, not a fullscreen transparent click catcher.
-  grabFocus: true
-  implicitWidth: mainWidth + (submenu === "" ? 0 : submenuWidth - 2)
-  implicitHeight: submenu === "programs" ? programsHeight : mainHeight
+  visible: open
+  implicitWidth: mainWidth + submenuWidth - 2
+  implicitHeight: programsHeight
+  minimumSize: Qt.size(implicitWidth, implicitHeight)
+  maximumSize: minimumSize
 
-  onVisibleChanged: {
-    if (!visible) {
+  onOpenChanged: {
+    if (open) {
+      wasActive = false;
+    } else {
       submenu = "";
+      programSearch = "";
+    }
+  }
+
+  Connections {
+    target: ToplevelManager
+
+    function onActiveToplevelChanged(): void {
+      const active = ToplevelManager.activeToplevel;
+      if (active && active.title === root.title) {
+        root.wasActive = true;
+      } else if (root.open && root.wasActive) {
+        root.close();
+      }
     }
   }
 
@@ -76,14 +149,103 @@ PopupWindow {
   // native grab can never trap keyboard focus indefinitely.
   Shortcut {
     sequence: "Escape"
-    enabled: root.visible
+    enabled: root.open && root.isOwner
     onActivated: root.close()
+  }
+
+  Shortcut {
+    sequence: "Return"
+    enabled: root.open && root.isOwner
+      && root.submenu === "programs"
+      && root.selectedProgramIndex >= 0
+    onActivated: root.launchProgram(root.selectedProgramIndex)
+  }
+
+  Shortcut {
+    sequence: "Down"
+    enabled: root.open && root.isOwner
+      && root.submenu === "programs"
+      && programsList.count > 0
+    onActivated: {
+      root.selectedProgramIndex = Math.min(
+        programsList.count - 1,
+        root.selectedProgramIndex + 1
+      );
+      programsList.positionViewAtIndex(
+        root.selectedProgramIndex,
+        ListView.Contain
+      );
+    }
+  }
+
+  Shortcut {
+    sequence: "Up"
+    enabled: root.open && root.isOwner
+      && root.submenu === "programs"
+      && programsList.count > 0
+    onActivated: {
+      root.selectedProgramIndex = Math.max(0, root.selectedProgramIndex - 1);
+      programsList.positionViewAtIndex(
+        root.selectedProgramIndex,
+        ListView.Contain
+      );
+    }
+  }
+
+  component ProgramKey: Shortcut {
+    required property string letter
+    sequence: letter.toUpperCase()
+    enabled: root.open && root.isOwner && root.submenu === "programs"
+    onActivated: root.handleProgramText(letter)
+  }
+
+  ProgramKey { letter: "a" }
+  ProgramKey { letter: "b" }
+  ProgramKey { letter: "c" }
+  ProgramKey { letter: "d" }
+  ProgramKey { letter: "e" }
+  ProgramKey { letter: "f" }
+  ProgramKey { letter: "g" }
+  ProgramKey { letter: "h" }
+  ProgramKey { letter: "i" }
+  ProgramKey { letter: "j" }
+  ProgramKey { letter: "k" }
+  ProgramKey { letter: "l" }
+  ProgramKey { letter: "m" }
+  ProgramKey { letter: "n" }
+  ProgramKey { letter: "o" }
+  ProgramKey { letter: "p" }
+  ProgramKey { letter: "q" }
+  ProgramKey { letter: "r" }
+  ProgramKey { letter: "s" }
+  ProgramKey { letter: "t" }
+  ProgramKey { letter: "u" }
+  ProgramKey { letter: "v" }
+  ProgramKey { letter: "w" }
+  ProgramKey { letter: "x" }
+  ProgramKey { letter: "y" }
+  ProgramKey { letter: "z" }
+
+  Timer {
+    id: programSearchTimer
+    interval: 900
+    onTriggered: root.programSearch = ""
   }
 
   Timer {
     interval: 15000
-    running: root.visible
+    running: root.open && root.isOwner
     onTriggered: root.close()
+  }
+
+  // Focus changes and the existing desktop/taskbar surfaces close the normal
+  // window. This handles its own transparent Win95 silhouette.
+  MouseArea {
+    anchors.fill: parent
+    onClicked: {
+      if (root.coordinator.activeMenu)
+        root.coordinator.activeMenu.close();
+    }
   }
 
   component MenuEntry: Rectangle {
@@ -200,6 +362,7 @@ PopupWindow {
 
   BevelRect {
     id: mainPanel
+    visible: root.isOwner
     anchors {
       left: parent.left
       bottom: parent.bottom
@@ -266,9 +429,22 @@ PopupWindow {
         }
       }
 
-      Item {
-        width: parent.width
-        height: 66
+      MenuEntry {
+        label: "Favorites"
+        icon: Quickshell.iconPath("emblem-favorite", true)
+        onActivated: {
+          root.close();
+          Win95MenuState.showFavorites("");
+        }
+      }
+
+      MenuEntry {
+        label: "Tools"
+        icon: Quickshell.iconPath("applications-utilities", true)
+        onActivated: {
+          root.close();
+          Win95MenuState.showTools("");
+        }
       }
 
       Item {
@@ -307,12 +483,11 @@ PopupWindow {
   }
 
   BevelRect {
-    visible: root.submenu === "programs"
+    visible: root.isOwner && root.submenu === "programs"
     anchors {
       left: mainPanel.right
       leftMargin: -2
-      top: parent.top
-      topMargin: 3
+      bottom: parent.bottom
     }
     width: root.submenuWidth
     height: root.programsHeight
@@ -326,12 +501,17 @@ PopupWindow {
       clip: true
       boundsBehavior: Flickable.StopAtBounds
       model: root.applications
+      currentIndex: root.selectedProgramIndex
 
       delegate: Rectangle {
+        id: appRow
         required property var modelData
+        required property int index
         width: programsList.width
         height: 32
-        color: appMouse.containsMouse ? Win95Theme.highlight : "transparent"
+        color: appMouse.containsMouse || ListView.isCurrentItem
+          ? Win95Theme.highlight
+          : "transparent"
 
         readonly property string iconSource: {
           let path = Quickshell.iconPath(modelData.icon, true);
@@ -359,7 +539,7 @@ PopupWindow {
             verticalCenter: parent.verticalCenter
           }
           text: parent.modelData.name
-          color: appMouse.containsMouse
+          color: appMouse.containsMouse || appRow.ListView.isCurrentItem
             ? Win95Theme.highlightText
             : Win95Theme.text
           font.family: "Comic Code"
@@ -373,8 +553,7 @@ PopupWindow {
           anchors.fill: parent
           hoverEnabled: true
           onClicked: {
-            root.close();
-            parent.modelData.execute();
+            root.launchProgram(appRow.index);
           }
         }
       }
@@ -386,11 +565,12 @@ PopupWindow {
   }
 
   BevelRect {
-    visible: root.submenu === "settings"
+    id: settingsPanel
+    visible: root.isOwner && root.submenu === "settings"
     anchors {
       left: mainPanel.right
       leftMargin: -2
-      top: parent.top
+      top: mainPanel.top
       topMargin: 41
     }
     width: root.submenuWidth

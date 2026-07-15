@@ -110,6 +110,7 @@ BevelRect {
   MouseArea {
     anchors.fill: parent
     onClicked: {
+      Win95MenuState.requestStartClose();
       if (button.modelData.activated)
         button.modelData.minimized = true;
       else

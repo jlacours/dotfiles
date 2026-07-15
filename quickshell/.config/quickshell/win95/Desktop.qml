@@ -38,6 +38,8 @@ Variants {
       hoverEnabled: true
 
       onPressed: mouse => {
+        Win95MenuState.requestStartClose();
+
         if (mouse.button === Qt.RightButton) {
           desktopWindow.selecting = false;
           Quickshell.execDetached([
