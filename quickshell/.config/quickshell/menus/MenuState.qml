@@ -26,6 +26,8 @@ Singleton {
   property string promptText: ""
   property string filterText: ""
   property bool noCustom: false
+  property int initialSelectedRow: 0
+  property int resetSelectionSerial: 0
   // Only set for mode === "dmenu": the FIFO the CLI shim (qs-dmenu.sh) is
   // blocked reading from. Writing to it (writeResult) is what unblocks it.
   property string resultFifo: ""
@@ -62,6 +64,10 @@ Singleton {
     }
   }
 
+  function requestSelectionReset() {
+    resetSelectionSerial += 1
+  }
+
   function setFilterText(text) {
     filterText = text || ""
     refreshFiltered()
@@ -91,6 +97,7 @@ Singleton {
     root.promptText = prompt
     root.filterText = ""
     root.noCustom = false
+    root.initialSelectedRow = 0
     root.resultFifo = ""
     root.clearItems()
     root.visible = true
@@ -229,6 +236,16 @@ Singleton {
   // --- Generic dmenu shim (qs-dmenu.sh) -------------------------------------
 
   function showDmenu(monitorName, prompt, itemsText, noCustomArg, selectedRow, fifo) {
+    root.beginDmenu(monitorName, prompt, noCustomArg, selectedRow, fifo)
+    root.populateDmenuItems(itemsText)
+  }
+
+  function showDmenuFile(monitorName, prompt, itemsPath, noCustomArg, selectedRow, fifo) {
+    root.beginDmenu(monitorName, prompt, noCustomArg, selectedRow, fifo)
+    dmenuFileProcess.exec(["cat", itemsPath || "/dev/null"])
+  }
+
+  function beginDmenu(monitorName, prompt, noCustomArg, selectedRow, fifo) {
     // Same preemption release as openMenu(): a second dmenu script must
     // not strand the first one's blocked reader.
     if (root.mode === "dmenu" && root.resultFifo) root.writeResult("")
@@ -237,15 +254,21 @@ Singleton {
     root.mode = "dmenu"
     root.promptText = prompt || ""
     root.noCustom = !!noCustomArg
+    root.initialSelectedRow = Math.max(0, selectedRow)
     root.resultFifo = fifo || ""
     root.filterText = ""
     root.clearItems()
+    root.visible = true
+  }
 
+  function populateDmenuItems(itemsText) {
+    root.clearItems()
     const lines = itemsText.length ? itemsText.split("\n") : []
+    if (lines.length > 0 && lines[lines.length - 1] === "") lines.pop()
     for (let i = 0; i < lines.length; i++) root.addItem(lines[i], "", "dmenu", String(i))
 
     root.refreshFiltered()
-    root.visible = true
+    root.requestSelectionReset()
   }
 
   function writeResult(text) {
@@ -325,6 +348,13 @@ Singleton {
   Process { id: spawnProcess }
   Process { id: powerProcess }
   Process { id: fifoWriter }
+  Process {
+    id: dmenuFileProcess
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.populateDmenuItems(text)
+    }
+  }
 
   Process {
     id: clientsProcess

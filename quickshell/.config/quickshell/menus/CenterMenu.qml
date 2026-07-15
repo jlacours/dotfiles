@@ -199,7 +199,10 @@ Scope {
               selectByMouse: true
               selectedTextColor: Wallust.bg
               selectionColor: Wallust.accentPrimary
-              onTextChanged: Menus.MenuState.setFilterText(text)
+              onTextChanged: {
+                Menus.MenuState.setFilterText(text)
+                menuWindow.resetSelection(0)
+              }
             }
 
             Text {
@@ -273,7 +276,17 @@ Scope {
       }
 
       onOverlayVisibleChanged: {
-        if (overlayVisible) focusTimer.restart()
+        if (overlayVisible) {
+          filterInput.text = Menus.MenuState.filterText
+          menuWindow.resetSelection(Menus.MenuState.initialSelectedRow)
+          focusTimer.restart()
+        }
+      }
+
+      function resetSelection(preferredRow) {
+        const targetIndex = Math.max(0, Math.min(menuList.count - 1, preferredRow || 0))
+        menuList.currentIndex = menuList.count > 0 ? targetIndex : -1
+        if (menuList.count > 0) menuList.positionViewAtIndex(menuList.currentIndex, ListView.Beginning)
       }
 
       function ensureValidSelection() {
@@ -303,6 +316,14 @@ Scope {
           menuWindow.ensureValidSelection()
         }
       }
+
+      Connections {
+        target: Menus.MenuState
+
+        function onResetSelectionSerialChanged() {
+          if (menuWindow.overlayVisible) menuWindow.resetSelection(Menus.MenuState.initialSelectedRow)
+        }
+      }
     }
   }
 
@@ -319,6 +340,10 @@ Scope {
       Menus.MenuState.showDmenu(monitorName, prompt, itemsText, noCustom, selectedRow, resultFifo)
     }
 
-    function hide(): void { Menus.MenuState.hide() }
+    function openDmenuFile(monitorName: string, prompt: string, itemsPath: string, noCustom: bool, selectedRow: int, resultFifo: string): void {
+      Menus.MenuState.showDmenuFile(monitorName, prompt, itemsPath, noCustom, selectedRow, resultFifo)
+    }
+
+    function hide(): void { Menus.MenuState.cancelCurrent() }
   }
 }

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
-# qs-dmenu.sh — dmenu-compatible shim on top of the quickshell centered menu
-# overlay (menus/CenterMenu.qml). Reads newline-separated entries on stdin,
-# shows them in the overlay, blocks until the user picks one (or cancels),
+# qs-dmenu.sh — dmenu-compatible shim on top of the active Quickshell menu.
+# The square profile renders CenterMenu; Labwc's Win95 profile renders its own
+# exact-size native popup. Reads newline-separated entries on stdin, shows them,
+# blocks until the user picks one (or cancels),
 # and prints the result to stdout — a drop-in replacement for `rofi -dmenu`
 # in the scripts this repo used to shell out to.
 #
@@ -19,19 +20,18 @@
 #                    'i': print the 0-based row index (-1 for typed text with
 #                    no match, when -no-custom is absent).
 #                    'i s': print "<index> <text>" (matches rofi's -format).
-#   -selected-row N  Accepted, ignored — the overlay always opens with the
-#                    first row highlighted (see handoff for why).
+#   -selected-row N  Open with the requested existing row highlighted.
 #   -lines N, -theme *, -theme-str *, -show-icons
 #                    Accepted, ignored — sizing/theming is fixed by the
-#                    square Theme singleton, not by the caller.
+#                    the active Quickshell profile, not by the caller.
 #
 # Usage: printf '%s\n' "${options[@]}" | qs-dmenu.sh -p "Prompt" [flags]
 #
-# Protocol: this script creates a one-shot FIFO, asks quickshell (via
-# scripts/qs-ipc.sh) to open the menu overlay with that FIFO path, then blocks
-# reading it. CenterMenu.qml/MenuState.qml write "<index>\t<text>" to the FIFO
-# on selection (index -1 for free-typed custom text) or an empty string on
-# cancel (Escape / click-outside), then this script formats and prints it.
+# Protocol: this script writes stdin to a temp file, creates a one-shot FIFO,
+# asks quickshell (via scripts/qs-ipc.sh) to open the menu overlay with those
+# paths, then blocks reading the FIFO. The active profile reads the item file
+# and writes "<index>\t<text>" to the FIFO on selection (index -1 for free-typed
+# custom text) or an empty string on cancel, then this script formats it.
 
 set -euo pipefail
 
@@ -57,16 +57,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-items="$(cat)"
-
 monitor="$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.monitor // empty' 2>/dev/null || true)"
 
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+items_file="$(mktemp "$runtime_dir/qs-dmenu-items.XXXXXX")"
 fifo="$(mktemp -u "$runtime_dir/qs-dmenu.XXXXXX")"
+cat > "$items_file"
 mkfifo -m 600 "$fifo"
-trap 'rm -f "$fifo"' EXIT
+trap 'rm -f "$fifo" "$items_file"' EXIT
 
-if ! "$script_dir/qs-ipc.sh" menu openDmenu "$monitor" "$prompt" "$items" "$no_custom" "$selected_row" "$fifo"; then
+if ! "$script_dir/qs-ipc.sh" menu openDmenuFile "$monitor" "$prompt" "$items_file" "$no_custom" "$selected_row" "$fifo"; then
   echo "qs-dmenu: failed to reach quickshell" >&2
   exit 1
 fi
