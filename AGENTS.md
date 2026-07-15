@@ -26,12 +26,15 @@ shell/.shellrc
 ## Repository Areas
 
 - `hyprland/`: compositor, idle, and tightly coupled desktop scripts.
+- `labwc/`: isolated stacking-compositor session with its own idle behavior.
 - `quickshell/`: the active bar, overlays, notification server, OSD, and scripts. Read `quickshell/AGENTS.md` before substantial changes.
 - `foot/`, `tmux/`, `zsh/`, `nvim/`, `emacs/`: application packages.
 - `eww/` and `sway/`: retained legacy configurations.
 - `legacy/`: archived material; never stowed automatically.
 - `scripts/`: repository maintenance helpers; not a Stow package.
 - `.agents/skills/commit-dotfiles/`: the required whole-worktree audit and commit workflow.
+- `.agents/skills/win95-desktop/`: the auto-discovered Labwc/Quickshell Win95
+  visual contract and live-validation workflow.
 
 Companion Rust tools live in:
 

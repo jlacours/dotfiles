@@ -13,10 +13,17 @@ This package is a Stow package for the Quickshell bar config at:
 
 ## Variants
 
-- **`square/` is the sole live variant.** It is a self-contained config rooted at
-  `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`, `qmldir`,
-  and `wallust.js`). `scripts/launch.sh` runs it via `quickshell -p .../square`;
-  `scripts/qs-switch.sh` only knows how to `restart` / `status` (`square`).
+- **`square/` is the live Hyprland variant.** It is a self-contained config
+  rooted at `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`,
+  `qmldir`, and `wallust.js`).
+- **`win95/` is the live Labwc variant.** It provides the teal desktop and
+  selection marquee, bottom taskbar, native popup Start menu,
+  desktop-entry-aware task icons, tray, clock, and its own exact-size
+  application/favorites/tools/power/dmenu popup. It adapts the square menu's
+  useful state shape but does not import Hyprland-specific menu state or use a
+  fullscreen transparent dismissal surface.
+- `scripts/launch.sh` runs either variant with `quickshell -p`; `qs-switch.sh`
+  can restart the current session, switch explicitly, or toggle between them.
 - **The classic variant is retired**, archived at `legacy/quickshell-classic/`
   (repo-root `legacy/`, which `install.sh` lists in `SKIP_DIRS` so it is never
   stowed). It is reference-only; do not wire anything into it. Before any bar
@@ -75,8 +82,9 @@ This package is a Stow package for the Quickshell bar config at:
   `hide`) — called via `scripts/qs-ipc.sh menu <function> ...` from
   `hyprland.conf` and from `scripts/qs-dmenu.sh`.
 - `menus/MenuItem.qml`: list delegate (mirrors `clipboard/ClipboardItem.qml`).
-- `scripts/qs-dmenu.sh`: dmenu-compatible CLI shim (stdin lines in → chosen
-  line on stdout, via a one-shot FIFO) so the scripts that used to pipe into
+- `scripts/qs-dmenu.sh`: dmenu-compatible CLI shim (stdin lines in → temp item
+  file + chosen line on stdout via a one-shot FIFO) so the scripts that used to
+  pipe into
   `rofi -dmenu` (`todo.sh`, `wallpaper.sh`, `emojis.sh`, `cliphist.sh`,
   `screenshot.sh`, `screenrecord.sh`, `deactivate-screens.sh`, `claude.sh`,
   `speak.sh`, `rofi-configs.py`) needed only a one-line substitution. It

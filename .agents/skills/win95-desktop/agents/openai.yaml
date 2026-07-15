@@ -1,0 +1,4 @@
+interface:
+  display_name: "Win95 Desktop"
+  short_description: "Maintain the Labwc and Quickshell Win95 desktop"
+  default_prompt: "Use $win95-desktop to make and visually validate a consistent Windows 95 desktop change."
