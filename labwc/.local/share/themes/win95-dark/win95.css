@@ -1,0 +1,13 @@
+@import url("../win95-light/win95.css");
+
+@define-color face #2b2b2b;
+@define-color face_light #666666;
+@define-color face_mid #505050;
+@define-color face_shadow #1a1a1a;
+@define-color face_dark #000000;
+@define-color text #d4d4d4;
+@define-color muted #8a8a8a;
+@define-color field #1f1f1f;
+@define-color field_text #e0e0e0;
+@define-color highlight #008080;
+@define-color highlight_text #ffffff;

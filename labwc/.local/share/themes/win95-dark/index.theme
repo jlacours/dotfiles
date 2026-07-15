@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=Juju95 Dark
+Comment=Windows 95 inspired dark theme for Labwc and GTK
+
+[X-GNOME-Metatheme]
+GtkTheme=win95-dark
+MetacityTheme=win95-dark
+IconTheme=Papirus-Dark
+CursorTheme=default
+ButtonLayout=menu:minimize,maximize,close

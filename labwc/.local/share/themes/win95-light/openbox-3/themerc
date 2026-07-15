@@ -1,0 +1,41 @@
+# win95-light — classic grey chrome, navy active titlebar
+border.width: 2
+
+window.active.border.color: #808080
+window.inactive.border.color: #808080
+
+window.titlebar.padding.width: 2
+window.titlebar.padding.height: 2
+window.label.text.justify: left
+window.button.width: 18
+window.button.height: 16
+window.button.spacing: 2
+window.button.hover.bg.color: #00000000
+window.active.shadow.size: 0
+window.inactive.shadow.size: 0
+
+window.active.title.bg: Solid
+window.active.title.bg.color: #000080
+window.active.label.text.color: #ffffff
+
+window.inactive.title.bg: Solid
+window.inactive.title.bg.color: #808080
+window.inactive.label.text.color: #c0c0c0
+
+window.active.button.unpressed.image.color: #ffffff
+window.inactive.button.unpressed.image.color: #d4d4d4
+
+menu.border.width: 1
+menu.border.color: #000000
+menu.items.bg: Solid
+menu.items.bg.color: #c0c0c0
+menu.items.text.color: #000000
+menu.items.active.bg: Solid
+menu.items.active.bg.color: #000080
+menu.items.active.text.color: #ffffff
+menu.separator.color: #808080
+
+osd.bg: Solid
+osd.bg.color: #c0c0c0
+osd.border.color: #000000
+osd.label.text.color: #000000

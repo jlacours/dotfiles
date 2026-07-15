@@ -1,0 +1,169 @@
+@define-color face #c0c0c0;
+@define-color face_light #ffffff;
+@define-color face_mid #dfdfdf;
+@define-color face_shadow #808080;
+@define-color face_dark #000000;
+@define-color text #000000;
+@define-color muted #606060;
+@define-color field #ffffff;
+@define-color field_text #000000;
+@define-color highlight #000080;
+@define-color highlight_text #ffffff;
+
+* {
+  border-radius: 0;
+  font-family: "Comic Code";
+}
+
+window, .background, dialog, assistant {
+  background-color: @face;
+  color: @text;
+}
+
+headerbar, .titlebar, toolbar, menubar, .menubar {
+  background-color: @face;
+  color: @text;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+entry, spinbutton, textview text, treeview.view, iconview.view,
+list, listbox, .view {
+  background-color: @field;
+  color: @field_text;
+  border: 2px solid;
+  border-color: @face_shadow @face_light @face_light @face_shadow;
+  box-shadow: inset 1px 1px @face_dark;
+  caret-color: @field_text;
+}
+
+button, .button, combobox button, modelbutton {
+  background-color: @face;
+  color: @text;
+  border: 2px solid;
+  border-color: @face_light @face_dark @face_dark @face_light;
+  box-shadow: inset 1px 1px @face_mid, inset -1px -1px @face_shadow;
+  padding: 3px 8px;
+  min-height: 18px;
+  background-image: none;
+}
+
+button:active, button:checked, button:backdrop:checked,
+modelbutton:active, modelbutton:checked {
+  border-color: @face_dark @face_light @face_light @face_dark;
+  box-shadow: inset 1px 1px @face_shadow;
+  padding: 4px 7px 2px 9px;
+}
+
+button:hover, modelbutton:hover {
+  background-color: @face_mid;
+}
+
+menu, .menu, popover, popover.background, .context-menu, tooltip {
+  background-color: @face;
+  color: @text;
+  border: 2px solid;
+  border-color: @face_light @face_dark @face_dark @face_light;
+  box-shadow: inset 1px 1px @face_mid, inset -1px -1px @face_shadow;
+  padding: 2px;
+}
+
+menuitem, modelbutton.flat {
+  background-color: transparent;
+  color: @text;
+  padding: 4px 20px 4px 6px;
+}
+
+menuitem:hover, menuitem:focus, modelbutton.flat:hover {
+  background-color: @highlight;
+  color: @highlight_text;
+}
+
+selection, *:selected, *:selected:focus, row:selected,
+treeview.view:selected, iconview.view:selected {
+  background-color: @highlight;
+  color: @highlight_text;
+}
+
+notebook > header {
+  background-color: @face;
+  border: 0;
+}
+
+notebook > header > tabs > tab {
+  background-color: @face;
+  color: @text;
+  border: 2px solid;
+  border-color: @face_light @face_dark @face_dark @face_light;
+  padding: 4px 9px;
+}
+
+notebook > header > tabs > tab:checked {
+  background-color: @face_mid;
+  border-bottom-color: @face_mid;
+}
+
+scrollbar, scrollbar trough, scale trough, progressbar trough {
+  background-color: @face;
+  border-radius: 0;
+}
+
+scrollbar slider {
+  background-color: @face;
+  border: 2px solid;
+  border-color: @face_light @face_dark @face_dark @face_light;
+  box-shadow: inset 1px 1px @face_mid, inset -1px -1px @face_shadow;
+  min-width: 14px;
+  min-height: 14px;
+}
+
+progressbar progress, scale highlight, levelbar block.filled {
+  background-color: @highlight;
+  border: 1px solid @face_dark;
+}
+
+check, radio, switch slider {
+  background-color: @field;
+  color: @field_text;
+  border: 2px solid;
+  border-color: @face_shadow @face_light @face_light @face_shadow;
+  border-radius: 0;
+  min-width: 13px;
+  min-height: 13px;
+}
+
+switch:checked, check:checked, radio:checked {
+  background-color: @highlight;
+  color: @highlight_text;
+}
+
+separator {
+  background-color: @face_shadow;
+  min-width: 1px;
+  min-height: 1px;
+}
+
+*:disabled {
+  color: @muted;
+  text-shadow: 1px 1px @face_light;
+}
+
+*:link, link, .link { color: #0000ee; }
+
+@define-color window_bg_color @face;
+@define-color window_fg_color @text;
+@define-color view_bg_color @field;
+@define-color view_fg_color @field_text;
+@define-color headerbar_bg_color @face;
+@define-color headerbar_fg_color @text;
+@define-color popover_bg_color @face;
+@define-color popover_fg_color @text;
+@define-color card_bg_color @face;
+@define-color card_fg_color @text;
+@define-color dialog_bg_color @face;
+@define-color dialog_fg_color @text;
+@define-color sidebar_bg_color @face;
+@define-color sidebar_fg_color @text;
+@define-color accent_bg_color @highlight;
+@define-color accent_fg_color @highlight_text;
+@define-color accent_color @highlight;

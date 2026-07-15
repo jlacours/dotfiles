@@ -1,0 +1,41 @@
+# win95-dark — dark chrome, Win95-desktop-teal active titlebar
+border.width: 2
+
+window.active.border.color: #404040
+window.inactive.border.color: #404040
+
+window.titlebar.padding.width: 2
+window.titlebar.padding.height: 2
+window.label.text.justify: left
+window.button.width: 18
+window.button.height: 16
+window.button.spacing: 2
+window.button.hover.bg.color: #00000000
+window.active.shadow.size: 0
+window.inactive.shadow.size: 0
+
+window.active.title.bg: Solid
+window.active.title.bg.color: #008080
+window.active.label.text.color: #ffffff
+
+window.inactive.title.bg: Solid
+window.inactive.title.bg.color: #404040
+window.inactive.label.text.color: #9e9e9e
+
+window.active.button.unpressed.image.color: #ffffff
+window.inactive.button.unpressed.image.color: #9e9e9e
+
+menu.border.width: 1
+menu.border.color: #555555
+menu.items.bg: Solid
+menu.items.bg.color: #2b2b2b
+menu.items.text.color: #d4d4d4
+menu.items.active.bg: Solid
+menu.items.active.bg.color: #008080
+menu.items.active.text.color: #ffffff
+menu.separator.color: #555555
+
+osd.bg: Solid
+osd.bg.color: #2b2b2b
+osd.border.color: #008080
+osd.label.text.color: #d4d4d4
