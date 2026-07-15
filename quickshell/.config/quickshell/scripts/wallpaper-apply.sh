@@ -3,6 +3,31 @@
 set -euo pipefail
 
 wallpaper="${1:-}"
+placement="${2:-fill}"
+
+case "$placement" in
+  fill|fit|center|tile|stretch) ;;
+  *) placement="fill" ;;
+esac
+
+if [[ "$wallpaper" == "--clear" ]]; then
+  if [[ "${XDG_CURRENT_DESKTOP:-}" != *labwc* ]]; then
+    printf '%s\n' 'wallpaper clearing is only supported by the Labwc desktop' >&2
+    exit 2
+  fi
+
+  home="${HOME:?}"
+  state_dir="${XDG_STATE_HOME:-$home/.local/state}/quickshell"
+  rm -f "$state_dir/win95-wallpaper" "$state_dir/win95-wallpaper-placement"
+
+  if [[ -x "$home/.config/quickshell/scripts/qs-ipc.sh" ]]; then
+    "$home/.config/quickshell/scripts/qs-ipc.sh" \
+      wallpaper setWallpaper "" "$placement" >/dev/null 2>&1 || true
+  fi
+
+  exit 0
+fi
+
 if [[ -z "$wallpaper" ]]; then
   printf 'usage: %s <wallpaper-image>\n' "${0##*/}" >&2
   exit 2
@@ -16,6 +41,29 @@ fi
 home="${HOME:?}"
 hyprpaper_conf="$home/.config/hypr/hyprpaper.conf"
 name="$(basename "$wallpaper")"
+
+if [[ "${XDG_CURRENT_DESKTOP:-}" == *labwc* ]]; then
+  state_home="${XDG_STATE_HOME:-$home/.local/state}"
+  state_dir="$state_home/quickshell"
+  state_file="$state_dir/win95-wallpaper"
+  placement_file="$state_dir/win95-wallpaper-placement"
+
+  mkdir -p "$state_dir"
+  printf '%s\n' "$wallpaper" > "$state_file"
+  printf '%s\n' "$placement" > "$placement_file"
+
+  if [[ -x "$home/.config/quickshell/scripts/qs-ipc.sh" ]]; then
+    "$home/.config/quickshell/scripts/qs-ipc.sh" \
+      wallpaper setWallpaper "$wallpaper" "$placement" >/dev/null 2>&1 || true
+  fi
+
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -a "Wallpaper" -u low -t 2500 \
+      "Wallpaper" "Set to $name" >/dev/null 2>&1 || true
+  fi
+
+  exit 0
+fi
 
 mkdir -p "$home/.cache" "$(dirname "$hyprpaper_conf")"
 

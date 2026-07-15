@@ -7,5 +7,6 @@ ShellRoot {
   Desktop {}
   Bar {}
   Win95Find {}
+  Win95Wallpaper {}
   NotificationPopups {}
 }

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
-HYPRPAPER_CONF="$HOME/.config/hypr/hyprpaper.conf"
 DMENU="$HOME/.config/quickshell/scripts/qs-dmenu.sh"
 
 # Note: the rofi version showed a thumbnail:// icon preview per entry; the
@@ -9,23 +8,10 @@ DMENU="$HOME/.config/quickshell/scripts/qs-dmenu.sh"
 # filenames.
 selected=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
     \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.jxl' \) \
-    -printf '%f\n' | sort | "$DMENU" -i -p "Wallpaper")
+    -printf '%f\n' | sort | "$DMENU" -i -no-custom -p "Wallpaper")
 
 [ -z "$selected" ] && exit 0
 
 wallpaper="$WALLPAPER_DIR/$selected"
 
-# Apply wallpaper
-hyprctl hyprpaper wallpaper ",$wallpaper"
-
-# Persist in hyprpaper.conf
-cat > "$HYPRPAPER_CONF" <<EOF
-splash = false
-
-wallpaper {
-    monitor =
-    path = $wallpaper
-}
-EOF
-
-notify-send -a "Wallpaper" -u low -t 3000 "Wallpaper" "Set to $selected"
+"$HOME/.config/quickshell/scripts/wallpaper-apply.sh" "$wallpaper"

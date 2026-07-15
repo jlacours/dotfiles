@@ -22,6 +22,9 @@
     <item label="Tools">
       <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh menu openTools &quot;&quot;" />
     </item>
+    <item label="Change wallpaper…">
+      <action name="Execute" command="~/.config/quickshell/scripts/qs-ipc.sh wallpaper open &quot;&quot;" />
+    </item>
     <separator />
     <menu id="theme-menu" label="Theme">
       <item label="Light">
