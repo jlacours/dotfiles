@@ -1,0 +1,18 @@
+# Win95 notification chrome: grey face, navy title strip. Static colors on
+# purpose — legible under both win95-light and win95-dark.
+font=Comic Code 10
+background-color=#c0c0c0
+text-color=#000000
+border-color=#000080
+border-size=2
+padding=8
+margin=6
+default-timeout=6000
+max-visible=5
+anchor=bottom-right
+# Keep clear of the 32px taskbar.
+outer-margin=40
+
+[urgency=critical]
+border-color=#800000
+default-timeout=0
