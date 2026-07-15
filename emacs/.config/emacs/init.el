@@ -24,6 +24,9 @@
     (load appearance-file nil t)))
 
 ;; --- UI basics ---
+;; Let Wayland compositors size GUI frames exactly instead of rounding their
+;; outer geometry to whole character-cell increments.
+(setq frame-resize-pixelwise t)
 (setq inhibit-startup-message t)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
