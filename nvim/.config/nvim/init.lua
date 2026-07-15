@@ -6,8 +6,12 @@ require("config.lazy")
 require("config.treesitter")
 -- Import all mappings
 require('mappings')
--- Theme
-vim.cmd("colorscheme darklime")
+-- Wallust integration (:WallustReload command)
+require("config.wallust")
+-- Theme: wallust-generated colorscheme, darklime as fallback until wallust runs
+if not pcall(vim.cmd.colorscheme, "wallust") then
+  vim.cmd.colorscheme("darklime")
+end
 -- Neovim diagnostic config
 vim.diagnostic.config({
     virtual_text = true,
