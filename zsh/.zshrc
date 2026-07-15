@@ -3,9 +3,11 @@
 # =========================
 
 # --- Environment Variables ---
-export EDITOR="nvim"
-export VISUAL="nvim"
-export SUDO_EDITOR="nvim"
+# Attach to the always-on Emacs daemon (systemd --user emacs.service).
+# -t: terminal frame; -a: fallback if no server running.
+export EDITOR="emacsclient -t -a 'emacs -nw'"
+export VISUAL="emacsclient -c -a 'emacs'"
+export SUDO_EDITOR="$EDITOR"
 [[ -S "/run/user/$UID/gcr/ssh" ]] && export SSH_AUTH_SOCK="/run/user/$UID/gcr/ssh"
 
 # --- History ---
@@ -137,6 +139,30 @@ alias newmatrix='neo-matrix -C ~/.config/neo/colors -m "Fuck Off"'
 alias sysinfo='macchina'
 alias cdx='codex-tmux'
 alias codex-ssh='codex-tmux'
+
+# Run Claude Code through the local CLIProxyAPI subscription gateway.
+claudex() {
+  local token_file="$HOME/.cli-proxy-api/client-token"
+
+  if [[ ! -r "$token_file" ]]; then
+    print -u2 "claudex: missing proxy token at $token_file"
+    return 1
+  fi
+
+  ANTHROPIC_BASE_URL="http://127.0.0.1:8317" \
+  ANTHROPIC_AUTH_TOKEN="$(<"$token_file")" \
+  ANTHROPIC_API_KEY="" \
+  ANTHROPIC_MODEL="gpt-5.6-sol" \
+  ANTHROPIC_SMALL_FAST_MODEL="gpt-5.6-luna" \
+  ANTHROPIC_DEFAULT_OPUS_MODEL="gpt-5.6-sol" \
+  ANTHROPIC_DEFAULT_SONNET_MODEL="gpt-5.6-terra" \
+  ANTHROPIC_DEFAULT_HAIKU_MODEL="gpt-5.6-luna" \
+  CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1 \
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+  CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK=1 \
+  API_TIMEOUT_MS=3000000 \
+    command claude "$@"
+}
 
 # NoPayStation — defaults to /mnt/Extra/ for downloads
 unalias npsget 2>/dev/null
