@@ -257,6 +257,12 @@
        tweaks needed (Hyprland ran sensitivity 0 / default profile too). -->
 
   <windowRules>
+    <!-- Decorate every window: clients that skip the xdg-decoration protocol
+         (imv, mpv, ...) otherwise map bare. Must stay FIRST — labwc gives the
+         LAST matching rule priority, so the specific no-decoration rules
+         below override this catch-all. -->
+    <windowRule identifier="*" serverDecoration="yes" />
+
     <!-- Quickshell PopupWindow grabs do not dismiss reliably under Labwc.
          Keep the exact-size normal Start window above the 32px taskbar. -->
     <windowRule title="juju95-start-menu-DP-2" serverDecoration="no">
