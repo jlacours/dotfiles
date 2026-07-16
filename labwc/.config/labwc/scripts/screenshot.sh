@@ -65,12 +65,26 @@ select_region() {
   printf '%s\n' "$geometry"
 }
 
+
+# The focused monitor, from the quickshell win95 shell (labwc itself cannot
+# answer this). Empty when the shell is not running or answers with an error
+# sentence ("Target not found." arrives on stdout with exit 0): callers fall
+# back to capturing the whole desktop.
+focused_output() {
+  name=$("$HOME/.config/quickshell/scripts/qs-ipc.sh" output focused 2>/dev/null) || name=""
+  case "$name" in
+    *" "*) name="" ;;
+  esac
+  printf '%s\n' "$name"
+}
+
 require grim
 
 case "$mode" in
   full)
     output=$(next_output)
-    if grim "$output"; then
+    monitor=$(focused_output)
+    if grim -l 2 ${monitor:+-o "$monitor"} "$output"; then
       notify normal "Screenshot saved" "$(basename "$output")" "$output"
     else
       rm -f "$output"
@@ -81,7 +95,7 @@ case "$mode" in
   region-save)
     geometry=$(select_region) || exit 0
     output=$(next_output)
-    if grim -g "$geometry" "$output"; then
+    if grim -l 2 -g "$geometry" "$output"; then
       notify normal "Screenshot saved" "$(basename "$output")" "$output"
     else
       rm -f "$output"
@@ -97,7 +111,7 @@ case "$mode" in
       die "Could not create a temporary screenshot"
     trap 'rm -f "$temporary"' EXIT HUP INT TERM
 
-    grim -g "$geometry" "$temporary" || \
+    grim -l 2 -g "$geometry" "$temporary" || \
       die "grim could not capture the selected region"
     wl-copy --type image/png <"$temporary" || \
       die "Could not copy the screenshot to the clipboard"

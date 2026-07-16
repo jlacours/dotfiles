@@ -65,6 +65,14 @@ Scope {
     function hide(): void { Win95MenuState.cancelCurrent(); }
   }
 
+  IpcHandler {
+    target: "output"
+
+    // Labwc has no CLI to query the focused monitor; scripts (for example
+    // the screenshot helper) ask the shell instead.
+    function focused(): string { return Win95MenuState.defaultScreenName(); }
+  }
+
   Variants {
     model: Quickshell.screens
 
@@ -168,9 +176,7 @@ Scope {
           spacing: 3
 
           Repeater {
-            model: ToplevelManager.toplevels.values.filter(
-              toplevel => !toplevel.title.startsWith("juju95-start-menu-")
-            )
+            model: ToplevelManager.toplevels.values
 
             TaskButton {
               Layout.fillWidth: true
@@ -251,7 +257,6 @@ Scope {
       StartMenu {
         id: startMenu
         barWindow: barWindow
-        startButton: startButton
         coordinator: scope
       }
 
