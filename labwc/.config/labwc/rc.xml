@@ -3,8 +3,10 @@
   <!-- <core> intentionally left at defaults: server decorations, gap 0,
        adaptiveSync/allowTearing off (60 Hz monitors, no usable VRR path). -->
 
+  <!-- Cascade from the center of the active output so fresh windows do not
+       pile into the top-left corner; Labwc offsets each successive window. -->
   <placement>
-    <policy>automatic</policy>
+    <policy>cascade</policy>
   </placement>
 
   <!-- Alt-tab: defaults (classic list, live preview, focus order),
