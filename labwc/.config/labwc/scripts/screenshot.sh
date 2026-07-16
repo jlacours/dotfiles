@@ -65,12 +65,26 @@ select_region() {
   printf '%s\n' "$geometry"
 }
 
+
+# The focused monitor, from the quickshell win95 shell (labwc itself cannot
+# answer this). Empty when the shell is not running or answers with an error
+# sentence ("Target not found." arrives on stdout with exit 0): callers fall
+# back to capturing the whole desktop.
+focused_output() {
+  name=$("$HOME/.config/quickshell/scripts/qs-ipc.sh" output focused 2>/dev/null) || name=""
+  case "$name" in
+    *" "*) name="" ;;
+  esac
+  printf '%s\n' "$name"
+}
+
 require grim
 
 case "$mode" in
   full)
     output=$(next_output)
-    if grim -l 2 "$output"; then
+    monitor=$(focused_output)
+    if grim -l 2 ${monitor:+-o "$monitor"} "$output"; then
       notify normal "Screenshot saved" "$(basename "$output")" "$output"
     else
       rm -f "$output"
