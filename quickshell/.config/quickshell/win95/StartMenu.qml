@@ -1,17 +1,14 @@
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Controls
 
-FloatingWindow {
+PopupWindow {
   id: root
 
   required property var barWindow
-  required property var startButton
   required property var coordinator
   property bool open: false
-  property bool wasActive: false
   property string submenu: ""
   property string programSearch: ""
   property int selectedProgramIndex: applications.length > 0 ? 0 : -1
@@ -114,39 +111,32 @@ FloatingWindow {
     }
   }
 
-  screen: barWindow.screen
-  title: "juju95-start-menu-" + barWindow.screen.name
+  anchor.window: barWindow
+  anchor.rect.x: 0
+  anchor.rect.y: 0
+  anchor.rect.width: mainWidth
+  anchor.rect.height: 1
+  anchor.edges: Edges.Top | Edges.Left
+  anchor.gravity: Edges.Top | Edges.Right
+  grabFocus: true
   color: "transparent"
   visible: open
   implicitWidth: mainWidth + submenuWidth - 2
   implicitHeight: programsHeight
-  minimumSize: Qt.size(implicitWidth, implicitHeight)
-  maximumSize: minimumSize
 
   onOpenChanged: {
-    if (open) {
-      wasActive = false;
-    } else {
+    if (!open) {
       submenu = "";
       programSearch = "";
     }
   }
 
-  Connections {
-    target: ToplevelManager
-
-    function onActiveToplevelChanged(): void {
-      const active = ToplevelManager.activeToplevel;
-      if (active && active.title === root.title) {
-        root.wasActive = true;
-      } else if (root.open && root.wasActive) {
-        root.close();
-      }
-    }
+  onVisibleChanged: {
+    if (!visible && open)
+      open = false;
   }
 
-  // Safety exits for compositor regressions: Escape is immediate, and a stale
-  // native grab can never trap keyboard focus indefinitely.
+  // Safety exit if the compositor ever fails to dismiss the popup grab.
   Shortcut {
     sequence: "Escape"
     enabled: root.open && root.isOwner
@@ -232,14 +222,9 @@ FloatingWindow {
     onTriggered: root.programSearch = ""
   }
 
-  Timer {
-    interval: 15000
-    running: root.open && root.isOwner
-    onTriggered: root.close()
-  }
-
-  // Focus changes and the existing desktop/taskbar surfaces close the normal
-  // window. This handles its own transparent Win95 silhouette.
+  // The popup surface is a fixed-size transparent canvas larger than the
+  // visible menu, and transparent regions of a Wayland surface still receive
+  // input, so this closes the menu when a click lands there.
   MouseArea {
     anchors.fill: parent
     onClicked: {
