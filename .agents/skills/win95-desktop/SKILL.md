@@ -43,8 +43,12 @@ Only treat `quickshell/win95` as live when Quickshell reports its `shell.qml`.
 ## Focus and popup safety
 
 - Never dismiss a menu with a fullscreen transparent input surface.
-- Prefer exact-size `PopupWindow` surfaces or a normal `FloatingWindow`.
-- For native popup grabs, keep Escape and a finite timeout as escape routes.
+- Prefer exact-size `PopupWindow` surfaces or a normal `FloatingWindow`. The
+  Start menu is the canonical working popup grab; `quickshell/AGENTS.md`
+  ("Labwc Start Menu Dismissal") lists its load-bearing pieces — copy that
+  shape (real transient parent, grabFocus, visibility folded back into state)
+  rather than reinventing it.
+- For native popup grabs, keep Escape as an escape route.
 - Test open and close through IPC with a cleanup trap before asking the user to
   risk their keyboard focus.
 - If a grab blacks another output, traps focus, or behaves differently under

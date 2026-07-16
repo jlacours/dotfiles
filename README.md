@@ -69,9 +69,9 @@ initials or longer prefixes, and Enter launches the highlighted application.
 Start → Find and `Super+F3` open a separate Win95-style application search
 window. `Super+B`, `Super+S`, and `Super+Shift+Q` open favorites, tools, and
 power. `Super+V` routes clipboard history through the Win95 dmenu-compatible
-popup, while `Super+F1` shows the active Labwc bindings. The exact-size Start
-window closes on client focus changes and presses handled by the Quickshell
-desktop/taskbar, with Escape and a short timeout retained as safety exits.
+popup, while `Super+F1` shows the active Labwc bindings. The Start menu is a
+popup anchored to the taskbar with a compositor-native grab, so clicking
+anywhere outside dismisses it; Escape is retained as a safety exit.
 
 The desktop right-click menu opens a Win95-style Display Properties wallpaper
 chooser backed by `~/Pictures/Wallpapers`, with a monitor preview, placement
