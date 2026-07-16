@@ -29,4 +29,5 @@ nm-applet --indicator >/dev/null 2>&1 &
 ~/.config/quickshell/scripts/launch.sh win95 >/dev/null 2>&1 &
 
 # Match Hyprland's 15-minute monitor timeout without importing hyprctl calls.
-hypridle -c "$HOME/.config/labwc/hypridle.conf" >/dev/null 2>&1 &
+# Keep logs: silent inhibit-lock leaks are undebuggable otherwise.
+hypridle -c "$HOME/.config/labwc/hypridle.conf" >"$HOME/.cache/hypridle.log" 2>&1 &
