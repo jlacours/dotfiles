@@ -238,6 +238,10 @@ Scope {
               }
             }
 
+            KeepAwakeButton {
+              anchors.verticalCenter: parent.verticalCenter
+            }
+
             Text {
               anchors.verticalCenter: parent.verticalCenter
               text: Qt.formatTime(clock.date, "h:mm AP")

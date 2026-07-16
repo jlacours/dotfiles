@@ -51,7 +51,10 @@ Quickshell profiles do not launch it.
 
 Labwc uses its own compositor-safe `hypridle` configuration: after 15 minutes
 of uninhibited idle time, `wlopm` powers off both monitors and restores them on
-input. It does not lock or suspend the session.
+input. It does not lock or suspend the session. A keep-awake toggle sits in the
+taskbar tray left of the clock: a small CRT chip that latches sunken and lights
+its screen while it holds a `zwp_idle_inhibit` lock (via the shared
+`idle-inhibit.sh` helper), parking the monitor timeout until toggled off.
 
 Labwc's Win95 Quickshell profile owns its notification server and renders native
 Win95-styled popups without a second daemon. `Print` saves a full-desktop PNG
