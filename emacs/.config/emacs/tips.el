@@ -1,7 +1,7 @@
 ;;; tips.el --- Rotating Emacs tips in the mode-line -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; `juju/tips-mode' (a global minor mode, on by default) appends ONE
+;; `juju/tips-mode' (an optional global minor mode) appends ONE
 ;; fixed-width segment to the mode-line's misc-info area and rotates a
 ;; curated tip through it every few minutes.  Design constraints:
 ;;
@@ -166,8 +166,7 @@ cancels the timer and removes the segment."
     (setq juju/tips--timer nil))
   (force-mode-line-update t))
 
-;; On by default; M-x juju/tips-mode toggles it off (and back on).
-(juju/tips-mode 1)
+;; Off by default; M-x juju/tips-mode enables it when wanted.
 
 (provide 'tips)
 ;;; tips.el ends here

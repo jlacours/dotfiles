@@ -30,7 +30,7 @@ Scope {
     }
 
     margins {
-      bottom: 40
+      bottom: 16
       right: 8
     }
 

@@ -82,10 +82,13 @@ require grim
 
 case "$mode" in
   full)
+    require wl-copy
     output=$(next_output)
     monitor=$(focused_output)
     if grim -l 2 ${monitor:+-o "$monitor"} "$output"; then
-      notify normal "Screenshot saved" "$(basename "$output")" "$output"
+      wl-copy --type image/png <"$output" || \
+        die "Screenshot saved, but could not copy it to the clipboard"
+      notify normal "Screenshot saved and copied" "$(basename "$output")" "$output"
     else
       rm -f "$output"
       die "grim could not capture the desktop"
@@ -93,10 +96,13 @@ case "$mode" in
     ;;
 
   region-save)
+    require wl-copy
     geometry=$(select_region) || exit 0
     output=$(next_output)
     if grim -l 2 -g "$geometry" "$output"; then
-      notify normal "Screenshot saved" "$(basename "$output")" "$output"
+      wl-copy --type image/png <"$output" || \
+        die "Screenshot saved, but could not copy it to the clipboard"
+      notify normal "Screenshot saved and copied" "$(basename "$output")" "$output"
     else
       rm -f "$output"
       die "grim could not capture the selected region"

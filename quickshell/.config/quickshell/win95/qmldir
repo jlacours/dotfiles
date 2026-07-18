@@ -4,14 +4,16 @@ Desktop Desktop.qml
 KeepAwakeButton KeepAwakeButton.qml
 NotificationPopup NotificationPopup.qml
 NotificationPopups NotificationPopups.qml
-singleton KeepAwakeState KeepAwakeState.qml
-singleton NotificationState NotificationState.qml
-singleton Win95MenuState Win95MenuState.qml
-singleton Win95Theme Win95Theme.qml
-singleton Win95WallpaperState Win95WallpaperState.qml
 StartMenu StartMenu.qml
 TaskButton TaskButton.qml
+VolumeButton VolumeButton.qml
 Win95CloseButton Win95CloseButton.qml
 Win95Find Win95Find.qml
 Win95Menu Win95Menu.qml
 Win95Wallpaper Win95Wallpaper.qml
+singleton KeepAwakeState KeepAwakeState.qml
+singleton NotificationState NotificationState.qml
+singleton VolumeState VolumeState.qml
+singleton Win95MenuState Win95MenuState.qml
+singleton Win95Theme Win95Theme.qml
+singleton Win95WallpaperState Win95WallpaperState.qml

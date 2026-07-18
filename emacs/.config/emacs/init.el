@@ -71,6 +71,10 @@
 (setq-default indent-tabs-mode nil
               tab-width 2)
 
+;; Python uses a fixed four-space indent; do not guess from file contents.
+(setq python-indent-offset 4
+      python-indent-guess-indent-offset nil)
+
 ;; No backup / autosave clutter
 (setq make-backup-files nil
       auto-save-default nil)
@@ -88,8 +92,8 @@
   (when (file-exists-p helper-file)
     (load helper-file nil t)))
 
-;; tips.el: juju/tips-mode, a rotating fixed-width Emacs tip in the
-;; mode-line (on by default; M-x juju/tips-mode toggles it).
+;; tips.el: optional rotating fixed-width Emacs tip for the mode-line.
+;; It stays off by default; M-x juju/tips-mode toggles it.
 (let ((tips-file (locate-user-emacs-file "tips.el")))
   (when (file-exists-p tips-file)
     (load tips-file nil t)))

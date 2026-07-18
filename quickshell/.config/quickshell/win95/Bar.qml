@@ -213,6 +213,7 @@ Scope {
               model: SystemTray.items
 
               IconImage {
+                id: trayIcon
                 required property var modelData
                 anchors.verticalCenter: parent.verticalCenter
                 implicitSize: 16
@@ -233,12 +234,18 @@ Scope {
                 QsMenuAnchor {
                   id: menuAnchor
                   menu: modelData.menu
-                  anchor.window: barWindow
+                  anchor.item: trayIcon
+                  anchor.edges: Edges.Top | Edges.Right
+                  anchor.gravity: Edges.Top | Edges.Left
                 }
               }
             }
 
             KeepAwakeButton {
+              anchors.verticalCenter: parent.verticalCenter
+            }
+
+            VolumeButton {
               anchors.verticalCenter: parent.verticalCenter
             }
 

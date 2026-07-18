@@ -63,8 +63,9 @@
   </theme>
 
   <!-- <default/> keeps the stock binds (A-Tab switcher, W-d show desktop,
-       A-F4 close, W-arrows snap...); everything below layers Hyprland
-       muscle memory on top. Later keybinds win on conflict. -->
+       A-F4 close, W-arrows snap...); everything below layers familiar
+       window-manager muscle memory and overrides W-arrows for focus navigation.
+       Later keybinds win on conflict. -->
   <keyboard>
     <default />
     <numlock>on</numlock>
@@ -139,6 +140,36 @@
     </keybind>
     <keybind key="W-S-Tab">
       <action name="PreviousWindow" workspace="current" output="all" />
+    </keybind>
+
+    <!-- Immediate focus navigation. Labwc cycles rather than selecting a
+         spatial neighbour: left/up go backward, right/down go forward. -->
+    <keybind key="W-Left">
+      <action name="PreviousWindowImmediate" workspace="current" output="all" />
+    </keybind>
+    <keybind key="W-Right">
+      <action name="NextWindowImmediate" workspace="current" output="all" />
+    </keybind>
+    <keybind key="W-Up">
+      <action name="PreviousWindowImmediate" workspace="current" output="all" />
+    </keybind>
+    <keybind key="W-Down">
+      <action name="NextWindowImmediate" workspace="current" output="all" />
+    </keybind>
+
+    <!-- Keep directional grid snapping behind Shift. combine=yes lets
+         consecutive horizontal/vertical snaps form output quarters. -->
+    <keybind key="W-S-Left">
+      <action name="SnapToEdge" direction="left" combine="yes" />
+    </keybind>
+    <keybind key="W-S-Right">
+      <action name="SnapToEdge" direction="right" combine="yes" />
+    </keybind>
+    <keybind key="W-S-Up">
+      <action name="SnapToEdge" direction="up" combine="yes" />
+    </keybind>
+    <keybind key="W-S-Down">
+      <action name="SnapToEdge" direction="down" combine="yes" />
     </keybind>
 
     <!-- Window verbs -->
@@ -265,17 +296,12 @@
          below override this catch-all. -->
     <windowRule identifier="*" serverDecoration="yes" />
 
-    <!-- Quickshell PopupWindow grabs do not dismiss reliably under Labwc.
-         Keep the exact-size normal Start window above the 32px taskbar. -->
-    <windowRule title="juju95-start-menu-DP-2" serverDecoration="no">
-      <skipWindowSwitcher>yes</skipWindowSwitcher>
-      <fixedPosition>yes</fixedPosition>
-      <action name="MoveTo" x="0" y="848" />
+    <!-- Steam games should open on the 1080p display. Most native and Proton
+         titles expose steam_app_<appid> as their XWayland WM_CLASS; the
+         XWayland primary-output setting in autostart covers other engines. -->
+    <windowRule identifier="steam_app_*">
+      <action name="MoveToOutput" output="HDMI-A-1" />
     </windowRule>
-    <windowRule title="juju95-start-menu-HDMI-A-1" serverDecoration="no">
-      <skipWindowSwitcher>yes</skipWindowSwitcher>
-      <fixedPosition>yes</fixedPosition>
-      <action name="MoveTo" x="2560" y="848" />
-    </windowRule>
+
   </windowRules>
 </labwc_config>

@@ -18,6 +18,7 @@ Singleton {
   readonly property color fieldText: dark ? "#e0e0e0" : "#000000"
   readonly property color highlight: dark ? "#008080" : "#000080"
   readonly property color highlightText: "#ffffff"
+  readonly property color alert: "#ff0000"
   readonly property color edgeLight: dark ? "#666666" : "#ffffff"
   readonly property color edgeMidLight: dark ? "#505050" : "#dfdfdf"
   readonly property color edgeShadow: dark ? "#1a1a1a" : "#808080"

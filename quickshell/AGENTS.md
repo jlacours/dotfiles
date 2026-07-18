@@ -13,10 +13,7 @@ This package is a Stow package for the Quickshell bar config at:
 
 ## Variants
 
-- **`square/` is the live Hyprland variant.** It is a self-contained config
-  rooted at `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`,
-  `qmldir`, and `wallust.js`).
-- **`win95/` is the live Labwc variant.** It provides the teal desktop and
+- **`win95/` is the live Labwc variant and current desktop.** It provides the teal desktop and
   selection marquee, bottom taskbar, grab-based Start popup,
   desktop-entry-aware task icons, tray, clock, and its own exact-size
   application/favorites/tools/power/dmenu popup. It adapts the square menu's
@@ -24,13 +21,17 @@ This package is a Stow package for the Quickshell bar config at:
   Programs cascade supports
   type-ahead selection, and its desktop root menu opens a dedicated Win95
   Display Properties wallpaper chooser rather than the shared dmenu surface.
+- **`square/` is the optional Hyprland variant.** It is a self-contained config
+  rooted at `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`,
+  `qmldir`, and `wallust.js`). Do not treat it as current-session truth.
 - `scripts/launch.sh` runs either variant with `quickshell -p`; `qs-switch.sh`
   can restart the current session, switch explicitly, or toggle between them.
 - **The classic variant is retired**, archived at `legacy/quickshell-classic/`
   (repo-root `legacy/`, which `install.sh` lists in `SKIP_DIRS` so it is never
   stowed). It is reference-only; do not wire anything into it. Before any bar
   work, confirm the live variant with `qs-switch.sh status` (or
-  `pgrep -af quickshell`) and edit under `square/`.
+  `pgrep -af quickshell`) and edit that reported profile. The normal live target
+  is `win95/`.
 
 ## Current Structure (square/)
 

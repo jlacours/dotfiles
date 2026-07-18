@@ -7,6 +7,16 @@
 wlr-randr --output DP-2 --mode 3840x2160@60 --pos 0,0 --scale 1.5 \
           --output HDMI-A-1 --mode 1920x1080@74.973 --pos 2560,360
 
+# Games often ask XWayland for its primary output instead of respecting the
+# monitor where they were launched. Make the 1080p gaming display primary once
+# XWayland is available; retry briefly because it starts lazily under Labwc.
+(
+  for attempt in 1 2 3 4 5; do
+    xrandr --output HDMI-A-1 --primary >/dev/null 2>&1 && exit 0
+    sleep 1
+  done
+) &
+
 # Labwc imports its DRM-session environment into D-Bus and systemd before this
 # script runs. Restart portals so a lingering user manager cannot retain the
 # backend or Wayland socket from a previous compositor session.

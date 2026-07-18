@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal Arch Linux dotfiles for Hyprland, managed with [GNU Stow](https://www.gnu.org/software/stow/).
+Personal Arch Linux dotfiles, managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ## Install
 
@@ -29,21 +29,21 @@ yay -S --needed nmap
 Install a subset by naming packages:
 
 ```bash
-./install.sh zsh foot hyprland quickshell
+./install.sh zsh foot labwc quickshell
 ```
 
 `install.sh` only manages symlinks. Applications and feature dependencies remain explicit so the script does not turn into a surprise package-manager séance.
 
-The active Hyprland and Quickshell setup also expects:
+The active Labwc and Quickshell setup expects:
+
+```bash
+yay -S --needed labwc hypridle wlopm wlr-randr xorg-xrandr quickshell foot wallust libnotify grim slurp wl-clipboard wtype cliphist network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
+```
+
+The optional Hyprland session expects:
 
 ```bash
 yay -S --needed hyprland hypridle quickshell foot filezilla jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg grim slurp wf-recorder xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland zen-browser-bin
-```
-
-The optional Labwc stacking session expects:
-
-```bash
-yay -S --needed labwc hypridle wlopm wlr-randr quickshell foot wallust libnotify grim slurp wl-clipboard wtype cliphist network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
 ```
 
 The `mako` package is an optional fallback notification daemon; the active
@@ -56,11 +56,14 @@ taskbar tray left of the clock: a small CRT chip that latches sunken and lights
 its screen while it holds a `zwp_idle_inhibit` lock (via the shared
 `idle-inhibit.sh` helper), parking the monitor timeout until toggled off.
 
+The same tray includes a live PipeWire volume readout. Scroll it for 5% volume
+steps, left-click to mute, or right-click to open `pavucontrol`.
+
 Labwc's Win95 Quickshell profile owns its notification server and renders native
-Win95-styled popups without a second daemon. `Print` saves a full-desktop PNG
-under `~/Pictures`, `Shift+Print` selects and saves a region, and `Ctrl+Print`
-selects a region for the clipboard. Each completed action shows a visible
-confirmation.
+Win95-styled popups without a second daemon. `Print` saves a focused-monitor PNG
+under `~/Pictures` and copies it to the clipboard, while `Shift+Print` does the
+same for a selected region. `Ctrl+Print` selects a region for the clipboard
+without keeping a file. Each completed action shows a visible confirmation.
 
 The same profile provides native Quickshell launchers rather than Rofi or a
 fullscreen click-catching layer. `Super+D` opens the authentic Start → Programs
@@ -148,13 +151,13 @@ Every application follows the same template: a top-level package mirrors its des
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; the default editor |
 | **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
 | **eww** | Legacy Eww bar retained for migration reference |
-| **foot** | Foot terminal — the default terminal across Hyprland, quickshell scripts, and rofi; Wallust color include |
+| **foot** | Foot terminal — the default terminal across Labwc and Quickshell scripts; Wallust color include |
 | **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game mode, and compositor helpers |
 | **labwc** | Floating/stacking Wayland session with Win95 Quickshell launchers, GTK/Qt application chrome, classic window borders, and compositor-safe monitor idling |
 | **mako** | Optional Win95-styled fallback notification daemon theme; not launched by the Quickshell profiles |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; available as the secondary editor |
 | **qtile** | Legacy Qtile Wayland configuration |
-| **quickshell** | Hyprland bar and overlays plus Labwc's Win95 taskbar and Start menu |
+| **quickshell** | Labwc's active Win95 desktop, taskbar, and Start menu, plus an optional Hyprland bar profile |
 | **sway** | Legacy Sway configuration |
 | **tmux** | tmux terminal multiplexer configuration |
 | **wallust** | Wallust color-generation configuration |
@@ -164,34 +167,22 @@ Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agen
 
 ## Current Desktop
 
-The active desktop is Hyprland plus the square Quickshell configuration, with
-Wallust-derived translucent surfaces and compositor blur. It includes:
-
-- workspace chips with per-window icons;
-- AI usage, tmux, CPU governor, system metrics, and network-rate blocks;
-- an output-device-aware volume indicator and PipeWire graph-rate selector;
-- system tray, game mode, microphone, notification/DND, VPN, Tailscale, idle, and suspend controls;
-- clock/calendar, clipboard history, keybinding overlay, notification center, and OSD;
-- Wallust theme and wallpaper selection;
-- TTS controls and local-model status.
-
-Labwc is also available as a separate SDDM session. It uses Win95 window chrome,
+The active desktop is Labwc. It uses Win95 window chrome,
 a Quickshell desktop with a classic left-drag selection marquee, a taskbar with
 desktop-entry-aware application icons, an exact-size Start menu, and Foot. The
 desktop root menu opens only on right-click and includes persistent wallpaper
-selection; the session remains independent from the active Hyprland desktop.
+selection.
 Dark mode switches the complete chrome palette and desktop fallback color;
 light mode keeps the classic teal fallback. Quickshell also owns Labwc's
 application/favorites/tools/power,
 clipboard, dmenu, and keybinding surfaces; the retired Rofi configuration is not
-part of the runtime path.
+part of the runtime path. The optional square profile remains isolated for an
+explicitly selected Hyprland session and is not current-session truth.
 
 Zen Browser is the default browser. Default programs are centralized in the
 `environment` package: session variables live in `.config/environment.d/`, and
-desktop file associations live in `.config/mimeapps.list`. Hyprland's
-`$terminal`/`$webbrowser` mirror those defaults, and every other terminal
-launcher composes from `$terminal`. The interface font is `Comic Code` across
-Quickshell, Foot, Emacs, and Hyprland.
+desktop file associations live in `.config/mimeapps.list`. The interface font
+is `Comic Code` across Quickshell, Foot, Emacs, and Labwc.
 
 The Quickshell config ships generated `qmldir` files (via
 `quickshell/.config/quickshell/scripts/gen-qmldir.sh`) purely to keep the QML
