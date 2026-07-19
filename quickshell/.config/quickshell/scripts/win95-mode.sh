@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Apply one coherent Win95 variant to Labwc, GTK, Qt, Wallust, and Quickshell.
+# Apply one coherent Win95 variant to GTK, Qt, Wallust, and Quickshell.
 set -euo pipefail
 
 home="${HOME:?}"
@@ -59,8 +59,6 @@ if command -v gsettings >/dev/null 2>&1; then
     gsettings set org.gnome.desktop.interface color-scheme default
   fi
 fi
-
-labwc --reconfigure >/dev/null 2>&1 || true
 
 if [[ "$requested" != "restore" ]] && pgrep -x quickshell >/dev/null; then
   setsid -f "$home/.config/quickshell/scripts/qs-switch.sh" restart \

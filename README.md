@@ -29,15 +29,15 @@ yay -S --needed nmap
 Install a subset by naming packages:
 
 ```bash
-./install.sh zsh foot labwc quickshell
+./install.sh zsh foot qtile quickshell
 ```
 
 `install.sh` only manages symlinks. Applications and feature dependencies remain explicit so the script does not turn into a surprise package-manager séance.
 
-The active Labwc and Quickshell setup expects:
+The Labwc session has been retired and archived to `legacy/labwc/`. The active qtile and Quickshell setup expects:
 
 ```bash
-yay -S --needed labwc hypridle wlopm wlr-randr xorg-xrandr quickshell foot wallust libnotify grim slurp wl-clipboard wtype cliphist network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
+yay -S --needed qtile qtile-extras python-pywlroots hypridle wlopm wlr-randr xorg-xrandr rofi mako swaybg quickshell foot wallust libnotify grim slurp wl-clipboard wtype cliphist network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol playerctl xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
 ```
 
 The optional Hyprland session expects:
@@ -46,10 +46,11 @@ The optional Hyprland session expects:
 yay -S --needed hyprland hypridle quickshell foot filezilla jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg grim slurp wf-recorder xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland zen-browser-bin
 ```
 
-The `mako` package is an optional fallback notification daemon; the active
-Quickshell profiles do not launch it.
+The `mako` package is the qtile session's notification daemon (launched from
+qtile's autostart); the Quickshell win95 profile still owns its own
+notification server when it is running.
 
-Labwc uses its own compositor-safe `hypridle` configuration: after 15 minutes
+qtile uses its own compositor-safe `hypridle` configuration: after 15 minutes
 of uninhibited idle time, `wlopm` powers off both monitors and restores them on
 input. It does not lock or suspend the session. A keep-awake toggle sits in the
 taskbar tray left of the clock: a small CRT chip that latches sunken and lights
@@ -59,7 +60,7 @@ its screen while it holds a `zwp_idle_inhibit` lock (via the shared
 The same tray includes a live PipeWire volume readout. Scroll it for 5% volume
 steps, left-click to mute, or right-click to open `pavucontrol`.
 
-Labwc's Win95 Quickshell profile owns its notification server and renders native
+qtile's Win95 Quickshell profile owns its notification server and renders native
 Win95-styled popups without a second daemon. `Print` saves a focused-monitor PNG
 under `~/Pictures` and copies it to the clipboard, while `Shift+Print` does the
 same for a selected region. `Ctrl+Print` selects a region for the clipboard
@@ -72,25 +73,25 @@ initials or longer prefixes, and Enter launches the highlighted application.
 Start → Find and `Super+F3` open a separate Win95-style application search
 window. `Super+B`, `Super+S`, and `Super+Shift+Q` open favorites, tools, and
 power. `Super+V` routes clipboard history through the Win95 dmenu-compatible
-popup, while `Super+F1` shows the active Labwc bindings. The Start menu is a
+popup, while `Super+F1` shows the active qtile bindings. The Start menu is a
 popup anchored to the taskbar with a compositor-native grab, so clicking
 anywhere outside dismisses it; Escape is retained as a safety exit.
 
 The desktop right-click menu opens a Win95-style Display Properties wallpaper
 chooser backed by `~/Pictures/Wallpapers`, with a monitor preview, placement
-controls, and classic OK/Cancel/Apply actions. Labwc stores its selected image
+controls, and classic OK/Cancel/Apply actions. qtile stores its selected image
 and placement under `~/.local/state/quickshell/win95-wallpaper*`; the Win95
 desktop renders it directly while preserving teal as the solid-color fallback.
 
-Labwc also ships matching `win95-light` and `win95-dark` GTK3/GTK4 themes. Its
-session-local environment gives Qt applications the built-in square Windows
+Quickshell also ships matching `win95-light` and `win95-dark` GTK3/GTK4 themes. The
+active session's environment gives Qt applications the built-in square Windows
 control style and the GTK palette, so application chrome follows the same
-classic bevels without leaking Labwc theme variables into Hyprland. The mode
+classic bevels without leaking Win95 theme variables into Hyprland. The mode
 switcher changes a runtime `win95-current` symlink and never rewrites tracked
 configuration; existing Qt applications need reopening after a mode change,
 and a fresh login applies the complete environment.
 
-Portal selection is desktop-specific. Hyprland and Labwc provide separate
+Portal selection is desktop-specific. Hyprland and qtile provide separate
 `*-portals.conf` files, selected through `XDG_CURRENT_DESKTOP`; there is no
 generic `portals.conf` that could force one compositor's capture backend into
 the other session. Neutral application defaults remain shared in the
@@ -151,13 +152,12 @@ Every application follows the same template: a top-level package mirrors its des
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; the default editor |
 | **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
 | **eww** | Legacy Eww bar retained for migration reference |
-| **foot** | Foot terminal — the default terminal across Labwc and Quickshell scripts; Wallust color include |
+| **foot** | Foot terminal — the default terminal across qtile and Quickshell scripts; Wallust color include |
 | **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game mode, and compositor helpers |
-| **labwc** | Floating/stacking Wayland session with Win95 Quickshell launchers, GTK/Qt application chrome, classic window borders, and compositor-safe monitor idling |
-| **mako** | Optional Win95-styled fallback notification daemon theme; not launched by the Quickshell profiles |
+| **mako** | Win95-styled notification daemon; launched by the qtile session (the Quickshell win95 profile uses its own notification server instead) |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; available as the secondary editor |
-| **qtile** | Legacy Qtile Wayland configuration |
-| **quickshell** | Labwc's active Win95 desktop, taskbar, and Start menu, plus an optional Hyprland bar profile |
+| **qtile** | Active tiling Wayland session: Hyprland-style keybinds ported to qtile, Rofi-based menus (drun, apps, tools, power, clipboard history, keybind viewer), mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
+| **quickshell** | Win95 desktop, taskbar, and Start menu for the active qtile session, plus an optional Hyprland bar profile |
 | **sway** | Legacy Sway configuration |
 | **tmux** | tmux terminal multiplexer configuration |
 | **wallust** | Wallust color-generation configuration |
@@ -167,22 +167,24 @@ Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agen
 
 ## Current Desktop
 
-The active desktop is Labwc. It uses Win95 window chrome,
+The active desktop is qtile (the Labwc session was retired and archived to
+`legacy/labwc/`). It uses Win95 window chrome,
 a Quickshell desktop with a classic left-drag selection marquee, a taskbar with
 desktop-entry-aware application icons, an exact-size Start menu, and Foot. The
 desktop root menu opens only on right-click and includes persistent wallpaper
 selection.
 Dark mode switches the complete chrome palette and desktop fallback color;
-light mode keeps the classic teal fallback. Quickshell also owns Labwc's
+light mode keeps the classic teal fallback. The Win95 Quickshell profile owns its own
 application/favorites/tools/power,
-clipboard, dmenu, and keybinding surfaces; the retired Rofi configuration is not
-part of the runtime path. The optional square profile remains isolated for an
+clipboard, dmenu, and keybinding surfaces; qtile separately provides Rofi-based
+menus (drun launcher, apps, tools, power, clipboard history, and a keybind
+viewer) for its own session-level bindings. The optional square profile remains isolated for an
 explicitly selected Hyprland session and is not current-session truth.
 
 Zen Browser is the default browser. Default programs are centralized in the
 `environment` package: session variables live in `.config/environment.d/`, and
 desktop file associations live in `.config/mimeapps.list`. The interface font
-is `Comic Code` across Quickshell, Foot, Emacs, and Labwc.
+is `Comic Code` across Quickshell, Foot, Emacs, and qtile.
 
 The Quickshell config ships generated `qmldir` files (via
 `quickshell/.config/quickshell/scripts/gen-qmldir.sh`) purely to keep the QML
@@ -200,6 +202,6 @@ The editor configuration is Emacs-first, running as a user daemon with
 
 [`AGENTS.md`](AGENTS.md) explains the repository layout and safety rules for coding agents browsing the project on GitHub.
 
-The project-local `$commit-dotfiles` skill lives at `.agents/skills/commit-dotfiles/`. It reviews the complete worktree, checks sensitive information and line endings, verifies Stow layout and documentation, runs relevant validation, and commits the intended snapshot. The auto-discovered `$win95-desktop` skill at `.agents/skills/win95-desktop/` carries the Labwc/Quickshell visual contract, canonical control assets, compositor-separation rules, focus-safety constraints, and live screenshot workflow for future Win95 changes.
+The project-local `$commit-dotfiles` skill lives at `.agents/skills/commit-dotfiles/`. It reviews the complete worktree, checks sensitive information and line endings, verifies Stow layout and documentation, runs relevant validation, and commits the intended snapshot. The auto-discovered `$win95-desktop` skill at `.agents/skills/win95-desktop/` carries the Quickshell visual contract, canonical control assets, compositor-separation rules, focus-safety constraints, and live screenshot workflow for future Win95 changes.
 
 See [CHANGELOG.md](CHANGELOG.md) for historical release notes.

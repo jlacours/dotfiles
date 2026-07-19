@@ -2,11 +2,14 @@
 
 ## Live ownership
 
-- Labwc session identity and bindings: `labwc/.config/labwc/`
+> Labwc — the compositor this profile was originally built for — is retired
+> and archived at `legacy/labwc/.config/labwc/`. The win95 profile is
+> compositor-agnostic via layer-shell and currently runs under qtile.
+
 - Window borders and canonical titlebar controls:
-  `labwc/.local/share/themes/win95-{light,dark}/openbox-3/`
+  `quickshell/.local/share/themes/win95-{light,dark}/openbox-3/`
 - GTK3/GTK4 application chrome:
-  `labwc/.local/share/themes/win95-{light,dark}/gtk-{3,4}.0/`
+  `quickshell/.local/share/themes/win95-{light,dark}/gtk-{3,4}.0/`
 - Runtime theme selector: `~/.local/share/themes/win95-current`
 - Quickshell desktop: `quickshell/.config/quickshell/win95/`
 - Shared command transport: `quickshell/.config/quickshell/scripts/qs-ipc.sh`
@@ -21,7 +24,7 @@ profile. Do not import `Quickshell.Hyprland` into Win95 state.
 | Palette | `Win95Theme.qml` | Consume semantic properties; do not scatter hex colors through QML. |
 | Raised/sunken edge | `BevelRect.qml` | Use square one- or two-pixel bevels; never round corners. |
 | Close control | `Win95CloseButton.qml` → `win95-current/openbox-3/close-active.svg` | Render the exact 18×16 crisp SVG. Never substitute `X`, `×`, or a font icon. |
-| Window titlebar | Labwc `openbox-3/themerc` | Let Labwc decorate real floating windows. Do not draw a second titlebar. |
+| Window titlebar | `openbox-3/themerc` (Labwc retired; see note above) | Let the compositor decorate real floating windows via this theme. Do not draw a second titlebar. |
 | Taskbar | `Bar.qml` | 32px bottom bar, 1px raised top edge, compact task buttons. |
 | Start surface | `StartMenu.qml` | Narrow lower-left menu with Programs cascade. |
 | Search | `Win95Find.qml` | Real centered Find window, opened by Start → Find or Super+F3. |
@@ -45,7 +48,7 @@ Light mode uses classic face `#c0c0c0`, navy highlight `#000080`, white raised
 edges, and black text. Dark mode uses charcoal faces, teal highlight, light text,
 and a matching solid desktop color. Every mode change must cover:
 
-- Labwc borders and titlebar controls;
+- Compositor window borders and titlebar controls (Labwc retired; see note above);
 - Quickshell desktop, taskbar, Start menu, dialogs, and notifications;
 - GTK named theme and Qt Windows-style palette;
 - Foot/editor Wallust colors;
@@ -61,12 +64,12 @@ and a matching solid desktop color. Every mode change must cover:
 - Start/Ctrl+Escape: open the native Start popup.
 - Clicking away from Start must dismiss it without a fullscreen click catcher.
 - Left-clicking the desktop draws the selection marquee; right-clicking opens
-  Labwc's real root menu.
+  the compositor's real root menu (Labwc originally; qtile now).
 - Rofi is retired. New menus use Quickshell IPC and the active Win95 profile.
 
 ## Visual verification
 
-Capture through `~/.config/labwc/scripts/screenshot.sh full`, then inspect the
+Capture through `~/.config/quickshell/scripts/win95-screenshot.sh full`, then inspect the
 combined mixed-scale image and the relevant monitor region. Verify:
 
 - exact border and bevel thickness;

@@ -13,7 +13,9 @@ This package is a Stow package for the Quickshell bar config at:
 
 ## Variants
 
-- **`win95/` is the live Labwc variant and current desktop.** It provides the teal desktop and
+- **`win95/` is the retro stacking-desktop variant.** It was originally
+  built for Labwc (now retired and archived at `legacy/labwc/`) but is compositor-agnostic
+  via layer-shell, so it runs on any wlroots compositor — currently qtile. It provides the teal desktop and
   selection marquee, bottom taskbar, grab-based Start popup,
   desktop-entry-aware task icons, tray, clock, and its own exact-size
   application/favorites/tools/power/dmenu popup. It adapts the square menu's
@@ -21,7 +23,8 @@ This package is a Stow package for the Quickshell bar config at:
   Programs cascade supports
   type-ahead selection, and its desktop root menu opens a dedicated Win95
   Display Properties wallpaper chooser rather than the shared dmenu surface.
-- **`square/` is the optional Hyprland variant.** It is a self-contained config
+- **`square/` is the Hyprland variant.** It depends on `Quickshell.Hyprland` APIs
+  and is a self-contained config
   rooted at `~/.config/quickshell/square/` (its own `shell.qml`, `Theme.qml`,
   `qmldir`, and `wallust.js`). Do not treat it as current-session truth.
 - `scripts/launch.sh` runs either variant with `quickshell -p`; `qs-switch.sh`
@@ -156,6 +159,12 @@ This package is a Stow package for the Quickshell bar config at:
 
 ## Labwc Start Menu Dismissal (recurring)
 
+> Historical: written while Labwc was the live compositor. Labwc is now
+> retired and archived at `legacy/labwc/`; the win95 profile runs under qtile
+> today. The popup-grab shape documented here is compositor-agnostic
+> (layer-shell) and still applies — keep it as the reference for this
+> behavior on any wlroots compositor.
+
 `win95/StartMenu.qml` is an anchored `PopupWindow` with a compositor-native
 grab. A previous attempt at this shape failed on the same stack (Quickshell
 0.3.0, Qt Wayland 6.11, Labwc 0.20: the surface stayed mapped after outside
@@ -187,8 +196,9 @@ piece below when touching this file:
 - Escape remains as the safety exit if the compositor ever fails the grab.
 
 The retired `FloatingWindow` machinery left per-output
-`juju95-start-menu-*` `windowRule` entries in Labwc's `rc.xml`; they match
-nothing now and can be dropped whenever that file is next touched.
+`juju95-start-menu-*` `windowRule` entries in Labwc's `rc.xml` (now
+`legacy/labwc/.config/labwc/rc.xml`); they match nothing now and can be
+dropped whenever that file is next touched.
 
 Two diagnostics are easy to misread:
 

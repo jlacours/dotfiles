@@ -31,8 +31,8 @@ pi-session-*.html
 .env
 .env.*
 *.local
-!labwc/.local/
-!labwc/.local/**
+!quickshell/.local/
+!quickshell/.local/**
 *.sqlite
 *.sqlite3
 *.db

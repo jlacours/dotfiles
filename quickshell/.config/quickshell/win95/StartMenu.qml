@@ -571,7 +571,7 @@ PopupWindow {
         label: "Light theme"
         icon: Quickshell.iconPath("weather-clear", true)
         onActivated: root.run([
-          Quickshell.env("HOME") + "/.config/labwc/scripts/win95-mode.sh",
+          Quickshell.env("HOME") + "/.config/quickshell/scripts/win95-mode.sh",
           "light"
         ])
       }
@@ -579,7 +579,7 @@ PopupWindow {
         label: "Dark theme"
         icon: Quickshell.iconPath("weather-clear-night", true)
         onActivated: root.run([
-          Quickshell.env("HOME") + "/.config/labwc/scripts/win95-mode.sh",
+          Quickshell.env("HOME") + "/.config/quickshell/scripts/win95-mode.sh",
           "dark"
         ])
       }

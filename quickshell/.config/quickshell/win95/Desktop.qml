@@ -3,7 +3,8 @@ import Quickshell.Wayland
 import QtQuick
 
 // Opaque desktop surface behind every window. Left-drag draws the gloriously
-// useless Win95 selection marquee; right-click asks labwc for its real menu.
+// useless Win95 selection marquee; right-click synthesizes W-S-F12, which the
+// compositor maps to its desktop menu (Labwc root-menu formerly; rofi on qtile).
 Scope {
   Variants {
     model: Quickshell.screens

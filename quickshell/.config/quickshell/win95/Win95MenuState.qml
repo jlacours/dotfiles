@@ -149,9 +149,9 @@ Singleton {
       return;
     noCustom = true;
     addItem("Screenshot", "save the complete desktop", "spawn",
-      JSON.stringify([home + "/.config/labwc/scripts/screenshot.sh", "full"]));
+      JSON.stringify([scriptsDir + "/win95-screenshot.sh", "full"]));
     addItem("Screenshot region", "select and save", "spawn",
-      JSON.stringify([home + "/.config/labwc/scripts/screenshot.sh", "region-save"]));
+      JSON.stringify([scriptsDir + "/win95-screenshot.sh", "region-save"]));
     addItem("Clipboard history", "cliphist", "spawn",
       JSON.stringify(["bash", scriptsDir + "/cliphist.sh"]));
     addItem("Emoji and symbols", "copy a character", "spawn",
@@ -171,7 +171,8 @@ Singleton {
     addItem("Shut down", "power off the computer", "spawn", JSON.stringify(["systemctl", "poweroff"]));
     addItem("Restart", "reboot the computer", "spawn", JSON.stringify(["systemctl", "reboot"]));
     addItem("Suspend", "sleep until input resumes it", "spawn", JSON.stringify(["systemctl", "suspend"]));
-    addItem("Log out", "exit Labwc", "spawn", JSON.stringify(["labwc", "--exit"]));
+    addItem("Log out", "end the session", "spawn",
+      JSON.stringify(["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\""]));
     refreshFiltered();
   }
 

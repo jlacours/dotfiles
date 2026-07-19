@@ -10,9 +10,16 @@ case "$placement" in
   *) placement="fill" ;;
 esac
 
+# The win95 profile renders its own desktop surface and owns the wallpaper
+# through state files + shell IPC, regardless of compositor. Every other
+# setup goes through the hyprpaper/wallust path below.
+win95_active() {
+  [[ "$(cat "${HOME:?}/.cache/quickshell-config" 2>/dev/null)" == "win95" ]]
+}
+
 if [[ "$wallpaper" == "--clear" ]]; then
-  if [[ "${XDG_CURRENT_DESKTOP:-}" != *labwc* ]]; then
-    printf '%s\n' 'wallpaper clearing is only supported by the Labwc desktop' >&2
+  if ! win95_active; then
+    printf '%s\n' 'wallpaper clearing is only supported by the win95 desktop profile' >&2
     exit 2
   fi
 
@@ -42,7 +49,7 @@ home="${HOME:?}"
 hyprpaper_conf="$home/.config/hypr/hyprpaper.conf"
 name="$(basename "$wallpaper")"
 
-if [[ "${XDG_CURRENT_DESKTOP:-}" == *labwc* ]]; then
+if win95_active; then
   state_home="${XDG_STATE_HOME:-$home/.local/state}"
   state_dir="$state_home/quickshell"
   state_file="$state_dir/win95-wallpaper"
@@ -91,6 +98,13 @@ printf '%s\n' "wallpaper" > "$home/.cache/quickshell-theme-picker-mode"
 
 if command -v hyprctl >/dev/null 2>&1; then
   hyprctl reload >/dev/null 2>&1 || true
+fi
+
+# Compositors without hyprpaper (qtile) show the wallpaper through swaybg;
+# swap the running instance so the change applies immediately.
+if pgrep -x swaybg >/dev/null 2>&1; then
+  pkill -x swaybg 2>/dev/null || true
+  setsid -f swaybg -m fill -i "$wallpaper" >/dev/null 2>&1 || true
 fi
 
 if command -v foot >/dev/null 2>&1; then

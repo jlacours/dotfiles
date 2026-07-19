@@ -1,12 +1,15 @@
 ---
 name: win95-desktop
-description: Maintain and visually validate the Labwc and Quickshell Windows 95 desktop in the dotfiles repository. Use whenever work touches quickshell/.config/quickshell/win95, Labwc Win95 borders or themes, GTK/Qt Win95 application chrome, taskbar or Start-menu behavior, notifications, close/minimize/maximize controls, launchers and keybind surfaces, wallpaper, output geometry, or light/dark visual consistency.
+description: Maintain and visually validate the Quickshell Windows 95 desktop in the dotfiles repository. Use whenever work touches quickshell/.config/quickshell/win95, Win95 borders or themes, GTK/Qt Win95 application chrome, taskbar or Start-menu behavior, notifications, close/minimize/maximize controls, launchers and keybind surfaces, wallpaper, output geometry, or light/dark visual consistency.
 ---
 
 # Maintain the Win95 Desktop
 
-Keep the live Labwc session visually coherent and compositor-safe across
-Quickshell, Labwc borders, GTK, and Qt.
+Keep the live Win95 desktop visually coherent and compositor-safe across
+Quickshell, window borders, GTK, and Qt. This profile was originally built for
+Labwc; Labwc is now retired and archived at `legacy/labwc/`, and the win95
+profile is compositor-agnostic via layer-shell — it currently runs under
+qtile.
 
 ## Required context
 
@@ -18,15 +21,15 @@ Quickshell, Labwc borders, GTK, and Qt.
 ```bash
 printf '%s\n' "$XDG_CURRENT_DESKTOP" "$XDG_SESSION_TYPE"
 quickshell list --all
-pgrep -af 'labwc|quickshell'
+pgrep -af 'qtile|quickshell'
 ```
 
 Only treat `quickshell/win95` as live when Quickshell reports its `shell.qml`.
 
 ## Workflow
 
-1. Inspect the live component, its QML caller, and the corresponding Labwc or
-   GTK theme asset. Do not infer behavior from filenames.
+1. Inspect the live component, its QML caller, and the corresponding window-border
+   or GTK theme asset. Do not infer behavior from filenames.
 2. For visual work, inspect an actual Windows 95 reference image before choosing
    geometry. Preserve the interaction model as well as the palette: Programs is
    a Start-menu cascade; Find is a window; task controls are pixel glyphs.
@@ -51,9 +54,9 @@ Only treat `quickshell/win95` as live when Quickshell reports its `shell.qml`.
 - For native popup grabs, keep Escape as an escape route.
 - Test open and close through IPC with a cleanup trap before asking the user to
   risk their keyboard focus.
-- If a grab blacks another output, traps focus, or behaves differently under
-  Labwc, stop and use compositor events or a normal window instead of a
-  Hyprland-specific focus-grab protocol.
+- If a grab blacks another output, traps focus, or behaves differently across
+  compositors (Labwc originally, qtile now), stop and use compositor events or
+  a normal window instead of a Hyprland-specific focus-grab protocol.
 
 ## Validation
 
@@ -77,13 +80,13 @@ both variants, and restore it even if a check fails:
 
 ```bash
 initial_mode="$(cat ~/.cache/wallust-current-mode 2>/dev/null || printf light)"
-trap '~/.config/labwc/scripts/win95-mode.sh "$initial_mode" >/dev/null' EXIT
+trap '~/.config/quickshell/scripts/win95-mode.sh "$initial_mode" >/dev/null' EXIT
 for mode in light dark; do
-  ~/.config/labwc/scripts/win95-mode.sh "$mode"
+  ~/.config/quickshell/scripts/win95-mode.sh "$mode"
   sleep 1
   notify-send -a 'Win95 visual check' -i dialog-information -t 15000 \
     'Notification chrome' "Checking the $mode close control"
-  ~/.config/labwc/scripts/screenshot.sh full
+  ~/.config/quickshell/scripts/win95-screenshot.sh full
 done
 ```
 
@@ -99,9 +102,9 @@ installed.
 Run checks proportional to the files changed:
 
 ```bash
-xmllint --noout labwc/.config/labwc/rc.xml labwc/.config/labwc/menu.xml
-bash -n labwc/.config/labwc/scripts/*.sh
-./install.sh --dry-run labwc quickshell wallust
+xmllint --noout legacy/labwc/.config/labwc/rc.xml legacy/labwc/.config/labwc/menu.xml
+bash -n quickshell/.config/quickshell/scripts/win95-*.sh
+./install.sh --dry-run qtile quickshell wallust
 "$HOME/Projects/repos/jlacours-skills/manage-dotfiles/scripts/stow-check.sh" "$PWD"
 git diff --check
 ```

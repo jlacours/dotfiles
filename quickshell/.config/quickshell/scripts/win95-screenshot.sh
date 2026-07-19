@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Labwc screenshot modes with desktop-notification feedback.
+# Win95-desktop screenshot modes with desktop-notification feedback.
 
 set -eu
 
@@ -25,7 +25,7 @@ notify() {
 
 die() {
   message=$1
-  printf 'labwc-screenshot: %s\n' "$message" >&2
+  printf 'win95-screenshot: %s\n' "$message" >&2
   notify critical "Screenshot failed" "$message" dialog-error
   exit 1
 }
@@ -66,7 +66,7 @@ select_region() {
 }
 
 
-# The focused monitor, from the quickshell win95 shell (labwc itself cannot
+# The focused monitor, from the quickshell win95 shell (the compositor cannot
 # answer this). Empty when the shell is not running or answers with an error
 # sentence ("Target not found." arrives on stdout with exit 0): callers fall
 # back to capturing the whole desktop.
@@ -113,7 +113,7 @@ case "$mode" in
     require wl-copy
     geometry=$(select_region) || exit 0
     runtime_dir=${XDG_RUNTIME_DIR:-/tmp}
-    temporary=$(mktemp "$runtime_dir/labwc-screenshot.XXXXXX.png") || \
+    temporary=$(mktemp "$runtime_dir/win95-screenshot.XXXXXX.png") || \
       die "Could not create a temporary screenshot"
     trap 'rm -f "$temporary"' EXIT HUP INT TERM
 

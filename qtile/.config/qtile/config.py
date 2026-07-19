@@ -1,21 +1,70 @@
+import os
 import subprocess
+
 from libqtile import bar, layout, qtile, widget, hook
-from libqtile.config import Click, Drag, Group, Key, Match, Screen
+from libqtile.config import (
+    Click,
+    Drag,
+    DropDown,
+    Group,
+    Key,
+    KeyChord,
+    Match,
+    ScratchPad,
+    Screen,
+)
 from libqtile.lazy import lazy
 from libqtile.backend.wayland.inputs import InputConfig
 from qtile_extras import widget as extra_widget
 from colors import colors
 
 mod = "mod4"
+home = os.path.expanduser("~")
 terminal = "foot"
-webbrowser = "firefox"
+webbrowser = "zen-browser"
+scripts = f"{home}/.config/qtile/scripts"
+qs_scripts = f"{home}/.config/quickshell/scripts"
+
 
 @hook.subscribe.startup_once
 def autostart():
-    subprocess.Popen(["/usr/lib/polkit-kde-authentication-agent-1"])
-    subprocess.Popen(["swww-daemon"])
-    subprocess.Popen(["waypaper", "--restore"])
+    # Output layout first. Scale 1.5 keeps DP-2's logical grid integral under
+    # wlroots; 1.6 leaves a partial logical pixel that corrupts the right edge.
+    subprocess.Popen([
+        "wlr-randr",
+        "--output", "DP-2", "--mode", "3840x2160@60", "--pos", "0,0", "--scale", "1.5",
+        "--output", "HDMI-A-1", "--mode", "1920x1080@74.973", "--pos", "2560,360",
+        "--output", "DP-1", "--mode", "1920x1080@100", "--pos", "0,-1080",
+    ])
+    # Games ask XWayland for its primary output instead of respecting the
+    # monitor they were launched on. XWayland starts lazily, so retry briefly.
+    subprocess.Popen([
+        "sh", "-c",
+        "for _ in 1 2 3 4 5; do "
+        "xrandr --output HDMI-A-1 --primary >/dev/null 2>&1 && exit 0; sleep 1; "
+        "done",
+    ])
+    # Restart portals and the polkit agent so nothing retains a backend or
+    # Wayland socket from a previous compositor session.
+    subprocess.Popen([f"{home}/.config/session/reset-display-services.sh"])
+    # hyprpaper no longer runs outside Hyprland (hyprtoolkit builds bail on
+    # qtile's xdg_wm_base version), so restore the last wallust wallpaper with
+    # swaybg; wallpaper-apply.sh restarts it on theme changes.
+    subprocess.Popen([
+        "sh", "-c",
+        'wp=$(cat "$HOME/.cache/wallust-current-wallpaper" 2>/dev/null); '
+        '[ -f "$wp" ] && exec swaybg -m fill -i "$wp"',
+    ])
+    subprocess.Popen(["mako"])
     subprocess.Popen(["wl-paste", "--watch", "cliphist", "store"])
+    subprocess.Popen(["nm-applet", "--indicator"])
+    # Keep logs: silent inhibit-lock leaks are undebuggable otherwise.
+    subprocess.Popen([
+        "sh", "-c",
+        f'hypridle -c "{home}/.config/qtile/hypridle.conf" '
+        f'>"{home}/.cache/hypridle.log" 2>&1',
+    ])
+
 
 def get_governor():
     try:
@@ -24,6 +73,7 @@ def get_governor():
         return "PERF" if gov == "performance" else "PWR"
     except:
         return "?"
+
 
 def get_tailscale():
     try:
@@ -36,44 +86,128 @@ def get_tailscale():
     except:
         return "OFF"
 
+
 keys = [
-    Key([mod], "h", lazy.layout.left(), desc="Move focus to left"),
-    Key([mod], "l", lazy.layout.right(), desc="Move focus to right"),
-    Key([mod], "j", lazy.layout.down(), desc="Move focus down"),
-    Key([mod], "k", lazy.layout.up(), desc="Move focus up"),
-    Key([mod], "space", lazy.layout.next(), desc="Move window focus to other window"),
-    Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window to the left"),
-    Key([mod, "shift"], "l", lazy.layout.shuffle_right(), desc="Move window to the right"),
+    # Navigation (Vim + arrows). mod+space stays unbound: it belongs to the
+    # XKB layout toggle (grp:win_space_toggle).
+    Key([mod], "h", lazy.layout.left(), desc="Focus left"),
+    Key([mod], "l", lazy.layout.right(), desc="Focus right"),
+    Key([mod], "j", lazy.layout.down(), desc="Focus down"),
+    Key([mod], "k", lazy.layout.up(), desc="Focus up"),
+    Key([mod], "Left", lazy.layout.left(), desc="Focus left"),
+    Key([mod], "Right", lazy.layout.right(), desc="Focus right"),
+    Key([mod], "Down", lazy.layout.down(), desc="Focus down"),
+    Key([mod], "Up", lazy.layout.up(), desc="Focus up"),
+    Key([mod], "u", lazy.group.focus_back(), desc="Focus last window"),
+    Key([mod], "Tab", lazy.group.next_window(), desc="Next window"),
+    Key([mod, "shift"], "Tab", lazy.group.prev_window(), desc="Previous window"),
+
+    # Moving windows
+    Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window left"),
+    Key([mod, "shift"], "l", lazy.layout.shuffle_right(), desc="Move window right"),
     Key([mod, "shift"], "j", lazy.layout.shuffle_down(), desc="Move window down"),
     Key([mod, "shift"], "k", lazy.layout.shuffle_up(), desc="Move window up"),
-    Key([mod, "control"], "h", lazy.layout.grow_left(), desc="Grow window to the left"),
-    Key([mod, "control"], "l", lazy.layout.grow_right(), desc="Grow window to the right"),
+    Key([mod, "shift"], "Left", lazy.layout.shuffle_left(), desc="Move window left"),
+    Key([mod, "shift"], "Right", lazy.layout.shuffle_right(), desc="Move window right"),
+    Key([mod, "shift"], "Down", lazy.layout.shuffle_down(), desc="Move window down"),
+    Key([mod, "shift"], "Up", lazy.layout.shuffle_up(), desc="Move window up"),
+
+    # Resizing
+    Key([mod, "control"], "h", lazy.layout.grow_left(), desc="Grow window left"),
+    Key([mod, "control"], "l", lazy.layout.grow_right(), desc="Grow window right"),
     Key([mod, "control"], "j", lazy.layout.grow_down(), desc="Grow window down"),
     Key([mod, "control"], "k", lazy.layout.grow_up(), desc="Grow window up"),
-    Key([mod], "n", lazy.layout.normalize(), desc="Reset all window sizes"),
-    Key([mod, "shift"], "Return", lazy.layout.toggle_split(), desc="Toggle between split and unsplit sides of stack",),
-    Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
-    Key([mod], "w", lazy.spawn(webbrowser), desc="Launch Web Browser"),
-    Key([mod], "q", lazy.window.kill(), desc="Kill focused window"),
-    Key([mod], "f", lazy.window.toggle_fullscreen(), desc="Toggle fullscreen on the focused window",),
-    Key([mod], "t", lazy.window.toggle_floating(), desc="Toggle floating on the focused window"),
-    Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
+    Key([mod], "comma", lazy.layout.shrink_main(), desc="Shrink main pane"),
+    Key([mod], "period", lazy.layout.grow_main(), desc="Grow main pane"),
+    Key([mod, "shift"], "n", lazy.layout.normalize(), desc="Reset window sizes"),
+    KeyChord(
+        [mod], "r",
+        [
+            Key([], "h", lazy.layout.shrink_main(), desc="Shrink main"),
+            Key([], "l", lazy.layout.grow_main(), desc="Grow main"),
+            Key([], "j", lazy.layout.shrink(), desc="Shrink window"),
+            Key([], "k", lazy.layout.grow(), desc="Grow window"),
+            Key([], "Left", lazy.layout.shrink_main(), desc="Shrink main"),
+            Key([], "Right", lazy.layout.grow_main(), desc="Grow main"),
+            Key([], "Down", lazy.layout.shrink(), desc="Shrink window"),
+            Key([], "Up", lazy.layout.grow(), desc="Grow window"),
+            Key([], "n", lazy.layout.normalize(), desc="Reset window sizes"),
+        ],
+        mode=True,
+        name="resize",
+        desc="Resize mode (Escape exits)",
+    ),
+
+    # Layout
+    Key([mod], "o", lazy.layout.flip(), desc="Flip main pane side"),
+    Key([mod], "backslash", lazy.next_layout(), desc="Cycle layout"),
+
+    # Launchers
+    Key([mod], "Return", lazy.spawn(terminal), desc="Open terminal"),
+    Key([mod, "shift"], "Return", lazy.group["scratchpad"].dropdown_toggle("term"), desc="Dropdown terminal"),
+    Key([mod], "equal", lazy.group["scratchpad"].dropdown_toggle("term"), desc="Dropdown terminal"),
+    Key([mod], "minus", lazy.group["scratchpad"].dropdown_toggle("calcurse"), desc="Calcurse scratchpad"),
+    Key([mod], "d", lazy.spawn("rofi -show drun"), desc="App launcher"),
+    Key([mod], "e", lazy.spawn(f"{terminal} -e ranger"), desc="File manager"),
+    Key([mod, "shift"], "e", lazy.spawn("pcmanfm"), desc="GUI file manager"),
+    Key([mod], "a", lazy.spawn("emacsclient -c"), desc="Emacs"),
+    Key([mod, "shift"], "a", lazy.spawn(f"{terminal} --app-id=nvim -e nvim"), desc="Neovim"),
+    Key([mod], "w", lazy.spawn(webbrowser), desc="Web browser"),
+    Key([mod, "shift"], "w", lazy.spawn(f"{webbrowser} --new-window"), desc="Alt. web browser"),
+    Key([mod], "b", lazy.spawn(f"{home}/.local/bin/rofi-apps"), desc="Favorite apps menu"),
+    Key([mod], "s", lazy.spawn(f"{home}/.local/bin/rofi-tools"), desc="Tools menu"),
+    Key([mod], "F1", lazy.spawn(f"{scripts}/keybinds-menu.sh"), desc="Show keybindings"),
+    # Root-menu stand-in: the win95 quickshell desktop synthesizes this key on
+    # desktop right-click.
+    Key([mod, "shift"], "F12", lazy.spawn("rofi -show drun"), desc="Desktop menu"),
+
+    # Window actions
+    Key([mod], "q", lazy.window.kill(), desc="Kill active window"),
+    Key([mod], "f", lazy.window.toggle_fullscreen(), desc="Toggle fullscreen"),
+    Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc="Toggle floating"),
+    Key([mod, "shift"], "c", lazy.window.center(), desc="Center floating window"),
+
+    # Bars and session
+    Key([mod], "slash", lazy.hide_show_bar("all"), desc="Toggle bars"),
+    Key([mod, "shift"], "slash", lazy.reload_config(), desc="Reload config"),
+    Key([mod, "shift"], "b", lazy.function(lambda q: q.hide_show_bar("bottom")), desc="Toggle bottom bar"),
+    Key([mod, "control"], "r", lazy.reload_config(), desc="Reload config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
-    Key([mod], "d", lazy.spawn("rofi -show drun"), desc="Spawn Rofi drun mode"),
-    Key([mod], "s", lazy.spawn("~/.local/bin/rofi-tools"), desc="Spawn Rofi tools"),
-    Key([mod], "b", lazy.spawn("~/.local/bin/rofi-apps"), desc="Spawn Rofi apps"),
-    Key([mod], "z", lazy.screen.prev_group(skip_empty=True)),
-    Key([mod], "x", lazy.screen.next_group(skip_empty=True)),
-    Key([mod, "shift"], "z", lazy.screen.prev_group(skip_empty=False)),
-    Key([mod, "shift"], "x", lazy.screen.next_group(skip_empty=False)),
-    Key([mod, "shift"], "b", lazy.function(lambda q: q.hide_show_bar("bottom"))),
+    Key([mod, "shift"], "q", lazy.spawn(f"{scripts}/power-menu.sh"), desc="Power menu"),
+    Key([mod], "F12", lazy.spawn("sh -c 'loginctl lock-session; sleep 1; wlopm --off \"*\"'"), desc="Lock and screens off"),
+
+    # Theme
+    Key([mod, "shift"], "semicolon", lazy.spawn(f"{home}/.local/bin/wallust-random-light"), desc="Random light theme"),
+
+    # Notifications (mako)
+    Key([mod], "n", lazy.spawn("makoctl dismiss --all"), desc="Dismiss notifications"),
+
+    # Audio
+    Key([mod], "m", lazy.spawn("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), desc="Toggle mute"),
+    Key([mod, "shift"], "m", lazy.spawn(f"{terminal} --app-id=pulsemixer -e pulsemixer"), desc="Pulsemixer"),
+    Key([mod, "control"], "m", lazy.spawn(f"{home}/.local/bin/cycle-sink"), desc="Cycle audio output"),
+    Key([], "XF86AudioRaiseVolume", lazy.spawn("wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 1%+"), desc="Volume up"),
+    Key([], "XF86AudioLowerVolume", lazy.spawn("wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-"), desc="Volume down"),
+    Key([], "XF86AudioMute", lazy.spawn("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), desc="Toggle mute"),
+
+    # Screenshots
+    Key([], "Print", lazy.spawn(f"{scripts}/screenshot.sh full"), desc="Screenshot screen"),
+    Key(["shift"], "Print", lazy.spawn(f"{scripts}/screenshot.sh region-save"), desc="Screenshot region"),
+    Key(["control"], "Print", lazy.spawn(f"{scripts}/screenshot.sh region-copy"), desc="Screenshot region to clipboard"),
+
+    # Utilities
+    Key([mod], "v", lazy.spawn(f"{scripts}/cliphist-rofi.sh"), desc="Clipboard history"),
+    Key([mod], "i", lazy.spawn(f"{qs_scripts}/idle-inhibit.sh toggle"), desc="Toggle idle inhibitor"),
+    Key([mod, "control"], "o", lazy.spawn(f"{home}/.local/bin/tts-selection"), desc="Read selection aloud"),
+    Key([mod], "semicolon", lazy.spawn(f"{home}/Projects/repos/llm-corrector-tui/bin/llm-corrector-field"), desc="LLM-correct focused field"),
+    Key([mod], "c", lazy.spawn(f"{home}/.local/bin/voice-input"), desc="Voice input (oneshot)"),
 
     # System controls
-    Key([], "F13", lazy.spawn("~/.config/waybar/scripts/idle-inhibit.sh toggle")),
-    Key([], "F14", lazy.spawn("~/.local/bin/hypridle-suspend toggle")),
+    Key([], "F13", lazy.spawn(f"{qs_scripts}/idle-inhibit.sh toggle"), desc="Toggle idle inhibitor"),
+    Key([], "F14", lazy.spawn(f"{home}/.local/bin/hypridle-suspend toggle"), desc="Toggle suspend inhibitor"),
     # Discord controls (global shortcuts)
-    Key([], "F21", lazy.spawn("wtype -M ctrl -M shift m")),
-    Key([], "F20", lazy.spawn("wtype -M ctrl -M shift d")),
+    Key([], "F21", lazy.spawn("wtype -M ctrl -M shift m"), desc="Discord mute"),
+    Key([], "F20", lazy.spawn("wtype -M ctrl -M shift d"), desc="Discord deafen"),
 ]
 
 for vt in range(1, 8):
@@ -88,7 +222,7 @@ for vt in range(1, 8):
 
 
 groups = []
-for i in "1256":
+for i in "12":
     groups.append(Group(i))
 for i in "34":
     groups.append(Group(i, layouts=[
@@ -103,24 +237,55 @@ for i in "34":
         ),
         layout.Max(),
     ]))
+for i in "56789":
+    groups.append(Group(i))
 
-for i in groups:
+for g in groups:
     keys.extend(
         [
             Key(
                 [mod],
-                i.name,
-                lazy.group[i.name].toscreen(),
-                desc=f"Switch to group {i.name}",
+                g.name,
+                lazy.group[g.name].toscreen(),
+                desc=f"Switch to group {g.name}",
             ),
             Key(
                 [mod, "shift"],
-                i.name,
-                lazy.window.togroup(i.name, switch_group=True),
-                desc=f"Switch to & move focused window to group {i.name}",
+                g.name,
+                lazy.window.togroup(g.name, switch_group=True),
+                desc=f"Switch to & move focused window to group {g.name}",
             ),
         ]
     )
+
+keys.extend([
+    Key([mod], "z", lazy.screen.prev_group(skip_empty=True), desc="Previous busy group"),
+    Key([mod], "x", lazy.screen.next_group(skip_empty=True), desc="Next busy group"),
+    Key([mod, "shift"], "z", lazy.screen.prev_group(skip_empty=False), desc="Previous group"),
+    Key([mod, "shift"], "x", lazy.screen.next_group(skip_empty=False), desc="Next group"),
+])
+
+groups.append(
+    ScratchPad(
+        "scratchpad",
+        [
+            DropDown(
+                "term",
+                f"{terminal} --app-id=scratchpad -o colors-dark.alpha=0.9 -e zsh",
+                width=0.32, height=0.4, x=0.34, y=0.05,
+                opacity=1.0,
+                on_focus_lost_hide=False,
+            ),
+            DropDown(
+                "calcurse",
+                f"{terminal} --app-id=calcurse -e calcurse-sync",
+                width=0.4, height=0.5, x=0.3, y=0.25,
+                opacity=1.0,
+                on_focus_lost_hide=False,
+            ),
+        ],
+    )
+)
 
 layouts = [
     layout.MonadTall(
@@ -295,6 +460,15 @@ floating_layout = layout.Floating(
         Match(wm_class="ssh-askpass"),  # ssh-askpass
         Match(title="branchdialog"),  # gitk
         Match(title="pinentry"),  # GPG key password entry
+        Match(wm_class="scratchpad"),
+        Match(wm_class="calcurse"),
+        Match(wm_class="pulsemixer"),
+        Match(wm_class="journal"),
+        Match(wm_class="zenity"),
+        Match(wm_class="xdg-desktop-portal-gtk"),
+        Match(title="llm-corrector"),
+        Match(wm_class="zen", title="Picture-in-Picture"),
+        Match(title="DayZ Launcher"),
     ]
 )
 auto_fullscreen = True
@@ -304,9 +478,13 @@ reconfigure_screens = True
 
 auto_minimize = True
 
+# numlock-on has no InputConfig equivalent; Hyprland's numlock_by_default is
+# approximated by numlockx-style tools if ever needed.
 wl_input_rules = {
     "type:keyboard": InputConfig(
-        kb_options="caps:escape",
+        kb_layout="us,ca",
+        kb_variant=",multix",
+        kb_options="caps:escape,grp:win_space_toggle,fkeys:basic_13-24",
     )
 }
 
