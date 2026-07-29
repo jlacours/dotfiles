@@ -23,9 +23,14 @@ hyprlock = { template = 'hyprlock.conf', target = '~/.config/hypr/themes/wallust
 fzf = { template = 'colors.sh', target = '~/.cache/wallust/colors.sh' }
 neo-matrix = { template = 'neo-matrix.color', target = '~/.config/neo/colors' }
 quickshell = { template = 'quickshell-colors.js', target = '~/.config/quickshell/wallust.js' }
+quickshell-hyprbar = { template = 'quickshell-hyprbar.json', target = '~/.cache/wallust/quickshell-hyprbar.json' }
 # real file (not a symlink) inside the square config root, so quickshell's
 # live-reload watcher sees the change and hot-reloads the bar
 quickshell-square = { template = 'quickshell-colors.js', target = '~/.config/quickshell/square/wallust.js' }
 gtk3 = { template = 'gtk.css.template', target = '~/.config/gtk-3.0/gtk.css' }
 gtk4 = { template = 'gtk.css.template', target = '~/.config/gtk-4.0/gtk.css' }
 zed = { template = 'zed.json', target = '~/.config/zed/themes/wallust.json' }
+
+[hooks]
+# Qtile needs an explicit reload; hyprbar watches its generated JSON directly.
+desktop = "$HOME/.local/bin/wallust-refresh-desktop"

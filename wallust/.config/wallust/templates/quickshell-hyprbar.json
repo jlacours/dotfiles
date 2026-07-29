@@ -1,0 +1,15 @@
+{
+  "background": "{{background}}",
+  "foreground": "{{foreground}}",
+  "color0": "{{color0}}",
+  "color4": "{{color4}}",
+  "color8": "{{color8}}",
+  "surfaceDark": "{{background | lighten(0.10)}}",
+  "surfaceLight": "{{background | darken(0.07)}}",
+  "hoverDark": "{{background | lighten(0.18)}}",
+  "hoverLight": "{{background | darken(0.12)}}",
+  "borderDark": "{{background | lighten(0.28)}}",
+  "borderLight": "{{background | darken(0.18)}}",
+  "mutedDark": "{{foreground | darken(0.24)}}",
+  "mutedLight": "{{foreground | lighten(0.24)}}"
+}

@@ -26,15 +26,13 @@ shell/.shellrc
 ## Repository Areas
 
 - `hyprland/`: compositor, idle, and tightly coupled desktop scripts.
-- `qtile/`: the active tiling Wayland session — Hyprland-style keybinds, Rofi menus, mako notifications, scratchpads, and idle/portal helpers.
-- `quickshell/`: the active bar, overlays, notification server, OSD, and scripts. Read `quickshell/AGENTS.md` before substantial changes.
+- `qtile/`: the active tiling Wayland session — Hyprland-style keybinds, Fuzzel menus, mako notifications, scratchpads, and idle/portal helpers.
 - `foot/`, `tmux/`, `zsh/`, `nvim/`, `emacs/`: application packages.
 - `eww/` and `sway/`: retained legacy configurations.
-- `legacy/`: archived material (including the retired `labwc/` session); never stowed automatically.
+- `quickshell/`: the minimal Hyprland bar; the retired full Quickshell desktops live under `legacy/`.
+- `legacy/`: archived material (including the retired `labwc/` and full Quickshell desktops); never stowed automatically.
 - `scripts/`: repository maintenance helpers; not a Stow package.
 - `.agents/skills/commit-dotfiles/`: the required whole-worktree audit and commit workflow.
-- `.agents/skills/win95-desktop/`: the auto-discovered Quickshell Win95
-  visual contract and live-validation workflow.
 
 Companion Rust tools live in:
 
@@ -58,7 +56,6 @@ Run checks relevant to the changed package:
 
 - Shell: `bash -n` or `zsh -n`.
 - Hyprland: `hyprctl configerrors` after reload-sensitive edits.
-- Quickshell: `qmllint` plus a live reload/smoke test when available.
 - Foot: `foot --check-config`.
 - Stow: `./install.sh --dry-run [packages...]`.
 - Git: `git diff --check` and the `commit-dotfiles` audit script.

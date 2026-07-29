@@ -1,0 +1,9 @@
+[Unit]
+Description=Borg backup of the home directory
+ConditionPathExists=%h/.config/borg/backup.env
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/borg-backup
+Nice=19
+IOSchedulingClass=idle

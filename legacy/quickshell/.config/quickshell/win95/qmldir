@@ -2,6 +2,7 @@ Bar Bar.qml
 BevelRect BevelRect.qml
 Desktop Desktop.qml
 KeepAwakeButton KeepAwakeButton.qml
+MediaButton MediaButton.qml
 NotificationPopup NotificationPopup.qml
 NotificationPopups NotificationPopups.qml
 StartMenu StartMenu.qml
@@ -12,6 +13,7 @@ Win95Find Win95Find.qml
 Win95Menu Win95Menu.qml
 Win95Wallpaper Win95Wallpaper.qml
 singleton KeepAwakeState KeepAwakeState.qml
+singleton MediaState MediaState.qml
 singleton NotificationState NotificationState.qml
 singleton VolumeState VolumeState.qml
 singleton Win95MenuState Win95MenuState.qml

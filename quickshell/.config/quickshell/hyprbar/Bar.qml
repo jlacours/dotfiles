@@ -1,0 +1,175 @@
+import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Services.SystemTray
+import Quickshell.Wayland
+import QtQuick 6.0
+import QtQuick.Layouts 6.0
+
+PanelWindow {
+    id: bar
+
+    readonly property color background: palette.background
+    readonly property color surface: palette.surface
+    readonly property color surfaceHover: palette.surfaceHover
+    readonly property color foreground: palette.foreground
+    readonly property color muted: palette.muted
+    readonly property color accent: palette.accent
+    readonly property var hyprMonitor: Hyprland.monitorFor(screen)
+
+    WallustPalette {
+        id: palette
+    }
+
+    color: "transparent"
+    implicitHeight: 24
+    exclusiveZone: 24
+
+    anchors {
+        top: true
+        left: true
+        right: true
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: bar.background
+
+        Rectangle {
+            anchors {
+                left: parent.left
+                right: parent.right
+                bottom: parent.bottom
+            }
+            height: 1
+            color: palette.border
+        }
+
+        RowLayout {
+            anchors {
+                left: parent.left
+                leftMargin: 8
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: 2
+
+            Repeater {
+                model: 6
+
+                delegate: Rectangle {
+                    id: workspaceButton
+
+                    required property int index
+                    readonly property int workspaceId: index + 1
+                    readonly property bool active: bar.hyprMonitor?.activeWorkspace?.id === workspaceId
+
+                    implicitWidth: 26
+                    implicitHeight: 24
+                    radius: 0
+                    color: active ? bar.accent : workspaceMouse.containsMouse ? bar.surfaceHover : "transparent"
+
+                    Behavior on implicitWidth {
+                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 120 }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: workspaceButton.workspaceId
+                        color: workspaceButton.active ? bar.background : bar.muted
+                        font.family: "monospace"
+                        font.pixelSize: 13
+                        font.weight: workspaceButton.active ? Font.DemiBold : Font.Medium
+                    }
+
+                    MouseArea {
+                        id: workspaceMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Hyprland.dispatch("workspace " + workspaceButton.workspaceId)
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Math.min(titleText.implicitWidth + 20, bar.width * 0.34)
+            height: 24
+            radius: 0
+            color: "transparent"
+
+            Text {
+                id: titleText
+                anchors {
+                    fill: parent
+                    leftMargin: 10
+                    rightMargin: 10
+                }
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                text: ToplevelManager.activeToplevel?.title || "desktop"
+                color: ToplevelManager.activeToplevel ? bar.foreground : bar.muted
+                font.family: "monospace"
+                font.pixelSize: 12
+                font.weight: Font.Medium
+            }
+        }
+
+        RowLayout {
+            anchors {
+                right: parent.right
+                rightMargin: 8
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: 8
+
+            Row {
+                spacing: 2
+
+                Repeater {
+                    model: SystemTray.items
+
+                    TrayItem {
+                        required property var modelData
+                        item: modelData
+                        hoverColor: bar.surfaceHover
+                    }
+                }
+            }
+
+            Text {
+                text: bar.hyprMonitor?.name || bar.screen.name
+                color: bar.muted
+                font.family: "monospace"
+                font.pixelSize: 11
+            }
+
+            Rectangle {
+                implicitWidth: clockText.implicitWidth + 14
+                implicitHeight: 24
+                radius: 0
+                color: "transparent"
+
+                Text {
+                    id: clockText
+                    anchors.centerIn: parent
+                    text: Qt.formatDateTime(clock.date, "ddd  MMM d  HH:mm")
+                    color: bar.foreground
+                    font.family: "monospace"
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                }
+
+                SystemClock {
+                    id: clock
+                    precision: SystemClock.Minutes
+                }
+            }
+        }
+    }
+}

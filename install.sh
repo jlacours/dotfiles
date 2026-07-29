@@ -52,7 +52,7 @@ ${C_BOLD}Examples:${C_RESET}
   $(basename "$0")              # install everything
   $(basename "$0") zsh foot     # install specific packages
   $(basename "$0") -D           # uninstall everything
-  $(basename "$0") -n quickshell # dry-run quickshell only
+  $(basename "$0") -n qtile      # dry-run qtile only
 EOF
 }
 

@@ -3,10 +3,9 @@
 # =========================
 
 # --- Environment Variables ---
-# Attach to the always-on Emacs daemon (systemd --user emacs.service).
-# -t: terminal frame; -a: fallback if no server running.
-export EDITOR="emacsclient -t -a 'emacs -nw'"
-export VISUAL="emacsclient -c -a 'emacs'"
+# Use Neovim for terminal editing and graphical launchers alike.
+export EDITOR="nvim"
+export VISUAL="nvim"
 export SUDO_EDITOR="$EDITOR"
 [[ -S "/run/user/$UID/gcr/ssh" ]] && export SSH_AUTH_SOCK="/run/user/$UID/gcr/ssh"
 
@@ -527,6 +526,3 @@ function sudo-off() {
   unset SUDO_READY
   echo "passwordless pacman OFF — agents will prompt for sudo again"
 }
-
-# Hermes Agent — ensure ~/.local/bin is on PATH
-export PATH="$HOME/.local/bin:$PATH"

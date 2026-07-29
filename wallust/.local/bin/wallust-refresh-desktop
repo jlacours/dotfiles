@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Refresh desktop components that do not watch Wallust outputs themselves.
+set -u
+
+if pgrep -x qtile >/dev/null 2>&1; then
+    qtile shell -c 'reload_config()' >/dev/null 2>&1 || true
+fi

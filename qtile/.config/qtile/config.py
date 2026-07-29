@@ -1,4 +1,5 @@
 import os
+import runpy
 import subprocess
 
 from libqtile import bar, layout, qtile, widget, hook
@@ -15,8 +16,22 @@ from libqtile.config import (
 )
 from libqtile.lazy import lazy
 from libqtile.backend.wayland.inputs import InputConfig
-from qtile_extras import widget as extra_widget
-from colors import colors
+
+colors = runpy.run_path(
+    os.path.join(os.path.dirname(__file__), "colors.py")
+)["colors"]
+
+bar_colors = {
+    "background": colors["bg"],
+    "foreground": colors["fg"],
+    "muted": colors["c8"],
+    "accent": colors["c5"],
+    "critical": colors["c1"],
+}
+
+# The native 1080p output needs a slimmer bar than the scaled 4K output.
+BAR_HEIGHT_1080P = 22
+BAR_HEIGHT_4K = 28
 
 mod = "mod4"
 home = os.path.expanduser("~")
@@ -73,18 +88,6 @@ def get_governor():
         return "PERF" if gov == "performance" else "PWR"
     except:
         return "?"
-
-
-def get_tailscale():
-    try:
-        res = subprocess.check_output(["tailscale", "status", "--json"], stderr=subprocess.DEVNULL)
-        import json
-        data = json.loads(res)
-        if data.get("BackendState") == "Running":
-            return "ON"
-        return "OFF"
-    except:
-        return "OFF"
 
 
 keys = [
@@ -147,19 +150,19 @@ keys = [
     Key([mod, "shift"], "Return", lazy.group["scratchpad"].dropdown_toggle("term"), desc="Dropdown terminal"),
     Key([mod], "equal", lazy.group["scratchpad"].dropdown_toggle("term"), desc="Dropdown terminal"),
     Key([mod], "minus", lazy.group["scratchpad"].dropdown_toggle("calcurse"), desc="Calcurse scratchpad"),
-    Key([mod], "d", lazy.spawn("rofi -show drun"), desc="App launcher"),
+    Key([mod], "d", lazy.spawn("fuzzel"), desc="App launcher"),
     Key([mod], "e", lazy.spawn(f"{terminal} -e ranger"), desc="File manager"),
     Key([mod, "shift"], "e", lazy.spawn("pcmanfm"), desc="GUI file manager"),
     Key([mod], "a", lazy.spawn("emacsclient -c"), desc="Emacs"),
     Key([mod, "shift"], "a", lazy.spawn(f"{terminal} --app-id=nvim -e nvim"), desc="Neovim"),
     Key([mod], "w", lazy.spawn(webbrowser), desc="Web browser"),
     Key([mod, "shift"], "w", lazy.spawn(f"{webbrowser} --new-window"), desc="Alt. web browser"),
-    Key([mod], "b", lazy.spawn(f"{home}/.local/bin/rofi-apps"), desc="Favorite apps menu"),
-    Key([mod], "s", lazy.spawn(f"{home}/.local/bin/rofi-tools"), desc="Tools menu"),
+    Key([mod], "b", lazy.spawn(f"{home}/.local/bin/fuzzel-apps"), desc="Favorite apps menu"),
+    Key([mod], "s", lazy.spawn(f"{home}/.local/bin/fuzzel-tools"), desc="Tools menu"),
     Key([mod], "F1", lazy.spawn(f"{scripts}/keybinds-menu.sh"), desc="Show keybindings"),
     # Root-menu stand-in: the win95 quickshell desktop synthesizes this key on
     # desktop right-click.
-    Key([mod, "shift"], "F12", lazy.spawn("rofi -show drun"), desc="Desktop menu"),
+    Key([mod, "shift"], "F12", lazy.spawn("fuzzel"), desc="Desktop menu"),
 
     # Window actions
     Key([mod], "q", lazy.window.kill(), desc="Kill active window"),
@@ -170,7 +173,6 @@ keys = [
     # Bars and session
     Key([mod], "slash", lazy.hide_show_bar("all"), desc="Toggle bars"),
     Key([mod, "shift"], "slash", lazy.reload_config(), desc="Reload config"),
-    Key([mod, "shift"], "b", lazy.function(lambda q: q.hide_show_bar("bottom")), desc="Toggle bottom bar"),
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod, "shift"], "q", lazy.spawn(f"{scripts}/power-menu.sh"), desc="Power menu"),
@@ -196,7 +198,7 @@ keys = [
     Key(["control"], "Print", lazy.spawn(f"{scripts}/screenshot.sh region-copy"), desc="Screenshot region to clipboard"),
 
     # Utilities
-    Key([mod], "v", lazy.spawn(f"{scripts}/cliphist-rofi.sh"), desc="Clipboard history"),
+    Key([mod], "v", lazy.spawn(f"{scripts}/cliphist-menu.sh"), desc="Clipboard history"),
     Key([mod], "i", lazy.spawn(f"{qs_scripts}/idle-inhibit.sh toggle"), desc="Toggle idle inhibitor"),
     Key([mod, "control"], "o", lazy.spawn(f"{home}/.local/bin/tts-selection"), desc="Read selection aloud"),
     Key([mod], "semicolon", lazy.spawn(f"{home}/Projects/repos/llm-corrector-tui/bin/llm-corrector-field"), desc="LLM-correct focused field"),
@@ -237,7 +239,7 @@ for i in "34":
         ),
         layout.Max(),
     ]))
-for i in "56789":
+for i in "56":
     groups.append(Group(i))
 
 for g in groups:
@@ -303,138 +305,72 @@ layouts = [
 ]
 
 widget_defaults = dict(
-    font="Iosevka",
+    font="Comic Code",
     fontsize=12,
-    padding=0,
-    foreground=colors["fg"]
+    padding=5,
+    foreground=bar_colors["foreground"],
 )
 extension_defaults = widget_defaults.copy()
 
+
 def init_widgets_list():
-    widgets_list = [
-        widget.Spacer(
-            length=6,
-        ),
+    """Minimal bar: workspaces, layout, window title, and clock."""
+    return [
+        widget.Spacer(length=4),
         widget.GroupBox(
-            highlight_method="text",
-            active=colors["fg"],
-            this_current_screen_border=colors["c2"],
-            fmt="[ {} ]",
-            hide_unused=True,
+            highlight_method="line",
+            active=bar_colors["foreground"],
+            inactive=bar_colors["muted"],
+            this_current_screen_border=bar_colors["accent"],
+            other_current_screen_border=bar_colors["muted"],
+            urgent_text=bar_colors["critical"],
+            hide_unused=False,
             rounded=False,
-            spacing=0,
-            margin_x=0,
-            padding_x=0,
+            spacing=2,
+            padding_x=6,
+            margin_y=2,
         ),
-        widget.Spacer(),
+        widget.Spacer(length=4),
+        widget.CurrentLayout(
+            fmt="{}",
+            padding=7,
+            foreground=bar_colors["accent"],
+            mouse_callbacks={"Button1": lazy.next_layout()},
+        ),
+        widget.WindowName(
+            empty_group_string="Desktop",
+            padding=6,
+            foreground=bar_colors["foreground"],
+        ),
         widget.Clock(
-            format="%a-%d-%m-%y",
-            fmt="[ {} ]",
+            format="%a %d %b  %H:%M",
+            padding=8,
+            foreground=bar_colors["accent"],
         ),
-        widget.Clock(
-            format="%I:%M%p",
-            fmt="[ {} ]",
-        ),
-        widget.Spacer(
-            length=6,
-        ),
+        widget.Spacer(length=4),
     ]
-    return widgets_list
+
 
 def init_secondary_widgets_list():
-    widgets_list = [
-        widget.Clock(
-            format="%I:%M%p",
-            fmt="[ {} ]",
-        ),
-        widget.Spacer(),
-        widget.GroupBox(
-            highlight_method="text",
-            active=colors["fg"],
-            this_current_screen_border=colors["c2"],
-            fmt="[ {} ]",
-            hide_unused=True,
-            rounded=False,
-            spacing=0,
-            margin_x=0,
-            padding_x=0,
-        ),
-    ]
-    return widgets_list
-
-def init_bottom_bar():
-    return bar.Bar(
-        [
-            widget.TextBox(
-                fmt=" ",
-            ),
-            widget.GenPollText(
-                func=get_governor,
-                update_interval=5,
-                fmt="[ GOV: {} ]",
-                mouse_callbacks={'Button1': lambda: qtile.spawn("pkexec sh -c 'CURRENT=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor); if [ \"$CURRENT\" = \"powersave\" ]; then echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; else echo powersave | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; fi'")}
-            ),
-            widget.GenPollText(
-                func=get_tailscale,
-                update_interval=10,
-                fmt="[ TS: {} ]",
-                mouse_callbacks={'Button1': lambda: qtile.spawn("tailscale up" if get_tailscale() == "OFF" else "tailscale down")}
-            ),
-            widget.Spacer(
-                length=bar.STRETCH,
-            ),
-            widget.TextBox(
-                fmt="[ MEM: "
-            ),
-            widget.Memory(
-                format="{MemUsed:>4.1f}G / {MemTotal:.1f}G ]",
-                measure_mem="G",
-                update_interval=2,
-            ),
-            widget.TextBox(
-                fmt="[ CPU: "
-            ),
-            widget.CPU(
-                format="{load_percent:>4}% ]",
-                update_interval=2,
-            ),
-            widget.TextBox(
-                fmt="[ NET: "
-            ),
-            widget.Net(
-                format="{down:>5.1f}⇂ {up:>5.1f}↾ ]",
-                interface="wlan1",
-                prefix="k",
-            ),
-            widget.TextBox(
-                fmt="[ SSD: "
-            ),
-            widget.DF(
-                visible_on_warn=False,
-                format="{uf}G / {s}G ]",
-            ),
-            widget.Spacer(
-                length=bar.STRETCH,
-            ),
-            extra_widget.StatusNotifier(),
-            widget.TextBox(
-                fmt=" ",
-            ),
-        ],
-        size=21,
-        background=colors["bg"],
-    )
+    """Create fresh widget instances for the second output."""
+    return init_widgets_list()
 
 screens = [
+    # Screen 0: right native-resolution 1080p monitor.
     Screen(
-        top=bar.Bar(init_widgets_list(), size=24, background=colors["bg"]),
-        bottom=init_bottom_bar(),
+        top=bar.Bar(
+            init_widgets_list(),
+            size=BAR_HEIGHT_1080P,
+            background=bar_colors["background"],
+        ),
     ),
+    # Screen 1: left 4K monitor at 1.5x scale.
     Screen(
-        top=bar.Bar(init_secondary_widgets_list(), size=24, background=colors["bg"]),
-    ),
-    Screen(
-        top=bar.Bar(init_secondary_widgets_list(), size=24, background=colors["bg"]),
+        top=bar.Bar(
+            init_secondary_widgets_list(),
+            size=BAR_HEIGHT_4K,
+            background=bar_colors["background"],
+        ),
     ),
 ]
 

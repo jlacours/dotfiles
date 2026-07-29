@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Install a larger no-ligature monospace set on Ubuntu and pick one with rofi.
+# Install a larger no-ligature monospace set on Ubuntu and pick one with fuzzel.
 #
 # Usage:
 #   set-global-font.sh --install      # install the curated font set, then pick
-#   set-global-font.sh --pick         # browse installed monospace fonts in rofi
+#   set-global-font.sh --pick         # browse installed monospace fonts in fuzzel
 #   set-global-font.sh --apply NAME   # apply a specific family directly
 #   set-global-font.sh --list         # list the monospace families we can see
 
@@ -74,14 +74,14 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [options]
 
-Pick a monospace font from the ones installed on the system, preview it in rofi,
+Pick a monospace font from the ones installed on the system, preview it in fuzzel,
 and then apply it through fontconfig, GNOME monospace settings, and repo-local
 dotfiles when available.
 
 Options:
   --install        Install the curated font packages before picking.
-  --pick           Open the rofi picker and apply the selection.
-  --apply NAME     Apply a specific family without opening rofi.
+  --pick           Open the fuzzel picker and apply the selection.
+  --apply NAME     Apply a specific family without opening fuzzel.
   --list           Print the monospace families visible to fontconfig.
   -h, --help       Show this help.
 
@@ -136,14 +136,14 @@ install_fonts() {
 }
 
 pick_family() {
-  need rofi
+  need fuzzel
 
   local -a families=()
   mapfile -t families < <(list_mono_families)
   (( ${#families[@]} > 0 )) || die "No monospace families found. Install fonts first."
 
   local choice
-  choice="$(printf '%s\n' "${families[@]}" | rofi -dmenu -i -format s -p "Font")" || exit 1
+  choice="$(printf '%s\n' "${families[@]}" | fuzzel --dmenu --prompt "Font> ")" || exit 1
   [[ -n "$choice" ]] || exit 1
   printf '%s\n' "$choice"
 }
@@ -212,16 +212,6 @@ hot_reload() {
     eww reload >/dev/null 2>&1 || true
   fi
 
-  if pgrep -x quickshell >/dev/null 2>&1; then
-    local qs_restart="$HOME/.local/bin/quickshell-restart"
-    local qs_launch="$HOME/.config/quickshell/scripts/launch.sh"
-    if [[ -x "$qs_restart" ]]; then
-      setsid "$qs_restart" >/dev/null 2>&1 &
-    elif [[ -x "$qs_launch" ]]; then
-      pkill -x quickshell >/dev/null 2>&1 || true
-      setsid "$qs_launch" >/dev/null 2>&1 &
-    fi
-  fi
 }
 
 ACTION="pick"

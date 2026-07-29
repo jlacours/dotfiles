@@ -30,9 +30,13 @@ pi-session-*.html
 # Common personal or machine-local artifacts
 .env
 .env.*
+**/backup.env
+**/excludes.local
 *.local
 !quickshell/.local/
 !quickshell/.local/**
+!wallust/.local/
+!wallust/.local/**
 *.sqlite
 *.sqlite3
 *.db

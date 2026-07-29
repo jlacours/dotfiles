@@ -137,10 +137,11 @@ Scope {
             anchors.verticalCenterOffset: startButton.pressed ? 1 : 0
             spacing: 5
 
-            // The genuine waving flag, courtesy of the user.
+            // Tux by Larry Ewing; CC0 vector redraw by Garrett LeSage.
+            // Keep the official mascot in the existing 18px Start-button slot.
             Image {
               anchors.verticalCenter: parent.verticalCenter
-              source: Qt.resolvedUrl("start-flag.svg")
+              source: Qt.resolvedUrl("start-tux.png")
               sourceSize: Qt.size(18, 18)
               width: 18
               height: 18
@@ -239,6 +240,10 @@ Scope {
                   anchor.gravity: Edges.Top | Edges.Left
                 }
               }
+            }
+
+            MediaButton {
+              anchors.verticalCenter: parent.verticalCenter
             }
 
             KeepAwakeButton {

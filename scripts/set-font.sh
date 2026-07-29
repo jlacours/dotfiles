@@ -11,9 +11,7 @@
 # but always writes the spaced form — pango and rofi accept it.
 # State file tracks the last family so repeated swaps work without re-specifying.
 #
-# rofi is retired (moved to legacy/rofi/, replaced by the quickshell menus/
-# module — see quickshell/AGENTS.md); its theme files are no longer live and
-# were dropped from this list on purpose.
+# Legacy Rofi and Quickshell configs are intentionally excluded.
 
 set -euo pipefail
 
@@ -29,9 +27,7 @@ FILES=(
   "$HOME/.config/foot/foot.ini"
 )
 
-# QML files under quickshell — collected dynamically
-mapfile -t QML_FILES < <(grep -rl "font.family" "$DOTFILES/quickshell/.config/quickshell" 2>/dev/null || true)
-FILES+=("${QML_FILES[@]}")
+FILES+=("$DOTFILES/qtile/.config/qtile/config.py")
 
 detect_font() {
   local file line detected=""
@@ -125,5 +121,3 @@ echo
 echo "Reload hints:"
 echo "  hyprctl reload"
 echo "  pkill -SIGUSR2 waybar   # or systemctl --user restart waybar"
-echo "  # quickshell reloads notifications automatically on wallust.js change"
-echo "  # quickshell: restart the shell process"

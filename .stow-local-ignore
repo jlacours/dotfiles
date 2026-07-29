@@ -26,6 +26,8 @@
 
 # Common personal or machine-local artifacts
 (^|/)\.env(\..*)?$
+(^|/)backup\.env$
+(^|/)excludes\.local$
 \.sqlite3?$
 \.db(-.*)?$
 \.pem$

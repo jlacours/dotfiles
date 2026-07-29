@@ -1,0 +1,26 @@
+# Portable cache and generated-data exclusions.
+# Borg archives absolute paths without the leading slash, so a home backup
+# begins at home/<user>. Shell-style ** patterns match nested directories.
+
+sh:home/*/.cache/**
+sh:home/*/.local/share/Steam/**
+sh:home/*/.local/share/Trash/**
+sh:home/*/.local/share/containers/**
+sh:home/*/.local/share/lutris/**
+sh:home/*/.local/share/pnpm/**
+sh:home/*/.local/share/umu/**
+sh:home/*/.npm/**
+sh:home/*/.npm-global/**
+sh:home/*/.rustup/**
+sh:home/*/.cargo/registry/**
+sh:home/*/go/pkg/**
+sh:**/node_modules/**
+sh:**/__pycache__/**
+sh:**/.venv/**
+sh:**/.gradle/**
+sh:**/*.pyc
+sh:**/*.safetensors
+
+# Personal data such as Downloads, photos, music, and video is intentionally
+# not excluded here. Add machine-specific choices to excludes.local, which is
+# ignored by Git and Stow.

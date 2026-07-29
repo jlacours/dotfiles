@@ -1,11 +1,11 @@
 #!/bin/sh
 
-# Session power menu through rofi.
+# Session power menu through fuzzel.
 
 set -eu
 
 choice=$(printf '%s\n' "lock" "logout" "suspend" "reboot" "poweroff" | \
-  rofi -dmenu -i -no-custom -p "Power") || exit 0
+  fuzzel --dmenu --only-match --minimal-lines --prompt "Power> ") || exit 0
 
 case "$choice" in
   lock)     loginctl lock-session ;;
