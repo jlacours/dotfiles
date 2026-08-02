@@ -5,3 +5,7 @@ set -u
 if pgrep -x qtile >/dev/null 2>&1; then
     qtile shell -c 'reload_config()' >/dev/null 2>&1 || true
 fi
+
+if pgrep -x mako >/dev/null 2>&1; then
+    makoctl reload >/dev/null 2>&1 || true
+fi

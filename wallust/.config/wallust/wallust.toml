@@ -20,6 +20,7 @@ ghostty = { template = 'ghostty.conf', target = '~/.config/ghostty/themes/wallus
 pi = { template = 'pi.json', target = '~/.pi/agent/themes/wallust.json' }
 hyprland = { template = 'hyprland.conf', target = '~/.config/hypr/themes/wallust.conf' }
 hyprlock = { template = 'hyprlock.conf', target = '~/.config/hypr/themes/wallust-lock.conf' }
+mako = { template = 'mako.conf', target = '~/.config/mako/wallust.conf' }
 fzf = { template = 'colors.sh', target = '~/.cache/wallust/colors.sh' }
 neo-matrix = { template = 'neo-matrix.color', target = '~/.config/neo/colors' }
 quickshell = { template = 'quickshell-colors.js', target = '~/.config/quickshell/wallust.js' }
