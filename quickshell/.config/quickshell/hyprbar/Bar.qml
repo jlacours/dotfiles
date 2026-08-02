@@ -15,6 +15,8 @@ PanelWindow {
     readonly property color muted: palette.muted
     readonly property color accent: palette.accent
     readonly property var hyprMonitor: Hyprland.monitorFor(screen)
+    readonly property string monitorName: hyprMonitor?.name || screen.name
+    readonly property bool isTopMonitor: monitorName === "DP-1"
 
     WallustPalette {
         id: palette
@@ -25,7 +27,8 @@ PanelWindow {
     exclusiveZone: 24
 
     anchors {
-        top: true
+        top: !bar.isTopMonitor
+        bottom: bar.isTopMonitor
         left: true
         right: true
     }
@@ -33,16 +36,6 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         color: bar.background
-
-        Rectangle {
-            anchors {
-                left: parent.left
-                right: parent.right
-                bottom: parent.bottom
-            }
-            height: 1
-            color: palette.border
-        }
 
         RowLayout {
             anchors {
@@ -53,7 +46,7 @@ PanelWindow {
             spacing: 2
 
             Repeater {
-                model: 6
+                model: 10
 
                 delegate: Rectangle {
                     id: workspaceButton
@@ -61,6 +54,17 @@ PanelWindow {
                     required property int index
                     readonly property int workspaceId: index + 1
                     readonly property bool active: bar.hyprMonitor?.activeWorkspace?.id === workspaceId
+                    readonly property var workspaceData: {
+                        const workspaces = Hyprland.workspaces.values
+
+                        for (let i = 0; i < workspaces.length; i++) {
+                            if (workspaces[i].id === workspaceId)
+                                return workspaces[i]
+                        }
+
+                        return null
+                    }
+                    readonly property bool occupied: workspaceData?.toplevels.values.length > 0
 
                     implicitWidth: 26
                     implicitHeight: 24
@@ -77,8 +81,10 @@ PanelWindow {
 
                     Text {
                         anchors.centerIn: parent
-                        text: workspaceButton.workspaceId
-                        color: workspaceButton.active ? bar.background : bar.muted
+                        text: workspaceButton.workspaceId === 10 ? "0" : workspaceButton.workspaceId.toString()
+                        color: workspaceButton.active
+                            ? bar.background
+                            : workspaceButton.occupied ? bar.foreground : bar.muted
                         font.family: "monospace"
                         font.pixelSize: 13
                         font.weight: workspaceButton.active ? Font.DemiBold : Font.Medium
@@ -143,7 +149,7 @@ PanelWindow {
             }
 
             Text {
-                text: bar.hyprMonitor?.name || bar.screen.name
+                text: bar.monitorName
                 color: bar.muted
                 font.family: "monospace"
                 font.pixelSize: 11

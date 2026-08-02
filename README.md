@@ -175,7 +175,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **mako** | Notification daemon launched by the qtile session |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Active tiling Wayland session: Hyprland-style keybinds ported to qtile, Fuzzel-based menus (applications, tools, power, clipboard history, keybind viewer, screen recording, emoji/Unicode picker, OCR, wallpaper picker), mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, workspaces, active-window title, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, the full workspace set with per-monitor active state and edge placement, active-window title, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr terminal-native agent multiplexer configuration |
 | **wallust** | Wallust color-generation configuration, application templates, and live desktop refresh hook |
