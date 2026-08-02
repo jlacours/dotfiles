@@ -41,6 +41,7 @@ application/toml=nvim.desktop;
 application/x-shellscript=nvim.desktop;
 application/x-yaml=nvim.desktop;
 application/xml=nvim.desktop;
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
 
 [Added Associations]
 video/mp4=mpv.desktop;
