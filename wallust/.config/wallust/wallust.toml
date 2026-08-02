@@ -19,6 +19,7 @@ startpage = { template = 'startpage.css', target = '~/Projects/startpage/theme.c
 ghostty = { template = 'ghostty.conf', target = '~/.config/ghostty/themes/wallust.conf' }
 pi = { template = 'pi.json', target = '~/.pi/agent/themes/wallust.json' }
 hyprland = { template = 'hyprland.conf', target = '~/.config/hypr/themes/wallust.conf' }
+hyprland-lua = { template = 'hyprland.lua', target = '~/.config/hypr/themes/wallust.lua' }
 hyprlock = { template = 'hyprlock.conf', target = '~/.config/hypr/themes/wallust-lock.conf' }
 mako = { template = 'mako.conf', target = '~/.config/mako/wallust.conf' }
 fzf = { template = 'colors.sh', target = '~/.cache/wallust/colors.sh' }
