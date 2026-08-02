@@ -1,0 +1,15 @@
+[Unit]
+Description=Codex Remote Control daemon
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/codex remote-control start --json
+ExecStop=%h/.local/bin/codex remote-control stop --json
+ExecStopPost=/usr/bin/sleep 2
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target

@@ -52,6 +52,22 @@ repository location or credentials. Copy
 machine-local file out of Git, test the service once, and only then enable the
 timer. See `borg/README.md` for the setup and restore-check commands.
 
+Install Codex with the official standalone installer before enabling the
+tracked Remote Control service:
+
+```bash
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+systemctl --user enable --now codex-remote-control.service
+```
+
+The service starts the official Codex-managed app-server daemon whenever the
+user systemd manager starts. On an always-on host, enable lingering once so the
+user manager starts at boot without waiting for an interactive login:
+
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
 Install a subset by naming packages:
 
 ```bash
@@ -149,6 +165,7 @@ Every application follows the same template: a top-level package mirrors its des
 | Package | Software and purpose |
 |---|---|
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
+| **codex** | Codex Remote Control systemd user service for automatic startup on an always-on host |
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; available as the secondary editor |
 | **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
 | **eww** | Legacy Eww bar retained for migration reference |
