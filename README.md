@@ -152,6 +152,27 @@ sudo ~/.config/hypr/scripts/install-game-mode-governor.sh
 
 Review `MANAGED_UNITS` in `hyprland/.config/hypr/scripts/game-mode.sh` first; those user services are paused while game mode is active.
 
+Away mode prepares the workstation for an unattended but remotely reachable
+period. It refuses to activate unless Tailscale, SSH, Codex Remote Control, and
+systemd user lingering are healthy; then it records and pauses expendable user
+services and desktop applications, preserves the current OpenRGB profile,
+disables automatic suspend, locks the session, and powers off RGB and displays.
+Networking, Codex Remote Control, the Hermes/Signal fallback, CLIProxyAPI, and
+the Borg backup timer remain active.
+
+```bash
+yay -S --needed openrgb openssh tailscale
+~/.config/hypr/scripts/away-mode.sh verify
+~/.config/hypr/scripts/away-mode.sh on
+~/.config/hypr/scripts/away-mode.sh status
+~/.config/hypr/scripts/away-mode.sh off
+```
+
+Activation and restoration are idempotent. Restoration starts only the units
+and desktop processes recorded as running when the mode was enabled, restores
+the saved RGB profile, turns the displays back on, and deliberately leaves the
+session locked for normal authentication.
+
 hypridle runs with `ignore_dbus_inhibit = true`, so it ignores the browser's audio/video idle locks. A `hypridle-video-inhibit.service` user unit restores "stay awake while watching" by holding a `systemd-inhibit --what=idle` lock only while a window is fullscreen; audio-only playback still idles out. Stow only links the unit, so enable it once:
 
 ```bash
@@ -171,7 +192,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **eww** | Legacy Eww bar retained for migration reference |
 | **foot** | Foot terminal — the default terminal across qtile; Wallust color include |
 | **fuzzel** | Fast native Wayland application launcher and dmenu-compatible picker with a compact square theme |
-| **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game mode, and compositor helpers |
+| **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
 | **mako** | Notification daemon launched by the qtile session |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Active tiling Wayland session: Hyprland-style keybinds ported to qtile, Fuzzel-based menus (applications, tools, power, clipboard history, keybind viewer, screen recording, emoji/Unicode picker, OCR, wallpaper picker), mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
