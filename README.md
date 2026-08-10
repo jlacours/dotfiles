@@ -93,7 +93,7 @@ yay -S --needed hyprland hypridle quickshell fuzzel foot filezilla jq pipewire-p
 Hyprland uses Fuzzel for its application, favorites, tools, window, power,
 clipboard-history, keybinding, and screen-management menus. The tools menu
 also covers screen recording, an emoji/Unicode picker, OCR, and a wallpaper
-picker.
+picker that can either regenerate the Wallust theme or keep the current palette.
 
 The minimal Hyprland bar watches Wallust's generated palette, so
 `wallust theme <name>` updates its background, text, hover, border, and accent
