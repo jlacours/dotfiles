@@ -2,25 +2,27 @@
 -- The main hyprland.lua will require this module after the full translation
 -- has been reviewed. Until then, the legacy hyprland.conf remains active.
 
+local terminal = "footclient"
+
 local programs = {
-  terminal = "foot",
-  file_manager = "foot -e ranger",
+  terminal = terminal,
+  file_manager = terminal .. " -e ranger",
   alternate_file_manager = "pcmanfm",
   menu = "fuzzel",
-  web_browser = "zen-browser",
-  alternate_web_browser = "zen-browser --new-window",
-  dropdown_terminal = "foot --app-id=scratchpad -o colors-dark.alpha=0.9 -e zsh",
-  newsboat = "foot --app-id=newsboat -e newsboat",
+  web_browser = "librewolf",
+  alternate_web_browser = "helium-browser --new-window",
+  dropdown_terminal = terminal .. " --app-id=scratchpad -o colors-dark.alpha=0.9 -e zsh",
+  newsboat = terminal .. " --app-id=newsboat -e newsboat",
   power_menu = "~/.config/hypr/scripts/power-menu.sh",
   window_menu = "~/.config/hypr/scripts/window-menu.sh",
-  music_player = "foot -e rmpc",
+  music_player = terminal .. " -e rmpc",
   restart_bar = [[sh -c "qs -c hyprbar kill >/dev/null 2>&1 || true; exec qs -c hyprbar -d"]],
   tools_menu = "~/.local/bin/fuzzel-tools",
   apps_menu = "~/.local/bin/fuzzel-apps",
   screen_menu = "~/.config/hypr/scripts/screens-menu.sh",
   emacs_client = "emacsclient -c",
-  nvim = "foot --app-id=nvim -e nvim",
-  pulsemixer = "foot --app-id=pulsemixer -e pulsemixer",
+  nvim = terminal .. " --app-id=nvim -e nvim",
+  pulsemixer = terminal .. " --app-id=pulsemixer -e pulsemixer",
 }
 
 -- Two vertically stacked 1080p displays: 24in above, 27in below.
@@ -38,7 +40,7 @@ hl.monitor({
   scale = 1,
 })
 
-for workspace = 1, 6 do
+for workspace = 1, 5 do
   hl.workspace_rule({
     workspace = tostring(workspace),
     monitor = "HDMI-A-1",
@@ -46,11 +48,11 @@ for workspace = 1, 6 do
   })
 end
 
-for workspace = 7, 10 do
+for workspace = 6, 10 do
   hl.workspace_rule({
     workspace = tostring(workspace),
     monitor = "DP-1",
-    default = workspace == 7,
+    default = workspace == 6,
   })
 end
 

@@ -134,6 +134,14 @@ PanelWindow {
             }
             spacing: 8
 
+            GameMode {
+                backgroundColor: bar.background
+                foregroundColor: bar.foreground
+                mutedColor: bar.muted
+                accentColor: bar.accent
+                hoverColor: bar.surfaceHover
+            }
+
             Row {
                 spacing: 2
 

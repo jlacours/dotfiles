@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "jobs_audit": 4,
+    "jobs_update": 1,
+    "connect_timeout_s": 10,
+    "command_timeout_s": 60,
+    "transaction_warn_after_s": 900,
+    "disk_warn_pct": 80,
+    "disk_crit_pct": 90,
+    "inode_warn_pct": 80,
+    "inode_crit_pct": 90
+  },
+  "hosts": [
+    {
+      "id": "ordijul",
+      "label": "Local Arch workstation",
+      "ssh_alias": "local",
+      "distro": "auto",
+      "tags": [
+        "local",
+        "workstation",
+        "arch"
+      ],
+      "enabled": true,
+      "expected_mounts": [
+        "/"
+      ],
+      "allowed_tcp_listeners": [],
+      "allowed_udp_listeners": [],
+      "arch": {
+        "include_aur": false
+      }
+    },
+    {
+      "id": "pixel",
+      "label": "Pixel Termux",
+      "ssh_alias": "pixel",
+      "distro": "auto",
+      "tags": [
+        "mobile",
+        "android",
+        "termux"
+      ],
+      "enabled": false,
+      "expected_mounts": [],
+      "allowed_tcp_listeners": [],
+      "allowed_udp_listeners": [],
+      "arch": {
+        "include_aur": false
+      }
+    },
+    {
+      "id": "pi5",
+      "label": "Raspberry Pi 5",
+      "ssh_alias": "pi5",
+      "distro": "auto",
+      "tags": [
+        "server",
+        "pi",
+        "debian"
+      ],
+      "enabled": true,
+      "expected_mounts": [
+        "/"
+      ],
+      "allowed_tcp_listeners": [],
+      "allowed_udp_listeners": [],
+      "arch": {
+        "include_aur": false
+      }
+    },
+    {
+      "id": "pi3",
+      "label": "Raspberry Pi 3",
+      "ssh_alias": "pi3",
+      "distro": "auto",
+      "tags": [
+        "server",
+        "pi",
+        "debian"
+      ],
+      "enabled": true,
+      "expected_mounts": [
+        "/"
+      ],
+      "allowed_tcp_listeners": [],
+      "allowed_udp_listeners": [],
+      "arch": {
+        "include_aur": false
+      }
+    },
+    {
+      "id": "vps",
+      "label": "VPS",
+      "ssh_alias": "vps",
+      "distro": "auto",
+      "tags": [
+        "server",
+        "remote",
+        "debian"
+      ],
+      "enabled": true,
+      "expected_mounts": [
+        "/"
+      ],
+      "allowed_tcp_listeners": [],
+      "allowed_udp_listeners": [],
+      "arch": {
+        "include_aur": false
+      }
+    }
+  ]
+}

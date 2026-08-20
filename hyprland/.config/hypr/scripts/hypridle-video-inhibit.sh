@@ -3,7 +3,7 @@
 # (i.e. a video you're actually watching) is visible; let audio-only playback idle.
 #
 # Why this exists:
-#   hypridle has only a global `ignore_dbus_inhibit` switch — it can't tell Firefox/Zen's
+#   hypridle has only a global `ignore_dbus_inhibit` switch — it can't tell LibreWolf/Helium's
 #   "Playing audio" idle-inhibit from "Playing video". So we set ignore_dbus_inhibit = true
 #   (hypridle ignores ALL browser screensaver locks, audio AND video) and re-add an idle
 #   lock ourselves, but only when a fullscreen window is on a visible workspace. hypridle

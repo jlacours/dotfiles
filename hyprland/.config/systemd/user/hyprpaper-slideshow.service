@@ -1,0 +1,9 @@
+[Unit]
+Description=Advance the two-image Hyprpaper slideshow
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/scripts/hyprpaper-slideshow.sh next

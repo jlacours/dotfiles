@@ -33,6 +33,8 @@ pi-session-*.html
 **/backup.env
 **/excludes.local
 *.local
+!codex/.local/
+!codex/.local/**
 !quickshell/.local/
 !quickshell/.local/**
 !wallust/.local/

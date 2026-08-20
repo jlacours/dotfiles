@@ -35,8 +35,9 @@ BAR_HEIGHT_4K = 28
 
 mod = "mod4"
 home = os.path.expanduser("~")
-terminal = "foot"
-webbrowser = "zen-browser"
+terminal = "footclient"
+webbrowser = "librewolf"
+alt_webbrowser = "helium-browser --new-window"
 scripts = f"{home}/.config/qtile/scripts"
 qs_scripts = f"{home}/.config/quickshell/scripts"
 
@@ -156,7 +157,7 @@ keys = [
     Key([mod], "a", lazy.spawn("emacsclient -c"), desc="Emacs"),
     Key([mod, "shift"], "a", lazy.spawn(f"{terminal} --app-id=nvim -e nvim"), desc="Neovim"),
     Key([mod], "w", lazy.spawn(webbrowser), desc="Web browser"),
-    Key([mod, "shift"], "w", lazy.spawn(f"{webbrowser} --new-window"), desc="Alt. web browser"),
+    Key([mod, "shift"], "w", lazy.spawn(alt_webbrowser), desc="Alt. web browser"),
     Key([mod], "b", lazy.spawn(f"{home}/.local/bin/fuzzel-apps"), desc="Favorite apps menu"),
     Key([mod], "s", lazy.spawn(f"{home}/.local/bin/fuzzel-tools"), desc="Tools menu"),
     Key([mod], "F1", lazy.spawn(f"{scripts}/keybinds-menu.sh"), desc="Show keybindings"),

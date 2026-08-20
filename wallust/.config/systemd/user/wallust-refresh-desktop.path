@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch Wallust GTK output for desktop refreshes
+PartOf=graphical-session.target
+
+[Path]
+PathChanged=%h/.config/gtk-3.0/gtk.css
+Unit=wallust-refresh-desktop.service
+
+[Install]
+WantedBy=graphical-session.target

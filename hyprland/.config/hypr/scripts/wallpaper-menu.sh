@@ -2,6 +2,7 @@
 set -eu
 
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
+THUMBNAIL_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/wallpaper-menu/thumbnails"
 
 notify() {
     command -v notify-send >/dev/null 2>&1 || return 0
@@ -13,6 +14,45 @@ die() {
     printf 'wallpaper-menu: %s\n' "$message" >&2
     notify critical "$message"
     exit 1
+}
+
+thumbnail_for() {
+    wallpaper_path=$1
+    thumbnail_key=$(printf '%s' "$wallpaper_path" | sha256sum)
+    thumbnail_key=${thumbnail_key%% *}
+    thumbnail="$THUMBNAIL_DIR/$thumbnail_key.png"
+
+    if [ ! -f "$thumbnail" ] || [ "$wallpaper_path" -nt "$thumbnail" ]; then
+        thumbnail_tmp=$(mktemp "$THUMBNAIL_DIR/$thumbnail_key.XXXXXX") || {
+            printf '%s\n' "image-x-generic"
+            return
+        }
+
+        if ffmpeg -v error -nostdin -y -i "$wallpaper_path" -frames:v 1 \
+            -vf "scale=96:64:force_original_aspect_ratio=increase,crop=96:64" \
+            -f image2 -c:v png "$thumbnail_tmp" &&
+            mv "$thumbnail_tmp" "$thumbnail"; then
+            :
+        else
+            rm -f "$thumbnail_tmp"
+        fi
+    fi
+
+    if [ -f "$thumbnail" ]; then
+        printf '%s\n' "$thumbnail"
+    else
+        printf '%s\n' "image-x-generic"
+    fi
+}
+
+wallpaper_entries() {
+    find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+        \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.jxl' \) \
+        -printf '%f\n' | sort | while IFS= read -r filename; do
+        wallpaper_path="$WALLPAPER_DIR/$filename"
+        thumbnail=$(thumbnail_for "$wallpaper_path")
+        printf '%s\0icon\037%s\n' "$filename" "$thumbnail"
+    done
 }
 
 apply_wallpaper_only() {
@@ -40,9 +80,10 @@ apply_wallpaper_only() {
     notify low "Set to $(basename "$wallpaper"); kept the current theme"
 }
 
-selected=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
-    \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.jxl' \) \
-    -printf '%f\n' | sort | fuzzel --dmenu --only-match --prompt "Wallpaper> ") || exit 0
+mkdir -p "$THUMBNAIL_DIR" || die "Could not create the wallpaper thumbnail cache"
+
+selected=$(wallpaper_entries | fuzzel --dmenu --only-match --prompt "Wallpaper> " \
+    --line-height=64 --lines=8 --width=52) || exit 0
 
 [ -z "$selected" ] && exit 0
 

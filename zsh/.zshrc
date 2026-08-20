@@ -1,5 +1,5 @@
 # =========================
-# Juju's .zshrc (working for fzf 0.68)
+# Juju's .zshrc
 # =========================
 
 # --- Environment Variables ---
@@ -334,11 +334,27 @@ zstyle ':completion:*' special-dirs false
 zstyle ':completion:*' menu no
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' group-name ''
-zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+# fzf-tab receives this value as data, so Zsh prompt escapes such as
+# %F{yellow} would otherwise be printed literally in its header.
+zstyle ':completion:*:descriptions' format '-- %d --'
 zstyle ':completion:*' list-dirs-first true
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS} 'ma=48;5;238;38;5;15;1'
 # Native tmux completion documents every command; omit duplicate short aliases.
 zstyle ':completion:*:*:tmux:*:subcommands' mode 'commands'
+
+# fzf-tab deliberately does not inherit FZF_DEFAULT_OPTS. Keep its picker
+# consistent with the regular fzf widgets and show a useful file preview.
+zstyle ':fzf-tab:*' fzf-flags \
+  --border=sharp \
+  --info=inline \
+  --pointer='➜' \
+  --marker='✓' \
+  --preview-window=right:60% \
+  --bind=ctrl-u:preview-half-page-up \
+  --bind=ctrl-d:preview-half-page-down \
+  --bind=ctrl-p:toggle-preview
+zstyle ':fzf-tab:*' fzf-preview \
+  'if [[ -d $realpath ]]; then eza -1 --color=always --icons=always -- "$realpath"; elif [[ -f $realpath ]]; then bat --color=always --style=numbers -- "$realpath"; fi'
 
 # Dart CLI Completion (if installed)
 [[ -f ~/.config/.dart-cli-completion/zsh-config.zsh ]] && . ~/.config/.dart-cli-completion/zsh-config.zsh || true
@@ -363,15 +379,34 @@ source_if_readable "$HOME/.zfunc/_claude"
 # --- FZF Setup ---
 unset FZF_DEFAULT_OPTS
 
-# Base FZF settings: layout, border, preview, keybindings
+# Base settings shared by the native fzf widgets. File previews belong to the
+# file picker only; applying one globally would make history search try to bat
+# shell commands.
 export FZF_DEFAULT_OPTS="
 --layout=reverse
 --border=sharp
 --info=inline
 --preview-window=right:60%
+--pointer=➜
+--marker=✓
 --bind=ctrl-u:preview-half-page-up
 --bind=ctrl-d:preview-half-page-down
 --bind=ctrl-p:toggle-preview
+"
+
+# The fzf 0.74 walker follows hidden directories and symlinks by default. On
+# this machine that means hundreds of thousands of cache, Steam, and container
+# entries before the picker is usable. When available, use ripgrep's bounded
+# file listing for Ctrl-T instead; it does not follow symlinks and skips the
+# usual bulk. Without ripgrep, fzf falls back to its own walker.
+if command -v rg >/dev/null 2>&1; then
+  export FZF_CTRL_T_COMMAND="rg --files --hidden -g '!.git/**' -g '!**/.cache/**' -g '!**/node_modules/**' 2>/dev/null"
+else
+  unset FZF_CTRL_T_COMMAND
+fi
+export FZF_CTRL_T_OPTS="
+--preview='if [[ -f {} ]]; then bat --color=always --style=numbers -- {} ; fi'
+--preview-window=right:60%
 "
 
 # Optional: Wallust dynamic colors for fzf
@@ -379,7 +414,7 @@ export FZF_DEFAULT_OPTS="
 if [[ -f ~/.cache/wallust/colors.sh ]]; then
     source ~/.cache/wallust/colors.sh
     # Add color options only for commands that support hex values
-    # Note: fzf 0.68 requires separate --color flags (no comma-separated values)
+    # Keep each color assignment separate for compatibility with older fzf.
     export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS
     --color=bg:$background
     --color=fg:$foreground
@@ -526,3 +561,7 @@ function sudo-off() {
   unset SUDO_READY
   echo "passwordless pacman OFF — agents will prompt for sudo again"
 }
+
+# >>> Codex installer >>>
+export PATH="$HOME/.local/bin:$PATH"
+# <<< Codex installer <<<

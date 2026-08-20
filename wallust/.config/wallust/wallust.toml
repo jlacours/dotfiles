@@ -32,7 +32,3 @@ quickshell-square = { template = 'quickshell-colors.js', target = '~/.config/qui
 gtk3 = { template = 'gtk.css.template', target = '~/.config/gtk-3.0/gtk.css' }
 gtk4 = { template = 'gtk.css.template', target = '~/.config/gtk-4.0/gtk.css' }
 zed = { template = 'zed.json', target = '~/.config/zed/themes/wallust.json' }
-
-[hooks]
-# Qtile needs an explicit reload; hyprbar watches its generated JSON directly.
-desktop = "$HOME/.local/bin/wallust-refresh-desktop"

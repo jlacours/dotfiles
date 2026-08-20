@@ -1,0 +1,12 @@
+[Unit]
+Description=Advance the Hyprpaper slideshow every 30 minutes
+PartOf=graphical-session.target
+
+[Timer]
+OnActiveSec=30min
+OnUnitActiveSec=30min
+AccuracySec=1s
+Unit=hyprpaper-slideshow.service
+
+[Install]
+WantedBy=graphical-session.target

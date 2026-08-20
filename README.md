@@ -40,6 +40,34 @@ Install local network diagnostic tools:
 yay -S --needed nmap
 ```
 
+Install the Bitwarden CLI session wrapper to cache only the temporary vault
+session in GNOME Keyring (never the master password):
+
+```bash
+yay -S --needed bitwarden-cli gnome-keyring libsecret
+./install.sh --dry-run bitwarden
+./install.sh bitwarden
+bw unlock
+```
+
+See [`bitwarden/README.md`](bitwarden/README.md) for behavior, requirements, and
+the `/usr/bin/bw` troubleshooting bypass.
+
+Install the Boxcare fleet-maintenance runtime, then Stow its command and safe
+logical inventory:
+
+```bash
+yay -S --needed python openssh
+./install.sh --dry-run boxcare
+./install.sh boxcare
+```
+
+`boxcare` audits by default; package changes require `boxcare update`, with
+`boxcare update --dry-run` available to inspect the command plan first. Host
+addresses and credentials remain in the local SSH configuration. See
+[`boxcare/README.md`](boxcare/README.md) for selection, output, sudo, strict
+host-key, and package-manager boundaries.
+
 Install Borg when using the user-level backup package:
 
 ```bash
@@ -68,6 +96,20 @@ user manager starts at boot without waiting for an interactive login:
 sudo loginctl enable-linger "$USER"
 ```
 
+The `codex` package also overrides the ChatGPT desktop launcher to use
+Electron's native Wayland backend instead of XWayland. After installing the
+OpenAI ChatGPT desktop app, Stow the package and refresh the desktop database:
+
+```bash
+./install.sh codex
+update-desktop-database ~/.local/share/applications
+```
+
+Fully quit and reopen ChatGPT after installing the override. Native Wayland
+windows use the lowercase `chatgpt` app ID when matching compositor rules. The
+Hyprland package excludes only the floating Codex pet from compositor blur,
+leaving the application's own glass styling intact.
+
 Install a subset by naming packages:
 
 ```bash
@@ -84,20 +126,54 @@ qtile setup expects:
 yay -S --needed qtile qtile-extras python-pywlroots hypridle wlopm wlr-randr xorg-xrandr fuzzel mako swaybg foot wallust libnotify grim slurp wl-clipboard wtype cliphist tesseract wf-recorder network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
 ```
 
+Active Wayland launchers use Foot's socket-activated server mode for lower
+startup overhead and shared font/glyph caches. Enable the packaged user socket
+once after installing Foot:
+
+```bash
+systemctl --user enable --now foot-server.socket
+```
+
+`footclient` starts the server on demand through that socket. The server reads
+`foot.ini` when it starts, so restart `foot-server.service` only when no
+terminal windows need to remain open after changing Foot configuration or
+generated colors.
+
 The optional Hyprland session expects:
 
 ```bash
-yay -S --needed hyprland hypridle quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland zen-browser-bin
+yay -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
 ```
 
 Hyprland uses Fuzzel for its application, favorites, tools, window, power,
 clipboard-history, keybinding, and screen-management menus. The tools menu
 also covers screen recording, an emoji/Unicode picker, OCR, and a wallpaper
-picker that can either regenerate the Wallust theme or keep the current palette.
+picker with cached thumbnail previews that can either regenerate the Wallust
+theme or keep the current palette.
 
 The minimal Hyprland bar watches Wallust's generated palette, so
 `wallust theme <name>` updates its background, text, hover, border, and accent
 colors without restarting Quickshell.
+
+The Hyprpaper slideshow alternates the night-garden and dawn-after-rain 4K
+wallpapers every 30 minutes without invoking Wallust, so wallpaper rotation
+cannot change the calibrated palette. Enable its timer once after Stowing the
+Hyprland package:
+
+```bash
+systemctl --user enable --now hyprpaper-slideshow.timer
+```
+
+Wallust's desktop hook pulses the maintained `adw-gtk3-dark` base theme after
+regenerating GTK CSS, which hot-reloads native dialogs in already-running apps.
+The calibrated desktop palette can be restored independently with
+`wallust theme Tokyo-Night --skip-sequences`.
+
+Enable the generated-file watcher once after Stowing the Wallust package:
+
+```bash
+systemctl --user enable --now wallust-refresh-desktop.path
+```
 
 The `mako` package is qtile's notification daemon, launched from qtile's
 autostart.
@@ -144,7 +220,10 @@ systemctl --user enable --now cli-proxy-api.service
 The `claudex` Zsh function launches Claude Code through that gateway while
 ordinary `claude` continues to use its native configuration.
 
-Game mode can switch the CPU governor without prompting after installing its narrow sudo helper:
+Game mode is available from the controller chip in the Hyprland bar or with
+`Super+Alt+G`. It pauses configured nonessential user services, enables Mako
+do-not-disturb, disables compositor effects and idle handling, and can switch
+the CPU governor without prompting after installing its narrow sudo helper:
 
 ```bash
 sudo ~/.config/hypr/scripts/install-game-mode-governor.sh
@@ -186,13 +265,14 @@ Every application follows the same template: a top-level package mirrors its des
 | Package | Software and purpose |
 |---|---|
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
-| **codex** | Codex Remote Control systemd user service for automatic startup on an always-on host |
+| **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
+| **codex** | Codex Remote Control systemd user service plus a native-Wayland ChatGPT desktop launcher override |
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; available as the secondary editor |
 | **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
 | **eww** | Legacy Eww bar retained for migration reference |
-| **foot** | Foot terminal — the default terminal across qtile; Wallust color include |
+| **foot** | Foot terminal with socket-activated server/client launches; Wallust color include |
 | **fuzzel** | Fast native Wayland application launcher and dmenu-compatible picker with a compact square theme |
-| **hyprland** | Hyprland, hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
+| **hyprland** | Hyprland, Hyprpaper (with a two-image 30-minute slideshow), hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
 | **mako** | Notification daemon launched by the qtile session |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Active tiling Wayland session: Hyprland-style keybinds ported to qtile, Fuzzel-based menus (applications, tools, power, clipboard history, keybind viewer, screen recording, emoji/Unicode picker, OCR, wallpaper picker), mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
@@ -215,7 +295,8 @@ The minimal Qtile bar reads its palette from Wallust's generated `colors.py`.
 Image palettes and the random light/dark theme helpers refresh the running
 desktop automatically after Wallust rewrites its theme files.
 
-Zen Browser is the default browser. Default programs are centralized in the
+LibreWolf is the default browser, with Helium retained as the alternate
+Chromium-based browser. Default programs are centralized in the
 `environment` package: session variables live in `.config/environment.d/`, and
 desktop file associations live in `.config/mimeapps.list`. The interface font
 is `Comic Code` across Foot, Emacs, and qtile.
