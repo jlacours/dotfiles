@@ -155,6 +155,11 @@ The minimal Hyprland bar watches Wallust's generated palette, so
 `wallust theme <name>` updates its background, text, hover, border, and accent
 colors without restarting Quickshell.
 
+The bar also includes an ExpressVPN status chip when the ExpressVPN 5 client is
+installed and activated. The chip polls `/usr/local/bin/expressvpnctl`, uses the
+accent color while connected, and connects to the saved location or disconnects
+on click without changing the selected region, protocol, or Network Lock.
+
 The Hyprpaper slideshow alternates the night-garden and dawn-after-rain 4K
 wallpapers every 30 minutes without invoking Wallust, so wallpaper rotation
 cannot change the calibrated palette. Enable its timer once after Stowing the
