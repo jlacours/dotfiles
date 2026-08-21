@@ -4,11 +4,11 @@ x-scheme-handler/betterdiscord=discord.desktop
 x-scheme-handler/freetube=FreeTube.desktop
 x-scheme-handler/discord=vesktop.desktop
 x-scheme-handler/nxm=modorganizer2-nxm-handler.desktop
-text/html=librewolf.desktop
-x-scheme-handler/http=librewolf.desktop
-x-scheme-handler/https=librewolf.desktop
-x-scheme-handler/about=librewolf.desktop
-x-scheme-handler/unknown=librewolf.desktop
+text/html=helium.desktop
+x-scheme-handler/http=helium.desktop
+x-scheme-handler/https=helium.desktop
+x-scheme-handler/about=helium.desktop
+x-scheme-handler/unknown=helium.desktop
 video/mp4=mpv.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/claude=claude-desktop.desktop
@@ -43,6 +43,7 @@ application/x-yaml=nvim.desktop;
 application/xml=nvim.desktop;
 application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
 x-scheme-handler/codex=chatgpt.desktop
+application/xhtml+xml=helium.desktop
 
 [Added Associations]
 video/mp4=mpv.desktop;

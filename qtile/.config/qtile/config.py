@@ -36,8 +36,8 @@ BAR_HEIGHT_4K = 28
 mod = "mod4"
 home = os.path.expanduser("~")
 terminal = "footclient"
-webbrowser = "librewolf"
-alt_webbrowser = "helium-browser --new-window"
+webbrowser = "helium-browser"
+alt_webbrowser = "librewolf"
 scripts = f"{home}/.config/qtile/scripts"
 qs_scripts = f"{home}/.config/quickshell/scripts"
 
