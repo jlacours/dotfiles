@@ -20,4 +20,4 @@ address=$(
 ) || exit 0
 
 [ -n "$address" ] || exit 0
-hyprctl dispatch focuswindow "address:$address" >/dev/null
+hyprctl dispatch "hl.dsp.focus({ window = 'address:$address' })" >/dev/null

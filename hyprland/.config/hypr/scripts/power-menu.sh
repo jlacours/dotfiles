@@ -9,7 +9,7 @@ choice=$(printf '%s\n' "lock" "exit Hyprland" "suspend" "reboot" "poweroff" | \
 
 case "$choice" in
   lock) loginctl lock-session ;;
-  "exit Hyprland") hyprctl dispatch exit ;;
+  "exit Hyprland") hyprctl dispatch 'hl.dsp.exit()' ;;
   suspend) systemctl suspend ;;
   reboot) systemctl reboot ;;
   poweroff) systemctl poweroff ;;

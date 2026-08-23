@@ -74,10 +74,16 @@ game_mode_on() {
     fi
   done
 
-  # 3. Disable Hyprland eye-candy at runtime
-  run_step "disable animations" hyprctl keyword animations:enabled 0
-  run_step "disable blur" hyprctl keyword decoration:blur:enabled 0
-  run_step "disable shadow" hyprctl keyword decoration:shadow:enabled 0
+  # 3. Disable Hyprland eye-candy at runtime. Lua providers reject the legacy
+  # `keyword` IPC command, while the retained rollback config still uses it.
+  if hyprctl systeminfo | grep -q '^configProvider: lua$'; then
+    run_step "disable compositor effects" hyprctl eval \
+      'hl.config({ animations = { enabled = false }, decoration = { blur = { enabled = false }, shadow = { enabled = false } } })'
+  else
+    run_step "disable animations" hyprctl keyword animations:enabled 0
+    run_step "disable blur" hyprctl keyword decoration:blur:enabled 0
+    run_step "disable shadow" hyprctl keyword decoration:shadow:enabled 0
+  fi
 
   # 4. Set CPU governor to performance (graceful — sudo rule may not be installed yet)
   if ! sudo -n /usr/local/bin/game-mode-governor performance 2>/dev/null; then
@@ -149,7 +155,7 @@ game_mode_off() {
     errors+=("CPU governor not restored (run the install step)")
   fi
 
-  # 3. Reload Hyprland (restores animations/blur/shadow from hyprland.conf)
+  # 3. Reload the active Hyprland provider to restore animations/blur/shadow.
   # Note: reload does NOT re-run exec-once, so this is safe.
   run_step "hyprctl reload" hyprctl reload
 

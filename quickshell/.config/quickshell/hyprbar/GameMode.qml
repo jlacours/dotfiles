@@ -1,5 +1,4 @@
 import QtQuick 6.0
-import QtQuick.Controls 6.0
 
 Rectangle {
     id: root
@@ -9,6 +8,8 @@ Rectangle {
     required property color mutedColor
     required property color accentColor
     required property color hoverColor
+    required property var panelWindow
+    property bool tooltipBelow: false
 
     implicitWidth: 26
     implicitHeight: 24
@@ -33,10 +34,15 @@ Rectangle {
         onClicked: GameModeState.toggle()
     }
 
-    ToolTip {
-        visible: gameModeMouse.containsMouse
-        text: GameModeState.active
+    BarTooltip {
+        panelWindow: root.panelWindow
+        triggerItem: root
+        below: root.tooltipBelow
+        shown: gameModeMouse.containsMouse
+        labelText: GameModeState.active
             ? "Game mode on — click to restore services"
             : "Game mode off — click to pause background services"
+        backgroundColor: root.backgroundColor
+        foregroundColor: root.foregroundColor
     }
 }

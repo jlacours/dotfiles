@@ -1,6 +1,6 @@
 import QtQuick 6.0
 
-// ExpressVPN status and toggle chip.
+// CPU governor status and performance/powersave toggle chip.
 Rectangle {
     id: root
 
@@ -15,36 +15,36 @@ Rectangle {
     implicitWidth: 26
     implicitHeight: 24
     radius: 0
-    color: vpnMouse.containsMouse ? root.hoverColor : "transparent"
+    color: governorMouse.containsMouse ? root.hoverColor : "transparent"
 
     Text {
         anchors.centerIn: parent
-        text: ExpressVPNState.active ? "󰒘" : "󰒙"
-        color: ExpressVPNState.active ? root.accentColor : root.mutedColor
+        text: CpuGovernorState.performance ? "󰓅" : "󰾆"
+        color: CpuGovernorState.performance ? root.accentColor : root.mutedColor
         font.family: "Symbols Nerd Font Mono"
         font.pixelSize: 15
-        opacity: ExpressVPNState.busy ? 0.45 : 1.0
+        opacity: CpuGovernorState.busy ? 0.45 : 1.0
     }
 
     MouseArea {
-        id: vpnMouse
+        id: governorMouse
         anchors.fill: parent
         hoverEnabled: true
-        enabled: !ExpressVPNState.busy
+        enabled: CpuGovernorState.available && !CpuGovernorState.busy
         cursorShape: Qt.PointingHandCursor
-        onClicked: ExpressVPNState.toggle()
+        onClicked: CpuGovernorState.toggle()
     }
 
     BarTooltip {
         panelWindow: root.panelWindow
         triggerItem: root
         below: root.tooltipBelow
-        shown: vpnMouse.containsMouse
-        labelText: ExpressVPNState.active
-            ? "VPN connected — click to disconnect"
-            : ExpressVPNState.busy
-                ? "VPN " + ExpressVPNState.connectionState.toLowerCase()
-                : "VPN disconnected — click to connect"
+        shown: governorMouse.containsMouse
+        labelText: !CpuGovernorState.available
+            ? "CPU governor unavailable"
+            : CpuGovernorState.performance
+                ? "CPU: performance — click for powersave"
+                : "CPU: " + CpuGovernorState.governor + " — click for performance"
         backgroundColor: root.backgroundColor
         foregroundColor: root.foregroundColor
     }

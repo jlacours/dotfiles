@@ -145,6 +145,11 @@ The optional Hyprland session expects:
 yay -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
 ```
 
+Hyprland loads `~/.config/hypr/hyprland.lua` as its live provider, with
+monitors, workspaces, keybindings, and rules split into Lua modules. The
+adjacent `hyprland.conf` remains synchronized as a rollback and monitor-layout
+reference for session helpers.
+
 Hyprland uses Fuzzel for its application, favorites, tools, window, power,
 clipboard-history, keybinding, and screen-management menus. The tools menu
 also covers screen recording, an emoji/Unicode picker, OCR, and a wallpaper
@@ -159,6 +164,11 @@ The bar also includes an ExpressVPN status chip when the ExpressVPN 5 client is
 installed and activated. The chip polls `/usr/local/bin/expressvpnctl`, uses the
 accent color while connected, and connects to the saved location or disconnects
 on click without changing the selected region, protocol, or Network Lock.
+
+The bar also includes a CPU governor chip beside the game-mode and VPN controls,
+and the Mod+S tools menu exposes the same switch. Both show the live
+`performance`/`powersave` state and use the same narrow helper installed for
+game mode.
 
 The Hyprpaper slideshow alternates the night-garden and dawn-after-rain 4K
 wallpapers every 30 minutes without invoking Wallust, so wallpaper rotation

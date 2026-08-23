@@ -5,7 +5,26 @@
 
 before=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .activeWorkspace.name')
 
-hyprctl dispatch "$@" >/dev/null
+if hyprctl systeminfo 2>/dev/null | grep -q '^configProvider: lua$'; then
+  dispatcher=${1:-}
+  argument=${2:-}
+  quoted_argument=$(jq -n --arg value "$argument" '$value')
+
+  case "$dispatcher" in
+    workspace)
+      hyprctl dispatch "hl.dsp.focus({ workspace = $quoted_argument })" >/dev/null
+      ;;
+    movefocus)
+      hyprctl dispatch "hl.dsp.focus({ direction = $quoted_argument })" >/dev/null
+      ;;
+    *)
+      printf 'unsupported Lua workspace dispatcher: %s\n' "$dispatcher" >&2
+      exit 2
+      ;;
+  esac
+else
+  hyprctl dispatch "$@" >/dev/null
+fi
 
 read -r ws monitor <<EOF
 $(hyprctl monitors -j | jq -r '.[] | select(.focused) | "\(.activeWorkspace.name) \(.name)"')

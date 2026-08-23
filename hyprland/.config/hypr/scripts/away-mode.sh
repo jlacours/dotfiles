@@ -338,7 +338,7 @@ lock_and_blank_displays() {
 
   if command -v hyprctl >/dev/null 2>&1; then
     sleep 1
-    hyprctl dispatch dpms off >/dev/null 2>&1 || error "failed to power off the displays"
+    hyprctl dispatch 'hl.dsp.dpms({ action = "off" })' >/dev/null 2>&1 || error "failed to power off the displays"
   fi
 }
 
@@ -514,7 +514,7 @@ away_mode_off() {
   fi
 
   if command -v hyprctl >/dev/null 2>&1; then
-    hyprctl dispatch dpms on >/dev/null 2>&1 || error "failed to power on the displays"
+    hyprctl dispatch 'hl.dsp.dpms({ action = "on" })' >/dev/null 2>&1 || error "failed to power on the displays"
   fi
 
   current_errors="$(errors_json)"

@@ -95,7 +95,9 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Hyprland.dispatch("workspace " + workspaceButton.workspaceId)
+                        onClicked: Hyprland.dispatch(Hyprland.usingLua
+                            ? "hl.dsp.focus({ workspace = " + workspaceButton.workspaceId + " })"
+                            : "workspace " + workspaceButton.workspaceId)
                     }
                 }
             }
@@ -137,12 +139,24 @@ PanelWindow {
             Row {
                 spacing: 2
 
+                CpuGovernor {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
                 GameMode {
                     backgroundColor: bar.background
                     foregroundColor: bar.foreground
                     mutedColor: bar.muted
                     accentColor: bar.accent
                     hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 // ExpressVPN status and toggle.
@@ -152,6 +166,8 @@ PanelWindow {
                     mutedColor: bar.muted
                     accentColor: bar.accent
                     hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
                 }
             }
 

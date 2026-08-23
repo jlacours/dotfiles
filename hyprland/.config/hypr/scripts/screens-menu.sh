@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+# The legacy config remains the synchronized monitor-layout reference while
+# hyprland.lua is active.
 HYPR_CONFIG="${HYPR_CONFIG:-$HOME/.config/hypr/hyprland.conf}"
 
 die() {
@@ -13,6 +15,29 @@ die() {
 
 notify() {
     notify-send "Screens" "$1" 2>/dev/null || true
+}
+
+lua_quote() {
+    jq -n --arg value "$1" '$value'
+}
+
+apply_monitor_rule() {
+    local rule=$1 output mode position scale
+
+    if ! hyprctl systeminfo 2>/dev/null | grep -q '^configProvider: lua$'; then
+        hyprctl keyword monitor "$rule" >/dev/null
+        return
+    fi
+
+    output=${rule%%,*}
+    if [[ ${rule#*,} == disable ]]; then
+        hyprctl eval "hl.monitor({ output = $(lua_quote "$output"), disabled = true })" >/dev/null
+        return
+    fi
+
+    IFS=, read -r output mode position scale _ <<<"$rule"
+    [[ -n $output && -n $mode && -n $position && -n $scale ]] || die "Invalid monitor rule: $rule"
+    hyprctl eval "hl.monitor({ output = $(lua_quote "$output"), mode = $(lua_quote "$mode"), position = $(lua_quote "$position"), scale = $(lua_quote "$scale") })" >/dev/null
 }
 
 configured_monitor_rules() {
@@ -31,7 +56,7 @@ restore_configured_screens() {
     local restored=0 rule
     while IFS= read -r rule; do
         [ -n "$rule" ] || continue
-        hyprctl keyword monitor "$rule" >/dev/null
+        apply_monitor_rule "$rule"
         restored=$((restored + 1))
     done < <(configured_monitor_rules)
     [ "$restored" -gt 0 ] || die "No configured monitor rules found."
@@ -46,7 +71,7 @@ enable_configured_screen() {
         break
     done < <(configured_monitor_rules)
     [ -n "$rule" ] || die "No configured rule found for $name."
-    hyprctl keyword monitor "$rule" >/dev/null
+    apply_monitor_rule "$rule"
     notify "Enabled $name."
 }
 
@@ -83,7 +108,7 @@ case "$selection" in
         [ "$active_count" -gt 1 ] || die "Refusing to disable the only active screen. Dramatic, but unhelpful."
         name=${selection#Disable }
         name=${name%% *}
-        hyprctl keyword monitor "$name,disable" >/dev/null
+        apply_monitor_rule "$name,disable"
         notify "Disabled $name."
         ;;
 esac

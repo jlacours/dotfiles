@@ -16,7 +16,13 @@ for i in "${!LAYOUTS[@]}"; do
     fi
 done
 
-hyprctl keyword workspace "$WS_ID",layout:"$next"
+if hyprctl systeminfo 2>/dev/null | grep -q '^configProvider: lua$'; then
+    quoted_workspace=$(jq -n --arg value "$WS_ID" '$value')
+    quoted_layout=$(jq -n --arg value "$next" '$value')
+    hyprctl eval "runtime_workspace_layout_rules = runtime_workspace_layout_rules or {}; local previous = runtime_workspace_layout_rules[$quoted_workspace]; if previous then previous:set_enabled(false) end; runtime_workspace_layout_rules[$quoted_workspace] = hl.workspace_rule({ workspace = $quoted_workspace, layout = $quoted_layout })"
+else
+    hyprctl keyword workspace "$WS_ID",layout:"$next"
+fi
 
 REFRESH_STAMP="/tmp/quickshell-layout-refresh.state"
 date +%s > "$REFRESH_STAMP"

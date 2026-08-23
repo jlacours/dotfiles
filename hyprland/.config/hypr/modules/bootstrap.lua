@@ -1,6 +1,5 @@
--- Bootstrap configuration for the Hyprland Lua migration.
--- The main hyprland.lua will require this module after the full translation
--- has been reviewed. Until then, the legacy hyprland.conf remains active.
+-- Bootstrap configuration for the live Hyprland Lua migration.
+-- The legacy hyprland.conf remains beside it as a review/rollback reference.
 
 local terminal = "footclient"
 
@@ -39,22 +38,6 @@ hl.monitor({
   position = "0x1080",
   scale = 1,
 })
-
-for workspace = 1, 5 do
-  hl.workspace_rule({
-    workspace = tostring(workspace),
-    monitor = "HDMI-A-1",
-    default = workspace == 1,
-  })
-end
-
-for workspace = 6, 10 do
-  hl.workspace_rule({
-    workspace = tostring(workspace),
-    monitor = "DP-1",
-    default = workspace == 6,
-  })
-end
 
 -- Autostart: Lua gives each command a normal string and starts it
 -- asynchronously. No trailing '&' or 'disown' is needed.

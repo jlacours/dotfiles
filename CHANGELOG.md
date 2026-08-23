@@ -8,6 +8,42 @@ honours [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new packages or user-visible features.
 - **PATCH** — fixes, small tweaks, lockfile bumps.
 
+## [2.0.0] - 2026-08-23
+
+### Added
+- **hyprland** Lua modules for the monitor layout, workspace assignments,
+  keybindings, and ordered layer/window rules.
+- **quickshell** CPU governor chip backed by the existing narrow game-mode
+  privilege helper, plus shared popup tooltips for the CPU, game-mode, and VPN
+  controls.
+
+### Changed
+- **Breaking:** the Hyprland session now loads `hyprland.lua` as its live
+  configuration provider. The legacy `hyprland.conf` remains as a synchronized
+  rollback and monitor-layout reference, but external IPC callers must use Lua
+  dispatcher expressions.
+- **hyprland** keybinding discovery now reads the compositor's live bindings,
+  including bindings generated from Lua loops.
+- **hyprland** lock and idle paths wake the displays before locking, and Lua
+  dispatch syntax is used consistently by idle, away-mode, power, and window
+  helpers.
+
+### Fixed
+- **hyprland** `Super+1` through `Super+0` once again switch workspaces under
+  the Lua provider while preserving the Quickshell workspace flash.
+- **quickshell** workspace buttons now select the matching Lua or rollback
+  dispatcher syntax at runtime.
+- **hyprland** the retained workspace-flash helper translates its workspace and
+  focus actions for both Lua and rollback configuration providers.
+- **hyprland** zoom-mode entry/exit and DPMS actions no longer call legacy
+  dispatch forms that the Lua provider rejects.
+- **hyprland** game mode now disables compositor effects through the active
+  configuration provider and restores all recorded services and state cleanly.
+- **hyprland** screen enable/disable and configured-layout restoration now
+  apply monitor rules through the active configuration provider.
+- **hyprland** per-workspace layout cycling now maintains one live Lua rule per
+  workspace instead of calling the unavailable legacy `keyword` IPC path.
+
 ## [1.0.0] - 2026-06-04
 
 ### Added
