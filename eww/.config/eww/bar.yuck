@@ -28,7 +28,7 @@
 (defpoll bar_vpn :interval "10s" :initial '{"status":"disconnected","icon":"󰒙","location":""}' "scripts/eww-bar vpn")
 
 (defpoll bar_idle_inhibit :interval "2s" :initial "false"
-  "[ -f /tmp/idle-inhibit.pid ] && kill -0 $(cat /tmp/idle-inhibit.pid 2>/dev/null) 2>/dev/null && echo true || echo false")
+  "~/.config/session/idle-inhibit.sh status")
 
 ;; System vitals (only poll when popup is open)
 (defpoll cpu_usage :interval "2s" :initial "0" :run-while popup_visible
@@ -171,12 +171,12 @@
                  :label "Keyboard"
                  :value bar_language
                  :css-class "popup-row-language")
-      (eventbox :onclick "~/.config/waybar/scripts/expressvpn.sh toggle"
+      (eventbox :onclick "~/.config/quickshell/hyprbar/expressvpn.sh toggle"
         (popup-row :icon {bar_vpn.icon}
                    :label "VPN"
                    :value {bar_vpn.status == "connected" ? bar_vpn.location : "Disconnected"}
                    :css-class "popup-row-vpn"))
-      (eventbox :onclick "~/.config/waybar/scripts/idle-inhibit.sh toggle && eww update bar_idle_inhibit=$([ -f /tmp/idle-inhibit.pid ] && echo true || echo false)"
+      (eventbox :onclick "~/.config/session/idle-inhibit.sh toggle && eww update bar_idle_inhibit=$(~/.config/session/idle-inhibit.sh status)"
         (popup-row :icon {bar_idle_inhibit == "true" ? "󰈈" : "󰈉"}
                    :label "Idle Inhibit"
                    :value {bar_idle_inhibit == "true" ? "ON" : "OFF"}

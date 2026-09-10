@@ -237,13 +237,6 @@ zstyle ':vcs_info:git:*' unstagedstr '*'
 zstyle ':vcs_info:git:*' formats '%b%u%c%m'
 zstyle ':vcs_info:git:*' actionformats '%b%u%c%m (%a)'
 
-# Reset extended keyboard modes that TUIs can leave enabled after a crash/kill.
-# Run unconditionally: terminals that don't implement the kitty keyboard
-# protocol ignore these sequences, and foot (the default terminal) supports it.
-reset_terminal_input_modes() {
-  printf '\e[<u\e[<u\e[<u\e[>4;0m'
-}
-
 # Hook to detect untracked files and show ** indicator
 +vi-git-untracked() {
   if [[ $(git rev-parse --is-inside-work-tree 2>/dev/null) == 'true' ]]; then
@@ -257,7 +250,6 @@ zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
 
 precmd() {
   local exit_code=$?
-  reset_terminal_input_modes
   vcs_info
 
   # Exit code display (only shown when non-zero)
@@ -504,7 +496,7 @@ alias claudev='claude --verbose'
 # System update: packages + Neovim plugins
 update() {
   echo "==> Updating packages..."
-  yay -Syu
+  sudo pacman -Syu
 
   echo "==> Updating Neovim plugins..."
   time nvim --headless "+Lazy! update" +qa
@@ -524,7 +516,7 @@ function llm-approve() {
 }
 
 # Toggle passwordless pacman (sudoers drop-in) so non-interactive agent
-# subprocesses without a TTY can run `yay` / `sudo pacman`. Run these from your
+# subprocesses without a TTY can run `sudo pacman`. Run these from your
 # interactive shell — you enter your password once to flip the drop-in on/off.
 # (Plain `sudo -v` doesn't work for this: the cached timestamp is TTY/session
 # scoped and does NOT transfer to agent-harness subprocesses.)
@@ -547,7 +539,7 @@ function sudo-on() {
   fi
   rm -f "$tmp"
   export SUDO_READY=1
-  echo "passwordless pacman ON — agents can run yay / sudo pacman"
+  echo "passwordless pacman ON — agents can run sudo pacman"
 }
 
 function sudo-off() {

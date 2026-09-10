@@ -1,0 +1,536 @@
+#!/usr/bin/env python3
+"""Bounded multi-host maintenance and security audits."""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import concurrent.futures
+import datetime as dt
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import time
+import uuid
+
+
+SCHEMA_VERSION = 1
+CHECK_NAMES = (
+    "identity",
+    "uptime",
+    "disk",
+    "memory",
+    "failed_units",
+    "listeners",
+    "firewall",
+    "sshd",
+    "auto_updates",
+    "kernel_warnings",
+    "reboot_required",
+    "pi_health",
+)
+DEFAULTS = {
+    "jobs_audit": 4,
+    "jobs_update": 1,
+    "connect_timeout_s": 10,
+    "command_timeout_s": 60,
+    # Accepted for schema compatibility; update progress does not use it yet.
+    "transaction_warn_after_s": 900,
+    "disk_warn_pct": 80,
+    "disk_crit_pct": 90,
+    "inode_warn_pct": 80,
+    "inode_crit_pct": 90,
+}
+HOST_KEYS = {
+    "id", "label", "ssh_alias", "enabled", "distro", "tags",
+    "expected_mounts", "allowed_tcp_listeners", "allowed_udp_listeners",
+    "important_units",
+}
+# The mount and listener fields remain part of the inventory schema, but are
+# not evaluated by the current audit implementation. `important_units` is the
+# only per-host check customization consumed below.
+EXIT_FINDINGS = 1
+EXIT_INCOMPLETE = 2
+EXIT_MAINTENANCE = 4
+EXIT_USAGE = 8
+
+
+class BoxcareError(Exception):
+    """Expected user-facing failure."""
+
+
+def utc_now() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def default_inventory_path() -> Path:
+    # An empty XDG_CONFIG_HOME has the same meaning as an unset value.
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    return config_home / "boxcare" / "hosts.json"
+
+
+def positive_int(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return number
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(
+        prog="boxcare",
+        description="Audit or conservatively update a fleet of Linux boxes.",
+    )
+    subs = root.add_subparsers(dest="operation", required=True)
+
+    def common(sub: argparse.ArgumentParser) -> None:
+        sub.add_argument("--inventory", type=Path, default=default_inventory_path())
+        sub.add_argument("--host", action="append", default=[], metavar="ID")
+        sub.add_argument("--tag", action="append", default=[], metavar="TAG")
+        sub.add_argument("--jobs", type=positive_int)
+        sub.add_argument("--format", choices=("table", "json", "jsonl"), default="table")
+
+    audit = subs.add_parser("audit", help="run read-only health and security checks")
+    common(audit)
+    update = subs.add_parser("update", help="run an explicit conservative package update")
+    common(update)
+    update.add_argument("--dry-run", action="store_true", help="simulate from cached metadata")
+    return root
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    if not argv or argv[0].startswith("-"):
+        argv = ["audit", *argv]
+    return parser().parse_args(argv)
+
+
+def require_type(value: object, expected: type, label: str) -> None:
+    if not isinstance(value, expected):
+        raise BoxcareError(f"{label} must be {expected.__name__}")
+
+
+def load_inventory(path: Path) -> tuple[dict, list[dict]]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise BoxcareError(f"inventory not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise BoxcareError(f"invalid inventory JSON at {path}:{exc.lineno}: {exc.msg}") from exc
+    require_type(raw, dict, "inventory")
+    if raw.get("schema_version") != SCHEMA_VERSION:
+        raise BoxcareError(f"inventory schema_version must be {SCHEMA_VERSION}")
+    defaults = dict(DEFAULTS)
+    supplied_defaults = raw.get("defaults", {})
+    require_type(supplied_defaults, dict, "defaults")
+    unknown_defaults = set(supplied_defaults) - set(DEFAULTS)
+    if unknown_defaults:
+        raise BoxcareError(f"unknown defaults: {', '.join(sorted(unknown_defaults))}")
+    defaults.update(supplied_defaults)
+    for key, value in defaults.items():
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            raise BoxcareError(f"defaults.{key} must be a positive integer")
+    if defaults["disk_warn_pct"] >= defaults["disk_crit_pct"]:
+        raise BoxcareError("disk_warn_pct must be lower than disk_crit_pct")
+    if defaults["inode_warn_pct"] >= defaults["inode_crit_pct"]:
+        raise BoxcareError("inode_warn_pct must be lower than inode_crit_pct")
+
+    hosts = raw.get("hosts")
+    require_type(hosts, list, "hosts")
+    seen: set[str] = set()
+    normalized: list[dict] = []
+    for index, host in enumerate(hosts):
+        require_type(host, dict, f"hosts[{index}]")
+        unknown = set(host) - HOST_KEYS
+        if unknown:
+            raise BoxcareError(f"host {index} has unknown fields: {', '.join(sorted(unknown))}")
+        for key in ("id", "ssh_alias"):
+            if not isinstance(host.get(key), str) or not host[key].strip():
+                raise BoxcareError(f"hosts[{index}].{key} must be a non-empty string")
+        if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]*", host["id"]):
+            raise BoxcareError(f"unsafe host id: {host['id']!r}")
+        if host["id"] in seen:
+            raise BoxcareError(f"duplicate host id: {host['id']}")
+        seen.add(host["id"])
+        if any(character.isspace() for character in host["ssh_alias"]):
+            raise BoxcareError(f"host {host['id']} has unsafe ssh_alias")
+        entry = {
+            "label": host["id"],
+            "enabled": True,
+            "distro": "auto",
+            "tags": [],
+            "expected_mounts": ["/"],
+            "allowed_tcp_listeners": [],
+            "allowed_udp_listeners": [],
+            "important_units": [],
+            **host,
+        }
+        if not isinstance(entry["label"], str) or not entry["label"].strip():
+            raise BoxcareError(f"host {entry['id']}.label must be a non-empty string")
+        for key in ("tags", "expected_mounts", "allowed_tcp_listeners", "allowed_udp_listeners", "important_units"):
+            require_type(entry[key], list, f"host {entry['id']}.{key}")
+            if not all(isinstance(item, str) for item in entry[key]):
+                raise BoxcareError(f"host {entry['id']}.{key} must contain only strings")
+        require_type(entry["enabled"], bool, f"host {entry['id']}.enabled")
+        if entry["distro"] not in ("auto", "debian", "arch", "termux"):
+            raise BoxcareError(f"host {entry['id']} has unsupported distro assertion")
+        normalized.append(entry)
+    return defaults, normalized
+
+
+def select_hosts(hosts: list[dict], ids: list[str], tags: list[str]) -> list[dict]:
+    enabled = [host for host in hosts if host["enabled"]]
+    known_ids = {host["id"] for host in hosts}
+    missing_ids = sorted(set(ids) - known_ids)
+    if missing_ids:
+        raise BoxcareError(f"unknown host IDs: {', '.join(missing_ids)}")
+    known_tags = {tag for host in hosts for tag in host["tags"]}
+    missing_tags = sorted(set(tags) - known_tags)
+    if missing_tags:
+        raise BoxcareError(f"unknown tags: {', '.join(missing_tags)}")
+    selected = enabled
+    if ids:
+        selected = [host for host in selected if host["id"] in ids]
+    if tags:
+        selected = [host for host in selected if all(tag in host["tags"] for tag in tags)]
+    if not selected:
+        raise BoxcareError("selection contains no enabled hosts")
+    return sorted(selected, key=lambda host: host["id"])
+
+
+AUDIT_SCRIPT = r'''#!/bin/sh
+set +e
+export LC_ALL=C
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+emit() {
+    bc_name=$1
+    bc_status=$2
+    bc_value=$3
+    bc_encoded=$(printf '%s' "$bc_value" | base64 | tr -d '\n')
+    printf 'BOXCARE1\t%s\t%s\t%s\n' "$bc_name" "$bc_status" "$bc_encoded"
+}
+check() {
+    bc_name=$1
+    shift
+    bc_value=$("$@" 2>&1)
+    bc_rc=$?
+    if [ "$bc_rc" -eq 0 ]; then bc_status=ok; else bc_status=unknown; fi
+    emit "$bc_name" "$bc_status" "$bc_value"
+}
+check identity sh -c 'printf "hostname="; hostname; printf "kernel="; uname -srmo; printf "arch="; uname -m; if [ -r /etc/os-release ]; then grep -E "^(ID|ID_LIKE|VERSION_ID|PRETTY_NAME)=" /etc/os-release; else printf "ID=termux\nPRETTY_NAME=Termux\n"; fi'
+check uptime sh -c 'uptime; printf "boot_id="; cat /proc/sys/kernel/random/boot_id 2>/dev/null'
+check disk sh -c 'df -PT 2>&1; printf "\nINODES\n"; df -Pi 2>&1'
+check memory sh -c 'grep -E "^(MemTotal|MemAvailable|SwapTotal|SwapFree):" /proc/meminfo; printf "\nSWAP\n"; cat /proc/swaps 2>/dev/null || true'
+check failed_units sh -c 'command -v systemctl >/dev/null 2>&1 || exit 3; systemctl --failed --no-legend --no-pager; for unit in __IMPORTANT_UNITS__; do systemctl is-active "$unit" 2>/dev/null || true; done'
+check listeners sh -c 'command -v ss >/dev/null 2>&1 || exit 3; sudo -n ss -H -lntup 2>/dev/null || ss -H -lntu'
+check firewall sh -c 'found=0; if command -v nft >/dev/null 2>&1; then found=1; printf "manager=nftables\n"; sudo -n nft list ruleset 2>&1 || nft list ruleset 2>&1; fi; if command -v ufw >/dev/null 2>&1; then found=1; printf "manager=ufw\n"; sudo -n ufw status verbose 2>&1 || ufw status verbose 2>&1; fi; if command -v firewall-cmd >/dev/null 2>&1; then found=1; printf "manager=firewalld\n"; firewall-cmd --state 2>&1; firewall-cmd --list-all 2>&1; fi; [ "$found" -eq 1 ] || { printf "manager=none\n"; exit 4; }'
+check sshd sh -c 'command -v sshd >/dev/null 2>&1 || exit 3; sudo -n sshd -t 2>&1 || exit $?; sudo -n sshd -T 2>/dev/null | grep -E "^(passwordauthentication|kbdinteractiveauthentication|permitrootlogin|pubkeyauthentication|permitemptypasswords|maxauthtries|x11forwarding|allowtcpforwarding) "'
+check auto_updates sh -c 'if command -v apt-get >/dev/null 2>&1; then dpkg-query -W -f="unattended-upgrades=${Status}\n" unattended-upgrades 2>/dev/null || printf "unattended-upgrades=not-installed\n"; systemctl is-enabled apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true; elif command -v pacman >/dev/null 2>&1; then systemctl list-timers --all --no-pager 2>/dev/null | grep -Ei "(upgrade|update|pacman)" || printf "automatic-updates=not-detected\n"; else printf "automatic-updates=unknown\n"; fi'
+check kernel_warnings sh -c 'command -v journalctl >/dev/null 2>&1 || exit 3; sudo -n journalctl -k -b --no-pager 2>/dev/null | grep -Ei "out of memory|oom-kill|I/O error|buffer i/o|filesystem error|read-only file system|hung task|under.?voltage|mmc.*error|nvme.*error|ata.*error" | tail -n 80 || true'
+check reboot_required sh -c 'if [ -e /run/reboot-required ]; then cat /run/reboot-required; cat /run/reboot-required.pkgs 2>/dev/null; elif [ -d /lib/modules ]; then running=$(uname -r); newest=$(find /lib/modules -mindepth 1 -maxdepth 1 -printf "%f\n" 2>/dev/null | sort -V | tail -n1); printf "running=%s\nnewest_installed=%s\n" "$running" "$newest"; [ -z "$newest" ] || [ "$running" = "$newest" ]; else printf "method=unavailable\n"; exit 3; fi'
+check pi_health sh -c 'if command -v vcgencmd >/dev/null 2>&1; then vcgencmd measure_temp; vcgencmd get_throttled; elif [ -r /sys/class/thermal/thermal_zone0/temp ]; then awk "{printf \"temp_c=%.1f\\n\", \$1/1000}" /sys/class/thermal/thermal_zone0/temp; else printf "not_applicable\n"; fi'
+'''
+
+
+DRY_RUN_SCRIPT = r'''#!/bin/sh
+set +e
+export LC_ALL=C
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+emit() { bc_encoded=$(printf '%s' "$3" | base64 | tr -d '\n'); printf 'BOXCARE1\t%s\t%s\t%s\n' "$1" "$2" "$bc_encoded"; }
+if [ -r /etc/os-release ]; then . /etc/os-release; else ID=termux; fi
+case "${ID:-}:${ID_LIKE:-}" in
+  *arch*)
+    command -v pacman >/dev/null 2>&1 || { emit update_plan unknown 'pacman is not installed'; exit 0; }
+    plan=$(pacman -Qu 2>&1); rc=$?
+    [ "$rc" -eq 0 ] || [ "$rc" -eq 1 ] && status=ok || status=unknown
+    emit update_plan "$status" "$(printf 'platform=arch\ncached_only=true\n%s' "$plan")"
+    ;;
+  *debian*|*ubuntu*|*raspbian*)
+    plan=$(apt-get -s --no-remove --with-new-pkgs upgrade 2>&1); rc=$?
+    [ "$rc" -eq 0 ] && status=ok || status=unknown
+    emit update_plan "$status" "$(printf 'platform=debian\ncached_only=true\n%s' "$plan")"
+    ;;
+  termux:*)
+    plan=$(pkg list-upgradable 2>&1); rc=$?
+    [ "$rc" -eq 0 ] && status=ok || status=unknown
+    emit update_plan "$status" "$(printf 'platform=termux\ncached_only=true\n%s' "$plan")"
+    ;;
+  *) emit update_plan unknown "unsupported platform ID=${ID:-unknown} ID_LIKE=${ID_LIKE:-}" ;;
+esac
+'''
+
+
+UPDATE_SCRIPT = r'''#!/bin/sh
+set +e
+export LC_ALL=C DEBIAN_FRONTEND=noninteractive
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+emit() { bc_encoded=$(printf '%s' "$3" | base64 | tr -d '\n'); printf 'BOXCARE1\t%s\t%s\t%s\n' "$1" "$2" "$bc_encoded"; }
+if pgrep -x apt-get >/dev/null 2>&1 || pgrep -x dpkg >/dev/null 2>&1 || pgrep -x pacman >/dev/null 2>&1; then
+  emit update fail 'package manager is already active'; exit 20
+fi
+if [ -r /etc/os-release ]; then . /etc/os-release; else ID=termux; fi
+case "${ID:-}:${ID_LIKE:-}" in
+  *arch*)
+    command -v pacman >/dev/null 2>&1 || { emit update fail 'pacman is not installed'; exit 21; }
+    sudo -n true >/dev/null 2>&1 || { emit update fail 'noninteractive sudo unavailable'; exit 22; }
+    output=$(sudo -n pacman -Syu --noconfirm 2>&1); rc=$?
+    output=$(printf 'platform=arch\n%s' "$output")
+    ;;
+  *debian*|*ubuntu*|*raspbian*)
+    sudo -n true >/dev/null 2>&1 || { emit update fail 'noninteractive sudo unavailable'; exit 22; }
+    output=$(sudo -n apt-get update 2>&1) || { rc=$?; emit update fail "$output"; exit "$rc"; }
+    upgraded=$(sudo -n apt-get -y --no-remove --with-new-pkgs -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade 2>&1); rc=$?
+    output=$(printf 'platform=debian\n%s\n%s' "$output" "$upgraded")
+    ;;
+  termux:*) output=$(pkg upgrade -y 2>&1); rc=$?; output=$(printf 'platform=termux\n%s' "$output") ;;
+  *) emit update fail "unsupported platform ID=${ID:-unknown} ID_LIKE=${ID_LIKE:-}"; exit 23 ;;
+esac
+[ "$rc" -eq 0 ] && status=ok || status=fail
+emit update "$status" "$output"
+exit "$rc"
+'''
+
+
+def script_for(host: dict, operation: str, dry_run: bool) -> str:
+    if operation == "audit":
+        units = " ".join(
+            unit for unit in host["important_units"]
+            if re.fullmatch(r"[A-Za-z0-9@_.:-]+", unit)
+        )
+        return AUDIT_SCRIPT.replace("__IMPORTANT_UNITS__", units)
+    if dry_run:
+        return DRY_RUN_SCRIPT
+    return UPDATE_SCRIPT
+
+
+def command_for(host: dict, connect_timeout: int) -> list[str]:
+    if host["ssh_alias"] == "local":
+        return ["bash", "-s"]
+    return [
+        "ssh", "-T", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes",
+        "-o", f"ConnectTimeout={connect_timeout}", host["ssh_alias"], "bash", "-s",
+    ]
+
+
+def parse_protocol(stdout: str) -> list[dict]:
+    checks: list[dict] = []
+    for line in stdout.splitlines():
+        if not line.startswith("BOXCARE1\t"):
+            continue
+        parts = line.split("\t", 3)
+        if len(parts) != 4:
+            continue
+        _, name, status, encoded = parts
+        try:
+            value = base64.b64decode(encoded, validate=True).decode("utf-8", "replace")
+        except (ValueError, base64.binascii.Error):
+            value = "invalid base64 payload"
+            status = "unknown"
+        checks.append({"name": name, "status": status, "value": value})
+    return checks
+
+
+def detect_platform(checks: list[dict]) -> str:
+    combined = "\n".join(check["value"] for check in checks)
+    planned = re.search(r"^platform=(arch|debian|termux)$", combined, re.MULTILINE)
+    if planned:
+        return planned.group(1)
+    identity = next((check["value"] for check in checks if check["name"] == "identity"), "")
+    os_id = re.search(r"^ID=\"?([^\"\n]+)", identity, re.MULTILINE)
+    like = re.search(r"^ID_LIKE=\"?([^\"\n]+)", identity, re.MULTILINE)
+    values = f"{os_id.group(1) if os_id else ''} {like.group(1) if like else ''}".lower()
+    if "arch" in values:
+        return "arch"
+    if any(value in values for value in ("debian", "ubuntu", "raspbian")):
+        return "debian"
+    if "termux" in values:
+        return "termux"
+    return "unknown"
+
+
+def enrich_checks(host: dict, defaults: dict, checks: list[dict]) -> list[dict]:
+    for check in checks:
+        value = check["value"]
+        if check["name"] == "failed_units" and re.search(
+            r"\b\S+\.(?:service|socket|timer|mount|target)\b", value
+        ):
+            check["status"] = "warn"
+        elif check["name"] == "firewall" and "manager=none" in value:
+            check["status"] = "warn"
+        elif check["name"] == "firewall" and re.search(
+            r"chain\s+input\b[^{]*\{[^}]*policy\s+accept", value, re.IGNORECASE | re.DOTALL
+        ):
+            check["status"] = "warn"
+        elif check["name"] == "sshd":
+            insecure = ("passwordauthentication yes", "permitemptypasswords yes", "permitrootlogin yes")
+            if any(setting in value.lower() for setting in insecure):
+                check["status"] = "warn"
+        elif check["name"] == "kernel_warnings" and re.search(
+            r"out of memory|oom-kill|i/o error|filesystem error|read-only file system|hung task|under.?voltage|mmc.*error|nvme.*error|ata.*error",
+            value,
+            re.IGNORECASE,
+        ):
+            check["status"] = "warn"
+        elif check["name"] == "reboot_required":
+            match_running = re.search(r"^running=(.+)$", value, re.MULTILINE)
+            match_newest = re.search(r"^newest_installed=(.+)$", value, re.MULTILINE)
+            if "/run/reboot-required" in value or (match_running and match_newest and match_running.group(1) != match_newest.group(1)):
+                check["status"] = "warn"
+        elif check["name"] == "disk":
+            uses = [int(number) for number in re.findall(r"\s(\d+)%\s", value)]
+            if uses and max(uses) >= defaults["disk_crit_pct"]:
+                check["status"] = "fail"
+            elif uses and max(uses) >= defaults["disk_warn_pct"]:
+                check["status"] = "warn"
+    present = {check["name"] for check in checks}
+    expected = set(CHECK_NAMES)
+    if "update_plan" in present or "update" in present:
+        expected = present
+    for name in sorted(expected - present):
+        checks.append({"name": name, "status": "unknown", "value": "no result returned"})
+    return checks
+
+
+def run_host(host: dict, defaults: dict, operation: str, dry_run: bool) -> dict:
+    started = time.monotonic()
+    record = {
+        "type": "host",
+        "id": host["id"],
+        "label": host["label"],
+        "ssh_alias": host["ssh_alias"],
+        "operation": "update-dry-run" if dry_run else operation,
+        "started_at": utc_now(),
+        "status": "unknown",
+        "platform": "unknown",
+        "checks": [],
+        "error": None,
+    }
+    try:
+        script = script_for(host, operation, dry_run)
+        timeout = defaults["command_timeout_s"] if operation == "audit" or dry_run else None
+        completed = subprocess.run(
+            command_for(host, defaults["connect_timeout_s"]),
+            input=script,
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+        )
+        raw_checks = parse_protocol(completed.stdout)
+        if not raw_checks:
+            record["status"] = "unreachable" if completed.returncode == 255 else "incomplete"
+            stderr = completed.stderr.strip()
+            record["error"] = stderr[-1200:] or f"command exited {completed.returncode} without protocol output"
+            checks = []
+        else:
+            checks = enrich_checks(host, defaults, raw_checks)
+        record["checks"] = checks
+        record["platform"] = detect_platform(checks)
+        assertion = host["distro"]
+        if assertion != "auto" and record["platform"] not in (assertion, "unknown"):
+            record["error"] = f"distro assertion {assertion!r} does not match {record['platform']!r}"
+            record["status"] = "fail"
+        elif not checks:
+            pass
+        elif completed.returncode != 0 or any(check["status"] == "fail" for check in checks):
+            record["status"] = "fail"
+            if completed.stderr.strip():
+                record["error"] = completed.stderr.strip()[-1200:]
+        elif any(check["status"] in ("warn", "unknown") for check in checks):
+            record["status"] = "warn"
+        else:
+            record["status"] = "ok"
+    except subprocess.TimeoutExpired as exc:
+        record["status"] = "timeout"
+        record["error"] = f"command exceeded {exc.timeout}s"
+    except (OSError, BoxcareError) as exc:
+        record["status"] = "fail"
+        record["error"] = str(exc)
+    record["finished_at"] = utc_now()
+    record["duration_s"] = round(time.monotonic() - started, 3)
+    return record
+
+
+def summarize(results: list[dict]) -> dict:
+    counts = {status: 0 for status in ("ok", "warn", "fail", "unreachable", "timeout", "incomplete")}
+    for result in results:
+        counts[result["status"]] = counts.get(result["status"], 0) + 1
+    return {"type": "summary", "total": len(results), "counts": counts}
+
+
+def render_table(results: list[dict], summary: dict) -> None:
+    widths = {
+        "id": max([4, *(len(result["id"]) for result in results)]),
+        "platform": max([8, *(len(result["platform"]) for result in results)]),
+        "status": max([6, *(len(result["status"]) for result in results)]),
+    }
+    print(f"{'HOST':<{widths['id']}}  {'PLATFORM':<{widths['platform']}}  {'STATUS':<{widths['status']}}  WARN/UNKNOWN  ERROR")
+    for result in results:
+        notable = sum(check["status"] in ("warn", "unknown", "fail") for check in result["checks"])
+        error = (result["error"] or "").replace("\n", " ")[:80]
+        print(f"{result['id']:<{widths['id']}}  {result['platform']:<{widths['platform']}}  {result['status']:<{widths['status']}}  {notable:<12}  {error}")
+    counts = summary["counts"]
+    print(f"\n{summary['total']} host(s): " + ", ".join(f"{key}={value}" for key, value in counts.items() if value))
+
+
+def exit_code(results: list[dict], operation: str) -> int:
+    code = 0
+    if any(result["status"] == "warn" for result in results):
+        code |= EXIT_FINDINGS
+    if any(result["status"] in ("unreachable", "timeout", "incomplete") for result in results):
+        code |= EXIT_INCOMPLETE
+    if any(result["status"] == "fail" for result in results):
+        code |= EXIT_MAINTENANCE if operation == "update" else EXIT_FINDINGS
+    return code
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(list(sys.argv[1:] if argv is None else argv))
+    try:
+        defaults, hosts = load_inventory(args.inventory)
+        selected = select_hosts(hosts, args.host, args.tag)
+        dry_run = bool(getattr(args, "dry_run", False))
+        jobs_default = defaults["jobs_update"] if args.operation == "update" and not dry_run else defaults["jobs_audit"]
+        jobs = args.jobs or jobs_default
+        if args.operation == "update" and not dry_run and jobs > defaults["jobs_update"]:
+            raise BoxcareError(f"real updates are capped at jobs_update={defaults['jobs_update']}")
+    except BoxcareError as exc:
+        print(f"boxcare: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+
+    run_id = str(uuid.uuid4())
+    started_at = utc_now()
+    results: list[dict] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(jobs, len(selected))) as pool:
+        futures = {
+            pool.submit(run_host, host, defaults, args.operation, dry_run): host["id"]
+            for host in selected
+        }
+        for future in concurrent.futures.as_completed(futures):
+            results.append(future.result())
+    results.sort(key=lambda result: result["id"])
+    summary = summarize(results)
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "run_id": run_id,
+        "operation": "update-dry-run" if dry_run else args.operation,
+        "started_at": started_at,
+        "finished_at": utc_now(),
+        "results": results,
+        "summary": summary,
+    }
+    if args.format == "json":
+        print(json.dumps(report, indent=2, sort_keys=True))
+    elif args.format == "jsonl":
+        for result in results:
+            print(json.dumps(result, sort_keys=True))
+        print(json.dumps(summary, sort_keys=True))
+    else:
+        render_table(results, summary)
+    return exit_code(results, args.operation)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

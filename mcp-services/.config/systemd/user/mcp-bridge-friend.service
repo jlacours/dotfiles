@@ -1,0 +1,21 @@
+[Unit]
+Description=Local-only MCP Bridge for Friend
+After=network.target
+ConditionPathExists=%h/.config/aichat/functions/mcp/bridge/index.js
+ConditionPathIsDirectory=%h/.config/aichat/functions_friend
+
+[Service]
+Type=simple
+Environment=MCP_BRIDGE_HOST=127.0.0.1
+Environment=MCP_BRIDGE_PORT=8908
+WorkingDirectory=%h/.config/aichat/functions/mcp/bridge
+ExecStart=/usr/bin/node index.js %h/.config/aichat/functions_friend
+Restart=on-failure
+RestartSec=3
+
+# MCP services must not reach the Tailscale address ranges.
+IPAddressDeny=100.64.0.0/10
+IPAddressDeny=fd7a:115c:a1e0::/48
+
+[Install]
+WantedBy=default.target

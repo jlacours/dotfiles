@@ -33,8 +33,16 @@ pi-session-*.html
 **/backup.env
 **/excludes.local
 *.local
+!bitwarden/.local/
+!bitwarden/.local/**
+!borg/.local/
+!borg/.local/**
+!boxcare/.local/
+!boxcare/.local/**
 !codex/.local/
 !codex/.local/**
+!mcp-services/.local/
+!mcp-services/.local/**
 !quickshell/.local/
 !quickshell/.local/**
 !wallust/.local/

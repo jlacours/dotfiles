@@ -22,6 +22,10 @@ PanelWindow {
         id: palette
     }
 
+    WorkspaceNames {
+        id: workspaceNames
+    }
+
     color: "transparent"
     implicitHeight: 24
     exclusiveZone: 24
@@ -64,9 +68,10 @@ PanelWindow {
 
                         return null
                     }
+                    readonly property string workspaceName: workspaceNames.nameFor(workspaceId)
                     readonly property bool occupied: workspaceData?.toplevels.values.length > 0
 
-                    implicitWidth: 26
+                    implicitWidth: Math.max(26, Math.min(128, workspaceLabel.implicitWidth + 16))
                     implicitHeight: 24
                     radius: 0
                     color: active ? bar.accent : workspaceMouse.containsMouse ? bar.surfaceHover : "transparent"
@@ -80,8 +85,16 @@ PanelWindow {
                     }
 
                     Text {
-                        anchors.centerIn: parent
-                        text: workspaceButton.workspaceId === 10 ? "0" : workspaceButton.workspaceId.toString()
+                        id: workspaceLabel
+                        anchors {
+                            fill: parent
+                            leftMargin: 8
+                            rightMargin: 8
+                        }
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                        text: workspaceButton.workspaceName
                         color: workspaceButton.active
                             ? bar.background
                             : workspaceButton.occupied ? bar.foreground : bar.muted
@@ -161,6 +174,16 @@ PanelWindow {
 
                 // ExpressVPN status and toggle.
                 ExpressVPN {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
+                Tailscale {
                     backgroundColor: bar.background
                     foregroundColor: bar.foreground
                     mutedColor: bar.muted

@@ -188,7 +188,7 @@ input type:keyboard {
     bindsym $mod+Shift+g layout split
 ## Bottom Bar states ##
     bindsym $mod+slash exec swaymsg bar mode toggle bottom_bar
-    bindsym --to-code F13 exec ~/.config/waybar/scripts/idle-inhibit.sh toggle
+    bindsym --to-code F13 exec ~/.config/session/idle-inhibit.sh toggle
     bindsym --to-code F14 exec ~/.config/hypr/scripts/hypridle-suspend.sh toggle
 
 #### Modes ####

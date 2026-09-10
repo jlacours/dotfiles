@@ -10,11 +10,11 @@ return {
           llama_cpp = function()
             return require("codecompanion.adapters").extend("openai_compatible", {
               env = {
-                url = "http://localhost:3000",
+                url = "http://localhost:3002",
               },
               schema = {
                 model = {
-                  default = "qwen2.5-coder-14b-q4_k_m",
+                  default = "qwen3.6-35b-a3b",
                 },
               },
             })

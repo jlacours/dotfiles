@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# Bitwarden CLI wrapper: cache only the temporary vault session in GNOME Keyring.
+
+set -uo pipefail
+
+readonly REAL_BW=/usr/bin/bw
+readonly KEYRING_APPLICATION=bitwarden-cli-session
+readonly KEYRING_ACCOUNT="${USER:-$(id -un)}"
+
+keyring_lookup() {
+  secret-tool lookup application "$KEYRING_APPLICATION" account "$KEYRING_ACCOUNT" 2>/dev/null || true
+}
+
+keyring_clear() {
+  secret-tool clear application "$KEYRING_APPLICATION" account "$KEYRING_ACCOUNT" >/dev/null 2>&1 || true
+}
+
+session_valid() {
+  [[ -n ${1:-} ]] && "$REAL_BW" --session "$1" unlock --check >/dev/null 2>&1
+}
+
+keyring_store() {
+  printf '%s' "$1" | secret-tool store \
+    --label='Bitwarden CLI session' \
+    application "$KEYRING_APPLICATION" \
+    account "$KEYRING_ACCOUNT" >/dev/null
+}
+
+unlock_and_store() {
+  local show_raw=0 arg token
+  local -a unlock_args=()
+
+  for arg in "$@"; do
+    case "$arg" in
+      --raw) show_raw=1 ;;
+      --check) ;;
+      *) unlock_args+=("$arg") ;;
+    esac
+  done
+
+  token="$("$REAL_BW" unlock "${unlock_args[@]}" --raw)" || return
+  [[ -n $token ]] || {
+    printf 'bw: unlock returned an empty session token\n' >&2
+    return 1
+  }
+  keyring_store "$token" || {
+    printf 'bw: vault unlocked, but GNOME Keyring could not store the session\n' >&2
+    return 1
+  }
+
+  if (( show_raw )); then
+    printf '%s\n' "$token"
+  else
+    printf 'Vault unlocked. Session cached securely in GNOME Keyring.\n'
+  fi
+}
+
+command_name=${1:-}
+session="$(keyring_lookup)"
+
+if [[ -n $session ]] && ! session_valid "$session"; then
+  keyring_clear
+  session=
+fi
+
+case "$command_name" in
+  unlock)
+    shift
+    if [[ ${1:-} == --check ]]; then
+      if session_valid "$session"; then
+        printf 'Vault is unlocked.\n'
+        exit 0
+      fi
+      printf 'Vault is locked.\n' >&2
+      exit 1
+    fi
+    unlock_and_store "$@"
+    ;;
+  lock|logout)
+    if [[ -n $session ]]; then
+      "$REAL_BW" --session "$session" "$@"
+      rc=$?
+    else
+      "$REAL_BW" "$@"
+      rc=$?
+    fi
+    keyring_clear
+    exit "$rc"
+    ;;
+  ''|-h|--help|--version|login|register|config|completion|update|serve)
+    exec "$REAL_BW" "$@"
+    ;;
+  status)
+    if [[ -n $session ]]; then
+      exec "$REAL_BW" --session "$session" "$@"
+    fi
+    exec "$REAL_BW" "$@"
+    ;;
+esac
+
+if [[ -z $session ]]; then
+  if [[ -t 0 && -t 1 ]]; then
+    unlock_and_store || exit
+    session="$(keyring_lookup)"
+  else
+    printf '%s\n' 'bw: vault is locked; run bw unlock once in an interactive terminal' >&2
+    exit 1
+  fi
+fi
+
+exec "$REAL_BW" --session "$session" "$@"

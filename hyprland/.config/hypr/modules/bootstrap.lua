@@ -1,7 +1,7 @@
 -- Bootstrap configuration for the live Hyprland Lua migration.
 -- The legacy hyprland.conf remains beside it as a review/rollback reference.
 
-local terminal = "footclient"
+local terminal = "foot"
 
 local programs = {
   terminal = terminal,
@@ -27,7 +27,7 @@ local programs = {
 -- Two vertically stacked 1080p displays: 24in above, 27in below.
 hl.monitor({
   output = "DP-1",
-  mode = "1920x1080@100",
+  mode = "1920x1080@60",
   position = "0x0",
   scale = 1,
 })

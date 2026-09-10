@@ -27,10 +27,7 @@
         "/"
       ],
       "allowed_tcp_listeners": [],
-      "allowed_udp_listeners": [],
-      "arch": {
-        "include_aur": false
-      }
+      "allowed_udp_listeners": []
     },
     {
       "id": "pixel",
@@ -45,10 +42,7 @@
       "enabled": false,
       "expected_mounts": [],
       "allowed_tcp_listeners": [],
-      "allowed_udp_listeners": [],
-      "arch": {
-        "include_aur": false
-      }
+      "allowed_udp_listeners": []
     },
     {
       "id": "pi5",
@@ -65,10 +59,7 @@
         "/"
       ],
       "allowed_tcp_listeners": [],
-      "allowed_udp_listeners": [],
-      "arch": {
-        "include_aur": false
-      }
+      "allowed_udp_listeners": []
     },
     {
       "id": "pi3",
@@ -85,10 +76,7 @@
         "/"
       ],
       "allowed_tcp_listeners": [],
-      "allowed_udp_listeners": [],
-      "arch": {
-        "include_aur": false
-      }
+      "allowed_udp_listeners": []
     },
     {
       "id": "vps",
@@ -105,10 +93,7 @@
         "/"
       ],
       "allowed_tcp_listeners": [],
-      "allowed_udp_listeners": [],
-      "arch": {
-        "include_aur": false
-      }
+      "allowed_udp_listeners": []
     }
   ]
 }

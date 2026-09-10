@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/borg"
+config_file="${BORG_BACKUP_CONFIG:-$config_dir/backup.env}"
+excludes_file="$config_dir/excludes"
+local_excludes_file="$config_dir/excludes.local"
+notification_id=""
+borg_warning=0
+
+notify() {
+    local urgency=$1
+    local message=$2
+    local args=(--urgency="$urgency" "Borg Backup" "$message")
+
+    command -v notify-send >/dev/null 2>&1 || return 0
+    if [[ -n "$notification_id" ]]; then
+        args=(--replace-id="$notification_id" "${args[@]}")
+    fi
+    notify-send "${args[@]}" >/dev/null 2>&1 || true
+}
+
+finish() {
+    local rc=$?
+    trap - EXIT
+
+    if (( rc != 0 )); then
+        notify critical "Backup failed (exit $rc). Check the user journal."
+    elif (( borg_warning != 0 )); then
+        notify normal "Backup completed with warnings. Check the user journal."
+    else
+        notify normal "Backup completed successfully."
+    fi
+
+    exit "$rc"
+}
+
+die() {
+    printf 'borg-backup: %s\n' "$*" >&2
+    exit 2
+}
+
+run_borg() {
+    local rc
+
+    set +e
+    borg "$@"
+    rc=$?
+    set -e
+
+    if (( rc >= 2 )); then
+        return "$rc"
+    fi
+    if (( rc == 1 )); then
+        borg_warning=1
+    fi
+    return 0
+}
+
+trap finish EXIT
+
+[[ -r "$config_file" ]] || die "missing readable config: $config_file"
+
+set -a
+# shellcheck disable=SC1090
+source "$config_file"
+set +a
+
+: "${BORG_REPO:?Set BORG_REPO in $config_file}"
+: "${BORG_PASSCOMMAND:?Set BORG_PASSCOMMAND in $config_file}"
+
+borg_source=${BORG_SOURCE:-$HOME}
+archive_prefix=${BORG_ARCHIVE_PREFIX:-home}
+compression=${BORG_COMPRESSION:-lz4}
+keep_daily=${BORG_KEEP_DAILY:-7}
+keep_weekly=${BORG_KEEP_WEEKLY:-4}
+keep_monthly=${BORG_KEEP_MONTHLY:-6}
+minimum_free_gib=${BORG_MIN_FREE_GIB:-5}
+one_file_system=${BORG_ONE_FILE_SYSTEM:-1}
+prune_enabled=${BORG_PRUNE:-1}
+
+[[ "$archive_prefix" =~ ^[A-Za-z0-9._-]+$ ]] || die "invalid archive prefix"
+for number in "$keep_daily" "$keep_weekly" "$keep_monthly" "$minimum_free_gib"; do
+    [[ "$number" =~ ^[0-9]+$ ]] || die "retention and free-space values must be integers"
+done
+case "$one_file_system" in
+    1 | true | yes) source_args=(--one-file-system) ;;
+    0 | false | no) source_args=() ;;
+    *) die "BORG_ONE_FILE_SYSTEM must be 1/0, true/false, or yes/no" ;;
+esac
+case "$prune_enabled" in
+    1 | true | yes) prune_archives=1 ;;
+    0 | false | no) prune_archives=0 ;;
+    *) die "BORG_PRUNE must be 1/0, true/false, or yes/no" ;;
+esac
+
+command -v borg >/dev/null 2>&1 || die "borg is not installed"
+command -v flock >/dev/null 2>&1 || die "flock is not installed"
+[[ -r "$excludes_file" ]] || die "missing excludes file: $excludes_file"
+[[ -e "$borg_source" ]] || die "backup source does not exist: $borg_source"
+
+lock_dir=${XDG_RUNTIME_DIR:-/tmp}
+exec 9>"$lock_dir/borg-backup-$UID.lock"
+flock -n 9 || die "another backup is already running"
+
+retention_args=()
+(( keep_daily > 0 )) && retention_args+=(--keep-daily "$keep_daily")
+(( keep_weekly > 0 )) && retention_args+=(--keep-weekly "$keep_weekly")
+(( keep_monthly > 0 )) && retention_args+=(--keep-monthly "$keep_monthly")
+
+if [[ "$BORG_REPO" == /* ]]; then
+    [[ -d "$BORG_REPO" ]] || die "local repository is unavailable"
+
+    if [[ -n "${BORG_EXPECTED_MOUNT:-}" ]]; then
+        command -v mountpoint >/dev/null 2>&1 || die "mountpoint is not installed"
+        mountpoint -q "$BORG_EXPECTED_MOUNT" || die "expected backup mount is not mounted"
+        case "$BORG_REPO/" in
+            "$BORG_EXPECTED_MOUNT"/*) ;;
+            *) die "repository is outside the expected backup mount" ;;
+        esac
+    fi
+
+    available_kib=$(df -Pk -- "$BORG_REPO" | awk 'NR == 2 { print $4 }')
+    required_kib=$((minimum_free_gib * 1024 * 1024))
+    if (( available_kib < required_kib )); then
+        if (( prune_archives != 0 && ${#retention_args[@]} > 0 )); then
+            printf 'borg-backup: repository is low on space; applying retention before backup\n' >&2
+            run_borg prune \
+                --verbose \
+                --list \
+                --stats \
+                --save-space \
+                --glob-archives "${archive_prefix}-*" \
+                "${retention_args[@]}"
+        else
+            printf 'borg-backup: repository is low on space; pruning is disabled\n' >&2
+        fi
+        run_borg compact
+
+        available_kib=$(df -Pk -- "$BORG_REPO" | awk 'NR == 2 { print $4 }')
+        (( available_kib >= required_kib )) ||
+            die "repository still has less than ${minimum_free_gib} GiB free after cleanup"
+    fi
+fi
+
+if command -v notify-send >/dev/null 2>&1; then
+    notification_id=$(notify-send --print-id --urgency=normal \
+        "Borg Backup" "Backup started..." 2>/dev/null || true)
+fi
+
+if [[ -n "${BORG_PRE_BACKUP_COMMAND:-}" ]]; then
+    [[ -x "$BORG_PRE_BACKUP_COMMAND" ]] || die "pre-backup command is not executable"
+    "$BORG_PRE_BACKUP_COMMAND"
+fi
+
+exclude_args=(--exclude-from "$excludes_file")
+if [[ -r "$local_excludes_file" ]]; then
+    exclude_args+=(--exclude-from "$local_excludes_file")
+fi
+
+run_borg create \
+    --verbose \
+    --stats \
+    --compression "$compression" \
+    --exclude-caches \
+    "${exclude_args[@]}" \
+    "${source_args[@]}" \
+    "$BORG_REPO::${archive_prefix}-{now:%Y-%m-%d_%H:%M}" \
+    "$borg_source"
+
+if (( prune_archives != 0 && ${#retention_args[@]} > 0 )); then
+    run_borg prune \
+        --verbose \
+        --list \
+        --glob-archives "${archive_prefix}-*" \
+        "${retention_args[@]}"
+    run_borg compact
+fi
+
+if (( borg_warning != 0 )); then
+    printf 'borg-backup: completed with Borg warnings\n' >&2
+fi

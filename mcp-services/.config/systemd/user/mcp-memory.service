@@ -1,0 +1,15 @@
+[Unit]
+Description=Shared juju-memory MCP server (local HTTP on 127.0.0.1:8767)
+PartOf=mcp-llama.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/mcp-memory
+Restart=on-failure
+RestartSec=3
+IPAddressDeny=100.64.0.0/10
+IPAddressDeny=fd7a:115c:a1e0::/48
+
+[Install]
+WantedBy=mcp-llama.target

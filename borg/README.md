@@ -9,7 +9,7 @@ machine-specific exclusions, and optional snapshot commands remain local.
 Install Borg and stow the package:
 
 ```bash
-yay -S --needed borg
+sudo pacman -S --needed borg
 cd ~/.dotfiles
 ./install.sh borg
 ```

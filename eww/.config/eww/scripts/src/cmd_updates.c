@@ -17,14 +17,12 @@ int cmd_updates(int argc, char **argv)
 {
     (void)argc; (void)argv;
 
-    char repo_buf[8192], aur_buf[8192];
+    char repo_buf[8192];
 
     int repo_len = popen_read("checkupdates 2>/dev/null", repo_buf, sizeof(repo_buf));
-    int aur_len = popen_read("yay -Qua 2>/dev/null", aur_buf, sizeof(aur_buf));
 
     int repo = (repo_len > 0) ? count_lines(repo_buf) : 0;
-    int aur = (aur_len > 0) ? count_lines(aur_buf) : 0;
 
-    printf("%d", repo + aur);
+    printf("%d", repo);
     return 0;
 }

@@ -15,8 +15,8 @@ return {
         openai_fim_compatible = {
           api_key = "TERM",
           name = "llama.cpp",
-          end_point = "http://localhost:3000/v1/completions",
-          model = "PLACEHOLDER",
+          end_point = "http://localhost:3002/v1/completions",
+          model = "qwen3.6-35b-a3b",
           optional = {
             max_tokens = 100,
             temperature = 0.2,

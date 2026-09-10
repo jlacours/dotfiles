@@ -35,11 +35,11 @@ BAR_HEIGHT_4K = 28
 
 mod = "mod4"
 home = os.path.expanduser("~")
-terminal = "footclient"
+terminal = "foot"
 webbrowser = "helium-browser"
 alt_webbrowser = "librewolf"
 scripts = f"{home}/.config/qtile/scripts"
-qs_scripts = f"{home}/.config/quickshell/scripts"
+idle_inhibitor = f"{home}/.config/session/idle-inhibit.sh"
 
 
 @hook.subscribe.startup_once
@@ -200,13 +200,13 @@ keys = [
 
     # Utilities
     Key([mod], "v", lazy.spawn(f"{scripts}/cliphist-menu.sh"), desc="Clipboard history"),
-    Key([mod], "i", lazy.spawn(f"{qs_scripts}/idle-inhibit.sh toggle"), desc="Toggle idle inhibitor"),
+    Key([mod], "i", lazy.spawn(f"{idle_inhibitor} toggle"), desc="Toggle idle inhibitor"),
     Key([mod, "control"], "o", lazy.spawn(f"{home}/.local/bin/tts-selection"), desc="Read selection aloud"),
     Key([mod], "semicolon", lazy.spawn(f"{home}/Projects/repos/llm-corrector-tui/bin/llm-corrector-field"), desc="LLM-correct focused field"),
     Key([mod], "c", lazy.spawn(f"{home}/.local/bin/voice-input"), desc="Voice input (oneshot)"),
 
     # System controls
-    Key([], "F13", lazy.spawn(f"{qs_scripts}/idle-inhibit.sh toggle"), desc="Toggle idle inhibitor"),
+    Key([], "F13", lazy.spawn(f"{idle_inhibitor} toggle"), desc="Toggle idle inhibitor"),
     Key([], "F14", lazy.spawn(f"{home}/.local/bin/hypridle-suspend toggle"), desc="Toggle suspend inhibitor"),
     # Discord controls (global shortcuts)
     Key([], "F21", lazy.spawn("wtype -M ctrl -M shift m"), desc="Discord mute"),

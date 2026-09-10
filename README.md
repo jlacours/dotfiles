@@ -7,17 +7,29 @@ Personal Arch Linux dotfiles, managed with [GNU Stow](https://www.gnu.org/softwa
 Install the repository prerequisites:
 
 ```bash
-yay -S --needed git stow gitleaks
+sudo pacman -S --needed git stow gitleaks
 git clone https://github.com/jlacours/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 ./install.sh --dry-run
 ./install.sh
 ```
 
+The installer never overwrites regular files already in `$HOME`. If the dry
+run reports a conflict, back up or move that exact file yourself and rerun the
+dry run before installing; do not use `--adopt` without reviewing the result.
+
+This setup does not use the AUR or an AUR helper. Software unavailable in the
+official Arch repositories is built from audited upstream releases by the
+companion `~/Projects/repos/juju-packages` project and published to its signed,
+machine-local `[juju-local]` repository. Because that repository is configured
+after the official repositories, official Arch packages always take
+precedence. Normal installs and upgrades then stay on the standard
+`pacman -S`/`pacman -Syu` path.
+
 Install the Zsh completion dependencies:
 
 ```bash
-yay -S --needed zsh zsh-completions fzf carapace-bin
+sudo pacman -S --needed zsh zsh-completions fzf carapace-bin
 ```
 
 Install Herdr, the terminal multiplexer used by this configuration:
@@ -37,14 +49,14 @@ rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 Install local network diagnostic tools:
 
 ```bash
-yay -S --needed nmap
+sudo pacman -S --needed nmap
 ```
 
 Install the Bitwarden CLI session wrapper to cache only the temporary vault
 session in GNOME Keyring (never the master password):
 
 ```bash
-yay -S --needed bitwarden-cli gnome-keyring libsecret
+sudo pacman -S --needed bitwarden-cli gnome-keyring libsecret
 ./install.sh --dry-run bitwarden
 ./install.sh bitwarden
 bw unlock
@@ -57,7 +69,7 @@ Install the Boxcare fleet-maintenance runtime, then Stow its command and safe
 logical inventory:
 
 ```bash
-yay -S --needed python openssh
+sudo pacman -S --needed python openssh
 ./install.sh --dry-run boxcare
 ./install.sh boxcare
 ```
@@ -71,7 +83,7 @@ host-key, and package-manager boundaries.
 Install Borg when using the user-level backup package:
 
 ```bash
-yay -S --needed borg
+sudo pacman -S --needed borg
 ```
 
 The tracked Borg script, exclusion rules, and systemd user units contain no
@@ -110,6 +122,36 @@ windows use the lowercase `chatgpt` app ID when matching compositor rules. The
 Hyprland package excludes only the floating Codex pet from compositor blur,
 leaving the application's own glass styling intact.
 
+The `mcp-services` package provides local-only HTTP/SSE wrappers for the memory
+and time MCP servers, plus an optional dormant Friend bridge. The wrappers bind
+only to `127.0.0.1`, which is the exposure boundary. The user units also request
+Tailscale-range filtering with `IPAddressDeny=`, but systemd warns that they
+configure an IP firewall without running as root. Treat those directives as
+defense in depth rather than relying on them instead of the loopback bind. OpenCode's memory,
+HSD, local-harness, and web-search MCP integrations run as local stdio
+processes; its web-search process calls the configured free public SearXNG
+instance directly. The configured DeepWiki MCP is a remote HTTPS integration,
+not a local Tailscale listener. The wrappers allow all web origins for local
+clients; the loopback bind limits network reachability but is not an origin
+restriction.
+
+Install `uv` first. The memory wrapper also requires a separately installed
+`~/.local/bin/juju-memory-mcp` executable. Then install and enable the local MCP
+services with:
+
+```bash
+sudo pacman -S --needed uv
+test -x ~/.local/bin/juju-memory-mcp
+./install.sh --dry-run mcp-services
+./install.sh mcp-services
+systemctl --user daemon-reload
+systemctl --user enable --now mcp-llama.target
+```
+
+The Friend bridge is not started by `mcp-llama.target`. It remains dormant
+unless its external bridge script and function directory are installed at the
+paths declared in `mcp-bridge-friend.service`.
+
 Install a subset by naming packages:
 
 ```bash
@@ -123,26 +165,17 @@ The Labwc and full Quickshell desktops have been retired and archived under
 qtile setup expects:
 
 ```bash
-yay -S --needed qtile qtile-extras python-pywlroots hypridle wlopm wlr-randr xorg-xrandr fuzzel mako swaybg foot wallust libnotify grim slurp wl-clipboard wtype cliphist tesseract wf-recorder network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
+sudo pacman -S --needed qtile qtile-extras python-pywlroots python-pywayland hypridle wlopm wlr-randr xorg-xrandr fuzzel mako swaybg foot wallust libnotify grim slurp wl-clipboard wtype cliphist tesseract wf-recorder network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
 ```
 
-Active Wayland launchers use Foot's socket-activated server mode for lower
-startup overhead and shared font/glyph caches. Enable the packaged user socket
-once after installing Foot:
-
-```bash
-systemctl --user enable --now foot-server.socket
-```
-
-`footclient` starts the server on demand through that socket. The server reads
-`foot.ini` when it starts, so restart `foot-server.service` only when no
-terminal windows need to remain open after changing Foot configuration or
-generated colors.
+Active Wayland launchers use standalone `foot` processes so each new terminal
+has an independent instance and server lifecycle. The optional
+`foot-server.socket`/`footclient` mode is not used by the default launchers.
 
 The optional Hyprland session expects:
 
 ```bash
-yay -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
+sudo pacman -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust python-pywayland adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
 ```
 
 Hyprland loads `~/.config/hypr/hyprland.lua` as its live provider, with
@@ -160,15 +193,19 @@ The minimal Hyprland bar watches Wallust's generated palette, so
 `wallust theme <name>` updates its background, text, hover, border, and accent
 colors without restarting Quickshell.
 
+Renamed workspaces set through `fuzzel-tools` appear as `id: title` in the bar;
+default numeric workspaces stay compact. The bar listens for Hyprland's rename
+event and refreshes its workspace model, so no Quickshell restart is needed.
+
 The bar also includes an ExpressVPN status chip when the ExpressVPN 5 client is
 installed and activated. The chip polls `/usr/local/bin/expressvpnctl`, uses the
 accent color while connected, and connects to the saved location or disconnects
 on click without changing the selected region, protocol, or Network Lock.
 
 The bar also includes a CPU governor chip beside the game-mode and VPN controls,
-and the Mod+S tools menu exposes the same switch. Both show the live
-`performance`/`powersave` state and use the same narrow helper installed for
-game mode.
+the Tailscale up/down toggle, and the Mod+S tools menu exposes the same CPU
+switch. The Tailscale chip shows the local address, exit node, and online-peer
+count in its tooltip.
 
 The Hyprpaper slideshow alternates the night-garden and dawn-after-rain 4K
 wallpapers every 30 minutes without invoking Wallust, so wallpaper rotation
@@ -193,6 +230,11 @@ systemctl --user enable --now wallust-refresh-desktop.path
 The `mako` package is qtile's notification daemon, launched from qtile's
 autostart.
 
+The shared idle-inhibit bindings in Hyprland, qtile, Sway, and the retained Eww
+bar use the `wayland-idle-inhibitor.py` helper installed by the `environment`
+package. It requires the Arch `python-pywayland` package; install the package
+before enabling those bindings.
+
 qtile uses its own compositor-safe `hypridle` configuration: after 15 minutes
 of uninhibited idle time, `wlopm` powers off both monitors and restores them on
 input. It does not lock or suspend the session.
@@ -206,7 +248,9 @@ and polkit processes when the persistent systemd user manager survives a
 compositor switch—it does not set compositor identity or hardcode a numbered
 Wayland socket.
 
-The interface font is `Comic Code`. It is a commercial typeface not packaged on the AUR, so install it manually into `~/.local/share/fonts/`.
+The interface font is `Comic Code`. It is a commercial typeface not packaged in
+the official repositories, so install it manually into
+`~/.local/share/fonts/`.
 
 ### Companion tools
 
@@ -221,12 +265,12 @@ git clone https://github.com/jlacours/llama-choose.git ~/Projects/repos/llama-ch
 ```
 
 CLIProxyAPI exposes Claude and Codex subscription OAuth sessions through a
-loopback-only Anthropic-compatible endpoint. Install its AUR package, create
+loopback-only Anthropic-compatible endpoint. Install its audited local package, create
 `~/.cli-proxy-api/config.yaml` and `client-token` as machine-local
 credentials, then authenticate and enable its user service:
 
 ```bash
-yay -S --needed cli-proxy-api-bin
+sudo pacman -S --needed cli-proxy-api-bin
 cli-proxy-api -config ~/.cli-proxy-api/config.yaml -claude-login
 cli-proxy-api -config ~/.cli-proxy-api/config.yaml -codex-login
 systemctl --user enable --now cli-proxy-api.service
@@ -251,11 +295,11 @@ period. It refuses to activate unless Tailscale, SSH, Codex Remote Control, and
 systemd user lingering are healthy; then it records and pauses expendable user
 services and desktop applications, preserves the current OpenRGB profile,
 disables automatic suspend, locks the session, and powers off RGB and displays.
-Networking, Codex Remote Control, the Hermes/Signal fallback, CLIProxyAPI, and
+Networking, Codex Remote Control, the Signal fallback, CLIProxyAPI, and
 the Borg backup timer remain active.
 
 ```bash
-yay -S --needed openrgb openssh tailscale
+sudo pacman -S --needed openrgb openssh tailscale
 ~/.config/hypr/scripts/away-mode.sh verify
 ~/.config/hypr/scripts/away-mode.sh on
 ~/.config/hypr/scripts/away-mode.sh status
@@ -279,21 +323,24 @@ Every application follows the same template: a top-level package mirrors its des
 
 | Package | Software and purpose |
 |---|---|
+| **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
 | **codex** | Codex Remote Control systemd user service plus a native-Wayland ChatGPT desktop launcher override |
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; available as the secondary editor |
 | **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
 | **eww** | Legacy Eww bar retained for migration reference |
-| **foot** | Foot terminal with socket-activated server/client launches; Wallust color include |
+| **foot** | Foot terminal with standalone launches, optional socket-activated server/client mode, and a Wallust color include |
 | **fuzzel** | Fast native Wayland application launcher and dmenu-compatible picker with a compact square theme |
 | **hyprland** | Hyprland, Hyprpaper (with a two-image 30-minute slideshow), hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
 | **mako** | Notification daemon launched by the qtile session |
+| **mcp-services** | Loopback-only HTTP/SSE wrappers for memory and time MCP servers, plus an optional dormant Friend bridge |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Active tiling Wayland session: Hyprland-style keybinds ported to qtile, Fuzzel-based menus (applications, tools, power, clipboard history, keybind viewer, screen recording, emoji/Unicode picker, OCR, wallpaper picker), mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, the full workspace set with per-monitor active state and edge placement, active-window title, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, active-window state, CPU/game-mode/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr terminal-native agent multiplexer configuration |
+| **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
 | **wallust** | Wallust color-generation configuration, application templates, and live desktop refresh hook |
 | **zsh** | zsh shell configuration, prompt schema, native completion, and Carapace coverage for unsupported commands |
 
@@ -310,11 +357,15 @@ The minimal Qtile bar reads its palette from Wallust's generated `colors.py`.
 Image palettes and the random light/dark theme helpers refresh the running
 desktop automatically after Wallust rewrites its theme files.
 
-LibreWolf is the default browser, with Helium retained as the alternate
-Chromium-based browser. Default programs are centralized in the
+Helium is the default browser, with LibreWolf retained as the alternate.
+Default programs are centralized in the
 `environment` package: session variables live in `.config/environment.d/`, and
 desktop file associations live in `.config/mimeapps.list`. The interface font
 is `Comic Code` across Foot, Emacs, and qtile.
+
+The `helium` package adds a user-level browser flag that suppresses Chromium's
+session-crashed/restore bubble after a compositor window close. It does not
+change Helium's startup-page preference.
 
 The editor configuration is Neovim-first. Emacs remains configured and
 available as the secondary editor.

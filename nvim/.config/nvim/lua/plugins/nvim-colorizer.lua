@@ -42,7 +42,7 @@ return {
         sass = { enable = false, parsers = { "css" } }, -- Enable sass colors
         xterm = false, -- Enable xterm 256-color codes (#xNN, \e[38;5;NNNm)
         -- Highlighting mode.  'background'|'foreground'|'virtualtext'
-        mode = "vitualtext", -- Set the display mode
+        mode = "virtualtext", -- Set the display mode
         -- Virtualtext character to use
         virtualtext = "■",
         -- Display virtualtext inline with color.  boolean|'before'|'after'.  True sets to 'after'

@@ -24,8 +24,16 @@ case "${1:-status}" in
     disconnect)
         exec "${EXPRESSVPNCTL}" --timeout "${TIMEOUT_SECONDS}" disconnect
         ;;
+    toggle)
+        connection_state="$(${EXPRESSVPNCTL} --timeout "${TIMEOUT_SECONDS}" get connectionstate 2>/dev/null)" \
+            || connection_state="Disconnected"
+        if [[ "${connection_state//$'\n'/}" == "Connected" ]]; then
+            exec "${EXPRESSVPNCTL}" --timeout "${TIMEOUT_SECONDS}" disconnect
+        fi
+        exec "${EXPRESSVPNCTL}" --timeout "${TIMEOUT_SECONDS}" connect
+        ;;
     *)
-        printf 'usage: %s {status|connect|disconnect}\n' "$0" >&2
+        printf 'usage: %s {status|connect|disconnect|toggle}\n' "$0" >&2
         exit 2
         ;;
 esac

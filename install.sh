@@ -13,7 +13,7 @@ if [[ -t 1 ]]; then
   C_BOLD=$'\e[1m'; C_GREEN=$'\e[32m'; C_YELLOW=$'\e[33m'
   C_RED=$'\e[31m'; C_RESET=$'\e[0m'
 else
-  C_BOLD= C_GREEN= C_YELLOW= C_RED= C_RESET=
+  C_BOLD='' C_GREEN='' C_YELLOW='' C_RED='' C_RESET=''
 fi
 
 log()  { printf '%s→%s %s\n' "$C_GREEN" "$C_RESET" "$*"; }
@@ -73,7 +73,7 @@ while (( $# > 0 )); do
   shift
 done
 
-command -v stow >/dev/null 2>&1 || die "GNU Stow not found — install with: yay -S stow"
+command -v stow >/dev/null 2>&1 || die "GNU Stow not found — install with: sudo pacman -S stow"
 
 if (( ${#PKGS[@]} == 0 )); then
   while IFS= read -r p; do PKGS+=("$p"); done < <(detect_packages)

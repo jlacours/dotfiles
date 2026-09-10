@@ -14,7 +14,7 @@ the keyring entry.
 ## Requirements
 
 ```bash
-yay -S --needed bitwarden-cli gnome-keyring libsecret
+sudo pacman -S --needed bitwarden-cli gnome-keyring libsecret
 systemctl --user start gnome-keyring-daemon.service
 ```
 

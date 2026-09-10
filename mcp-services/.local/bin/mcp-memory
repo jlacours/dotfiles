@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# HTTP-wrapped shared SQLite memory server, local-only.
+# Endpoint: http://127.0.0.1:8767/mcp
+# Source of truth: ~/.local/share/juju-memory/memory.db
+set -euo pipefail
+
+# Keep this pair together: mcp-proxy 0.12.0 is not compatible with mcp 2.x.
+exec uvx --from 'mcp-proxy==0.12.0' --with 'mcp==1.29.0' mcp-proxy \
+  --port 8767 --host 127.0.0.1 --allow-origin '*' -- \
+  "${HOME}/.local/bin/juju-memory-mcp"

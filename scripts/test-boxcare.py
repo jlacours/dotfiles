@@ -68,7 +68,6 @@ class BoxcareTestCase(unittest.TestCase):
             "expected_mounts": ["/"],
             "allowed_tcp_listeners": [],
             "allowed_udp_listeners": [],
-            "arch": {"include_aur": False},
         }
 
     def write_fake_ssh(self, *, delay_s: float = 0.0) -> Path:
@@ -106,6 +105,10 @@ class BoxcareTestCase(unittest.TestCase):
                     "reboot_required",
                     "pi_health",
                 )
+                if "update_plan" in remote_script:
+                    value = base64.b64encode(b"platform=arch\\ncached_only=true\\n").decode("ascii")
+                    print(f"BOXCARE1\\tupdate_plan\\tok\\t{{value}}")
+                    raise SystemExit(0)
                 for name in checks:
                     value = base64.b64encode(b"fixture").decode("ascii")
                     print(f"BOXCARE1\\t{{name}}\\tok\\t{{value}}")
@@ -158,9 +161,6 @@ class InventoryTests(BoxcareTestCase):
         self.assertEqual(hosts["ordijul"]["ssh_alias"], "local")
         self.assertFalse(hosts["pixel"]["enabled"])
         self.assertTrue(all(host["distro"] == "auto" for host in hosts.values()))
-        self.assertTrue(
-            all(not host["arch"]["include_aur"] for host in hosts.values())
-        )
 
         forbidden_keys = {
             "address",
@@ -178,6 +178,16 @@ class InventoryTests(BoxcareTestCase):
             self.assertNotIn("@", host["ssh_alias"])
             self.assertEqual(host["allowed_tcp_listeners"], [])
             self.assertEqual(host["allowed_udp_listeners"], [])
+
+    def test_inventory_rejects_non_string_host_list_values(self) -> None:
+        host = self.host("alpha")
+        host["important_units"] = [["not-a-unit"]]
+        inventory = self.write_inventory([host])
+
+        result = self.run_boxcare("audit", inventory=inventory)
+
+        self.assertEqual(result.returncode, 8)
+        self.assertIn("important_units must contain only strings", result.stderr)
 
 
 class CommandTests(BoxcareTestCase):
@@ -295,6 +305,8 @@ class CommandTests(BoxcareTestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["results"][0]["platform"], "arch")
         calls = self.ssh_calls()
         self.assertGreaterEqual(len(calls), 1)
         remote_payload = "\n".join(call["stdin"] for call in calls)

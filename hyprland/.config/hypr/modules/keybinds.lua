@@ -24,30 +24,11 @@ local function dispatch(keys, action, description, options)
 end
 
 -- In a Lua-configured session, hyprctl dispatch expects a Lua dispatcher
--- expression. The legacy wsflash helper still emits hyprlang-style dispatcher
--- arguments, so perform focus changes natively and keep the flash as a
--- separate post-action effect.
+-- expression. The minimal active bar has no workspace-flash IPC handler, so
+-- perform focus changes natively without sending a guaranteed-to-fail call.
 local function focus_with_workspace_flash(keys, focus, description)
   bind(keys, function()
-    local before = hl.get_active_workspace()
     hl.dispatch(hl.dsp.focus(focus))
-    local after = hl.get_active_workspace()
-
-    if not after or after.special or (before and before.id == after.id) then
-      return
-    end
-
-    local monitor = after.monitor
-    if not monitor then
-      return
-    end
-
-    hl.exec_cmd(
-      "quickshell ipc call -- workspaceflash show "
-        .. string.format("%q", after.name)
-        .. " "
-        .. string.format("%q", monitor.name)
-    )
   end, description)
 end
 
@@ -73,7 +54,7 @@ exec(main_mod .. " + tab", programs.window_menu, "Window switcher")
 exec(main_mod .. " + F1", "~/.config/hypr/scripts/keybinds-menu.sh", "Show keybindings")
 
 -- Window actions
-dispatch(main_mod .. " + Q", hl.dsp.window.kill(), "Kill active window")
+dispatch(main_mod .. " + Q", hl.dsp.window.close(), "Close active window")
 dispatch(main_mod .. " + SHIFT + F", hl.dsp.window.float(), "Toggle floating")
 dispatch(main_mod .. " + F", hl.dsp.window.fullscreen(), "Toggle fullscreen")
 dispatch(main_mod .. " + P", hl.dsp.window.pin(), "Pin window")
@@ -85,14 +66,9 @@ dispatch(main_mod .. " + bracketright", hl.dsp.group.next(), "Next tab")
 
 -- Bars and overlays
 exec(
-  main_mod .. " + slash",
-  [[~/.config/quickshell/scripts/qs-ipc.sh bar togglePopup "$(hyprctl activeworkspace -j | jq -r '.monitor')"]],
-  "Toggle popup"
-)
-exec(
   main_mod .. " + N",
-  [[~/.config/quickshell/scripts/qs-ipc.sh notifications toggle "$(hyprctl activeworkspace -j | jq -r '.monitor')"]],
-  "Toggle notification center"
+  "makoctl dismiss --all",
+  "Dismiss notifications"
 )
 exec(main_mod .. " + CTRL + SHIFT + slash", programs.restart_bar, "Restart bar")
 
@@ -140,9 +116,10 @@ exec(main_mod .. " + ALT + G", "~/.config/hypr/scripts/game-mode.sh toggle", "To
 exec(main_mod .. " + SHIFT + F12", programs.screen_menu, "Deactivate screens")
 exec(main_mod .. " + S", programs.tools_menu, "Tools menu")
 exec(main_mod .. " + V", "~/.config/hypr/scripts/cliphist-menu.sh", "Clipboard history")
-exec(main_mod .. " + I", "~/.config/waybar/scripts/idle-inhibit.sh toggle", "Toggle idle inhibitor")
+exec(main_mod .. " + I", "~/.config/session/idle-inhibit.sh toggle", "Toggle idle inhibitor")
 
--- Navigation. Flash only when focus crosses into a different workspace.
+-- Navigation. The active minimal bar does not provide a workspace-flash IPC
+-- endpoint, so these bindings only perform the focus operation.
 for _, item in ipairs({
   { key = "LEFT", direction = "l", description = "Focus left" },
   { key = "RIGHT", direction = "r", description = "Focus right" },
@@ -293,7 +270,7 @@ dispatch(
   hl.dsp.send_shortcut({ mods = "CTRL SHIFT", key = "D", window = "class:^([Vv]esktop|discord)$" }),
   "Toggle Discord deafen"
 )
-exec("F13", "~/.config/waybar/scripts/idle-inhibit.sh toggle", "Toggle idle inhibitor")
+exec("F13", "~/.config/session/idle-inhibit.sh toggle", "Toggle idle inhibitor")
 exec("F14", "~/.local/bin/hypridle-suspend toggle", "Toggle suspend inhibitor")
 
 -- Mouse

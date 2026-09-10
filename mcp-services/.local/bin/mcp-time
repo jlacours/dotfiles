@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# SSE-wrapped time MCP server, local-only.
+# Endpoint: http://127.0.0.1:8766/sse
+set -euo pipefail
+
+# Keep these versions together: neither proxy nor time server supports mcp 2.x yet.
+exec uvx --from 'mcp-proxy==0.12.0' --with 'mcp==1.29.0' mcp-proxy \
+  --port 8766 --host 127.0.0.1 --allow-origin '*' -- \
+  uvx --from 'mcp-server-time==2026.7.10' --with 'mcp==1.29.0' mcp-server-time
