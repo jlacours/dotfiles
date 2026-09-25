@@ -232,7 +232,7 @@ Renamed workspaces set through `fuzzel-tools` appear as `id: title` in the bar;
 default numeric workspaces stay compact. The bar listens for Hyprland's rename
 event and refreshes its workspace model, so no Quickshell restart is needed.
 
-`Super+grave` (the key printed as `` ` ``) cycles the focused workspace through
+`Super+BackSlash` (the key printed as `\`) cycles the focused workspace through
 the configured `master`, `dwindle`, `scrolling`, and `monocle` layouts. For about
 2.2 seconds after the change, the center title badge shows the selected layout
 and slides vertically before returning to the active window title.
