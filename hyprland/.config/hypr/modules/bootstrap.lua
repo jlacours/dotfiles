@@ -18,6 +18,7 @@ local programs = {
   restart_bar = [[sh -c "qs -c hyprbar kill >/dev/null 2>&1 || true; exec qs -c hyprbar -d"]],
   tools_menu = "~/.local/bin/fuzzel-tools",
   apps_menu = "~/.local/bin/fuzzel-apps",
+  agent_command_menu = "~/.config/hypr/scripts/agent-command-menu.sh",
   screen_menu = "~/.config/hypr/scripts/screens-menu.sh",
   emacs_client = "emacsclient -c",
   nvim = terminal .. " --app-id=nvim -e nvim",
@@ -43,6 +44,7 @@ hl.monitor({
 -- asynchronously. No trailing '&' or 'disown' is needed.
 hl.on("hyprland.start", function()
   hl.exec_cmd("~/.config/session/reset-display-services.sh")
+  hl.exec_cmd("systemctl --user start hypridle.service hypridle-video-inhibit.service")
   hl.exec_cmd("hyprpaper")
   hl.exec_cmd("qs -c hyprbar -d")
   hl.exec_cmd("wl-paste --watch cliphist store")

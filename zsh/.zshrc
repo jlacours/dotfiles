@@ -515,45 +515,6 @@ function llm-approve() {
   fi
 }
 
-# Toggle passwordless pacman (sudoers drop-in) so non-interactive agent
-# subprocesses without a TTY can run `sudo pacman`. Run these from your
-# interactive shell — you enter your password once to flip the drop-in on/off.
-# (Plain `sudo -v` doesn't work for this: the cached timestamp is TTY/session
-# scoped and does NOT transfer to agent-harness subprocesses.)
-SUDOERS_PACMAN=/etc/sudoers.d/pacman-nopasswd
-
-function sudo-on() {
-  local tmp
-  tmp=$(mktemp) || return 1
-  echo 'juju ALL=(ALL) NOPASSWD: /usr/bin/pacman' > "$tmp"
-  # Validate BEFORE installing: a malformed sudoers file can lock out sudo.
-  if ! sudo visudo -cf "$tmp" >/dev/null; then
-    rm -f "$tmp"
-    echo "sudo-on: sudoers syntax invalid — aborted, sudo unchanged" >&2
-    return 1
-  fi
-  if ! sudo install -m 440 -o root -g root "$tmp" "$SUDOERS_PACMAN"; then
-    rm -f "$tmp"
-    echo "sudo-on: failed to install sudoers drop-in (auth cancelled?)" >&2
-    return 1
-  fi
-  rm -f "$tmp"
-  export SUDO_READY=1
-  echo "passwordless pacman ON — agents can run sudo pacman"
-}
-
-function sudo-off() {
-  # rm -f is idempotent: a non-root user can't stat /etc/sudoers.d/, so an
-  # existence pre-check would always report "absent". Just remove and rely on
-  # the exit code.
-  if ! sudo rm -f "$SUDOERS_PACMAN"; then
-    echo "sudo-off: failed to remove sudoers drop-in (auth cancelled?)" >&2
-    return 1
-  fi
-  unset SUDO_READY
-  echo "passwordless pacman OFF — agents will prompt for sudo again"
-}
-
 # >>> Codex installer >>>
 export PATH="$HOME/.local/bin:$PATH"
 # <<< Codex installer <<<

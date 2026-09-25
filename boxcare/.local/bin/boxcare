@@ -224,11 +224,11 @@ check uptime sh -c 'uptime; printf "boot_id="; cat /proc/sys/kernel/random/boot_
 check disk sh -c 'df -PT 2>&1; printf "\nINODES\n"; df -Pi 2>&1'
 check memory sh -c 'grep -E "^(MemTotal|MemAvailable|SwapTotal|SwapFree):" /proc/meminfo; printf "\nSWAP\n"; cat /proc/swaps 2>/dev/null || true'
 check failed_units sh -c 'command -v systemctl >/dev/null 2>&1 || exit 3; systemctl --failed --no-legend --no-pager; for unit in __IMPORTANT_UNITS__; do systemctl is-active "$unit" 2>/dev/null || true; done'
-check listeners sh -c 'command -v ss >/dev/null 2>&1 || exit 3; sudo -n ss -H -lntup 2>/dev/null || ss -H -lntu'
-check firewall sh -c 'found=0; if command -v nft >/dev/null 2>&1; then found=1; printf "manager=nftables\n"; sudo -n nft list ruleset 2>&1 || nft list ruleset 2>&1; fi; if command -v ufw >/dev/null 2>&1; then found=1; printf "manager=ufw\n"; sudo -n ufw status verbose 2>&1 || ufw status verbose 2>&1; fi; if command -v firewall-cmd >/dev/null 2>&1; then found=1; printf "manager=firewalld\n"; firewall-cmd --state 2>&1; firewall-cmd --list-all 2>&1; fi; [ "$found" -eq 1 ] || { printf "manager=none\n"; exit 4; }'
-check sshd sh -c 'command -v sshd >/dev/null 2>&1 || exit 3; sudo -n sshd -t 2>&1 || exit $?; sudo -n sshd -T 2>/dev/null | grep -E "^(passwordauthentication|kbdinteractiveauthentication|permitrootlogin|pubkeyauthentication|permitemptypasswords|maxauthtries|x11forwarding|allowtcpforwarding) "'
+check listeners sh -c 'command -v ss >/dev/null 2>&1 || exit 3; ss -H -lntu'
+check firewall sh -c 'found=0; if command -v nft >/dev/null 2>&1; then found=1; printf "manager=nftables\n"; nft list ruleset 2>&1; fi; if command -v ufw >/dev/null 2>&1; then found=1; printf "manager=ufw\n"; ufw status verbose 2>&1; fi; if command -v firewall-cmd >/dev/null 2>&1; then found=1; printf "manager=firewalld\n"; firewall-cmd --state 2>&1; firewall-cmd --list-all 2>&1; fi; [ "$found" -eq 1 ] || { printf "manager=none\n"; exit 4; }'
+check sshd sh -c 'command -v sshd >/dev/null 2>&1 || exit 3; sshd -t 2>&1 || exit $?; sshd -T 2>/dev/null | grep -E "^(passwordauthentication|kbdinteractiveauthentication|permitrootlogin|pubkeyauthentication|permitemptypasswords|maxauthtries|x11forwarding|allowtcpforwarding) "'
 check auto_updates sh -c 'if command -v apt-get >/dev/null 2>&1; then dpkg-query -W -f="unattended-upgrades=${Status}\n" unattended-upgrades 2>/dev/null || printf "unattended-upgrades=not-installed\n"; systemctl is-enabled apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true; elif command -v pacman >/dev/null 2>&1; then systemctl list-timers --all --no-pager 2>/dev/null | grep -Ei "(upgrade|update|pacman)" || printf "automatic-updates=not-detected\n"; else printf "automatic-updates=unknown\n"; fi'
-check kernel_warnings sh -c 'command -v journalctl >/dev/null 2>&1 || exit 3; sudo -n journalctl -k -b --no-pager 2>/dev/null | grep -Ei "out of memory|oom-kill|I/O error|buffer i/o|filesystem error|read-only file system|hung task|under.?voltage|mmc.*error|nvme.*error|ata.*error" | tail -n 80 || true'
+check kernel_warnings sh -c 'command -v journalctl >/dev/null 2>&1 || exit 3; journalctl -k -b --no-pager 2>/dev/null | grep -Ei "out of memory|oom-kill|I/O error|buffer i/o|filesystem error|read-only file system|hung task|under.?voltage|mmc.*error|nvme.*error|ata.*error" | tail -n 80 || true'
 check reboot_required sh -c 'if [ -e /run/reboot-required ]; then cat /run/reboot-required; cat /run/reboot-required.pkgs 2>/dev/null; elif [ -d /lib/modules ]; then running=$(uname -r); newest=$(find /lib/modules -mindepth 1 -maxdepth 1 -printf "%f\n" 2>/dev/null | sort -V | tail -n1); printf "running=%s\nnewest_installed=%s\n" "$running" "$newest"; [ -z "$newest" ] || [ "$running" = "$newest" ]; else printf "method=unavailable\n"; exit 3; fi'
 check pi_health sh -c 'if command -v vcgencmd >/dev/null 2>&1; then vcgencmd measure_temp; vcgencmd get_throttled; elif [ -r /sys/class/thermal/thermal_zone0/temp ]; then awk "{printf \"temp_c=%.1f\\n\", \$1/1000}" /sys/class/thermal/thermal_zone0/temp; else printf "not_applicable\n"; fi'
 '''
@@ -271,17 +271,18 @@ if pgrep -x apt-get >/dev/null 2>&1 || pgrep -x dpkg >/dev/null 2>&1 || pgrep -x
   emit update fail 'package manager is already active'; exit 20
 fi
 if [ -r /etc/os-release ]; then . /etc/os-release; else ID=termux; fi
+if [ "$(id -u)" -ne 0 ] && [ "${ID:-}" != "termux" ]; then
+  emit update fail 'refusing to elevate privileges; connect as root explicitly to update this host'; exit 22
+fi
 case "${ID:-}:${ID_LIKE:-}" in
   *arch*)
     command -v pacman >/dev/null 2>&1 || { emit update fail 'pacman is not installed'; exit 21; }
-    sudo -n true >/dev/null 2>&1 || { emit update fail 'noninteractive sudo unavailable'; exit 22; }
-    output=$(sudo -n pacman -Syu --noconfirm 2>&1); rc=$?
+    output=$(pacman -Syu --noconfirm 2>&1); rc=$?
     output=$(printf 'platform=arch\n%s' "$output")
     ;;
   *debian*|*ubuntu*|*raspbian*)
-    sudo -n true >/dev/null 2>&1 || { emit update fail 'noninteractive sudo unavailable'; exit 22; }
-    output=$(sudo -n apt-get update 2>&1) || { rc=$?; emit update fail "$output"; exit "$rc"; }
-    upgraded=$(sudo -n apt-get -y --no-remove --with-new-pkgs -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade 2>&1); rc=$?
+    output=$(apt-get update 2>&1) || { rc=$?; emit update fail "$output"; exit "$rc"; }
+    upgraded=$(apt-get -y --no-remove --with-new-pkgs -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade 2>&1); rc=$?
     output=$(printf 'platform=debian\n%s\n%s' "$output" "$upgraded")
     ;;
   termux:*) output=$(pkg upgrade -y 2>&1); rc=$?; output=$(printf 'platform=termux\n%s' "$output") ;;

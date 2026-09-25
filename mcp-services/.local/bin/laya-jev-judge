@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# JSON stdin/stdout switchable Laya/Jev judgment CLI.
+set -euo pipefail
+
+root="${JUDGMENT_ROOT:-${HOME}/local-model-harness}"
+python_bin="${JUDGMENT_PYTHON:-${root}/.venv/bin/python}"
+exec "${python_bin}" "${root}/judgment_cli.py" "$@"

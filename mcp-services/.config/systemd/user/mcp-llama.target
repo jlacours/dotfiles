@@ -1,6 +1,6 @@
 [Unit]
-Description=Local memory and time MCP services
-Wants=mcp-memory.service mcp-time.service
+Description=Shared local MCP services
+Wants=mcp-memory.service mcp-time.service mcp-exa.service
 After=network.target
 
 [Install]

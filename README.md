@@ -92,6 +92,20 @@ repository location or credentials. Copy
 machine-local file out of Git, test the service once, and only then enable the
 timer. See `borg/README.md` for the setup and restore-check commands.
 
+Install the lightweight root-filesystem space guard and enable its hourly user
+timer:
+
+```bash
+./install.sh --dry-run disk-health
+./install.sh disk-health
+systemctl --user daemon-reload
+systemctl --user enable --now disk-space-guard.timer
+```
+
+It warns at 85% usage, becomes critical at 90%, rate-limits repeated desktop
+notifications, and never scans directories or deletes files automatically. See
+`disk-health/README.md` for manual checks and threshold overrides.
+
 Install Codex with the official standalone installer before enabling the
 tracked Remote Control service:
 
@@ -108,45 +122,59 @@ user manager starts at boot without waiting for an interactive login:
 sudo loginctl enable-linger "$USER"
 ```
 
-The `codex` package also overrides the ChatGPT desktop launcher to use
-Electron's native Wayland backend instead of XWayland. After installing the
-OpenAI ChatGPT desktop app, Stow the package and refresh the desktop database:
+The `codex` package keeps the ChatGPT desktop launcher on the application's
+default XWayland backend. Native Wayland is experimental for floating windows
+and can misplace the pet overlay. After installing the OpenAI ChatGPT desktop
+app, Stow the package and refresh the desktop database:
 
 ```bash
 ./install.sh codex
 update-desktop-database ~/.local/share/applications
 ```
 
-Fully quit and reopen ChatGPT after installing the override. Native Wayland
-windows use the lowercase `chatgpt` app ID when matching compositor rules. The
-Hyprland package excludes only the floating Codex pet from compositor blur,
-leaving the application's own glass styling intact.
+Fully quit and reopen ChatGPT after changing the launcher. Hyprland keeps the
+floating ChatGPT pet overlay free of compositor blur,
+border, and shadow while leaving the application's own styling intact.
 
-The `mcp-services` package provides local-only HTTP/SSE wrappers for the memory
-and time MCP servers, plus an optional dormant Friend bridge. The wrappers bind
+The `mcp-services` package provides local-only HTTP/SSE wrappers for the memory,
+time, and Exa web-search MCP servers, plus switchable local Laya/OpenRouter Jev
+judgment wrappers and an optional dormant Friend bridge. Exa's API key stays in
+the machine-local `~/.zshenv.local`; the service passes only that variable to
+the pinned Exa server process. The wrappers bind
 only to `127.0.0.1`, which is the exposure boundary. The user units also request
 Tailscale-range filtering with `IPAddressDeny=`, but systemd warns that they
 configure an IP firewall without running as root. Treat those directives as
-defense in depth rather than relying on them instead of the loopback bind. OpenCode's memory,
-HSD, local-harness, and web-search MCP integrations run as local stdio
-processes; its web-search process calls the configured free public SearXNG
-instance directly. The configured DeepWiki MCP is a remote HTTPS integration,
-not a local Tailscale listener. The wrappers allow all web origins for local
-clients; the loopback bind limits network reachability but is not an origin
-restriction.
+defense in depth rather than relying on them instead of the loopback bind.
+OpenCode's memory, HSD, and local-harness integrations run as local stdio
+processes. Codex, OpenCode, Hermes, the llama.cpp Web UI, and Pi can connect to
+the shared Exa endpoint at `http://127.0.0.1:8769/mcp`; Pi uses the
+`pi-mcp-adapter` package and the shared `~/.config/mcp/mcp.json` file. The
+configured DeepWiki MCP is a remote HTTPS integration, not a local Tailscale
+listener. Browser access to the Exa endpoint is restricted to the local llama
+Web UI origins.
 
 Install `uv` first. The memory wrapper also requires a separately installed
 `~/.local/bin/juju-memory-mcp` executable. Then install and enable the local MCP
 services with:
 
 ```bash
-sudo pacman -S --needed uv
+sudo pacman -S --needed uv nodejs npm
 test -x ~/.local/bin/juju-memory-mcp
 ./install.sh --dry-run mcp-services
 ./install.sh mcp-services
 systemctl --user daemon-reload
 systemctl --user enable --now mcp-llama.target
+systemctl --user enable --now mcp-exa.service
+pi install npm:pi-mcp-adapter
 ```
+
+Restart Pi after installing the adapter so it loads the shared Exa MCP entry.
+
+The judgment wrappers expect the shared source workspace at
+`~/local-model-harness` with its `.venv` installed. Use
+`~/.local/bin/laya-jev-judge --backend laya` for the private local judge or
+`--backend jev` for an explicit OpenRouter Jev request. The MCP equivalent is
+`~/.local/bin/laya-jev-mcp`; neither wrapper changes backend implicitly.
 
 The Friend bridge is not started by `mcp-llama.target`. It remains dormant
 unless its external bridge script and function directory are installed at the
@@ -161,8 +189,8 @@ Install a subset by naming packages:
 `install.sh` only manages symlinks. Applications and feature dependencies remain explicit so the script does not turn into a surprise package-manager séance.
 
 The Labwc and full Quickshell desktops have been retired and archived under
-`legacy/`. A minimal Quickshell bar remains available for Hyprland. The active
-qtile setup expects:
+`legacy/`. A minimal Quickshell bar remains available for Hyprland. The
+alternate qtile session expects:
 
 ```bash
 sudo pacman -S --needed qtile qtile-extras python-pywlroots python-pywayland hypridle wlopm wlr-randr xorg-xrandr fuzzel mako swaybg foot wallust libnotify grim slurp wl-clipboard wtype cliphist tesseract wf-recorder network-manager-applet polkit-kde-agent papirus-icon-theme ranger pcmanfm pulsemixer pavucontrol xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-wlr
@@ -172,7 +200,7 @@ Active Wayland launchers use standalone `foot` processes so each new terminal
 has an independent instance and server lifecycle. The optional
 `foot-server.socket`/`footclient` mode is not used by the default launchers.
 
-The optional Hyprland session expects:
+The active Hyprland session expects:
 
 ```bash
 sudo pacman -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust python-pywayland adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
@@ -184,7 +212,14 @@ adjacent `hyprland.conf` remains synchronized as a rollback and monitor-layout
 reference for session helpers.
 
 Hyprland uses Fuzzel for its application, favorites, tools, window, power,
-clipboard-history, keybinding, and screen-management menus. The tools menu
+clipboard-history, keybinding, screen-management, and live-agent-command menus.
+`Super+Ctrl+Shift+number` moves every window on the current workspace to that
+numbered workspace, then focuses it. It leaves windows untouched and shows a
+notification when a special workspace is visible.
+`Super+F2` groups live commands by their recognized agent (`codex`, `opencode`,
+`claude`, `aider`, `gemini`, or `amp`), focuses an existing terminal
+when one exists, and otherwise opens a read-only Foot process monitor for the
+hidden command. The tools menu
 also covers screen recording, an emoji/Unicode picker, OCR, and a wallpaper
 picker with cached thumbnail previews that can either regenerate the Wallust
 theme or keep the current palette.
@@ -197,15 +232,31 @@ Renamed workspaces set through `fuzzel-tools` appear as `id: title` in the bar;
 default numeric workspaces stay compact. The bar listens for Hyprland's rename
 event and refreshes its workspace model, so no Quickshell restart is needed.
 
+`Super+grave` (the key printed as `` ` ``) cycles the focused workspace through
+the configured `master`, `dwindle`, `scrolling`, and `monocle` layouts. For about
+2.2 seconds after the change, the center title badge shows the selected layout
+and slides vertically before returning to the active window title.
+
 The bar also includes an ExpressVPN status chip when the ExpressVPN 5 client is
 installed and activated. The chip polls `/usr/local/bin/expressvpnctl`, uses the
 accent color while connected, and connects to the saved location or disconnects
 on click without changing the selected region, protocol, or Network Lock.
 
-The bar also includes a CPU governor chip beside the game-mode and VPN controls,
-the Tailscale up/down toggle, and the Mod+S tools menu exposes the same CPU
-switch. The Tailscale chip shows the local address, exit node, and online-peer
-count in its tooltip.
+The bar also includes game-mode and VPN controls, a Tailscale up/down toggle,
+and a dedicated local grammar-correction model toggle. The correction icon
+switches to a rotating, pulsing star while the `Super+;` focused-field action
+is processing. The Tailscale chip shows the local address, exit node, and
+online-peer count in its tooltip.
+
+Install the correction model as machine-local data, then reload the tracked
+user unit. The service is intentionally not enabled at login; click its bar
+icon to start or stop it:
+
+```bash
+hf download redromnon/LFM2-700M-grammar-correction LFM2-700M.Q4_K_M.gguf \
+  --local-dir ~/models/LFM2-700M-grammar-correction
+systemctl --user daemon-reload
+```
 
 The Hyprpaper slideshow alternates the night-garden and dawn-after-rain 4K
 wallpapers every 30 minutes without invoking Wallust, so wallpaper rotation
@@ -220,6 +271,10 @@ Wallust's desktop hook pulses the maintained `adw-gtk3-dark` base theme after
 regenerating GTK CSS, which hot-reloads native dialogs in already-running apps.
 The calibrated desktop palette can be restored independently with
 `wallust theme Tokyo-Night --skip-sequences`.
+
+Fuzzel reads its colors from Wallust's generated cache, so apply one palette
+once after a fresh install with `wallust run <wallpaper> --skip-sequences` or
+`wallust theme <name> --skip-sequences` before launching a menu.
 
 Enable the generated-file watcher once after Stowing the Wallust package:
 
@@ -279,14 +334,13 @@ systemctl --user enable --now cli-proxy-api.service
 The `claudex` Zsh function launches Claude Code through that gateway while
 ordinary `claude` continues to use its native configuration.
 
+The local Matrix homeserver runs Synapse v1.156.0 in a rootless Podman container. The service expects a pre-provisioned `~/.local/share/matrix-synapse` containing `homeserver.yaml` and the server signing key; on a fresh machine, generate and review those files first using the [Synapse Docker instructions](https://github.com/matrix-org/synapse/blob/develop/docker/README.md) with server name `matrix.home.arpa` and reporting disabled. The checked-in unit does not generate or overwrite them. Then install Podman and enable `matrix-synapse.service`. Federation and public registration are disabled. The Hyprland bar indicator checks the client API and Hermes gateway before showing Matrix as healthy, and game mode pauses both services and restores their previous active state. Hermes connection secrets and the phone login are machine-local files outside the repo. Phone access uses Tailscale Serve over HTTPS after Serve is enabled for the device and the phone joins the tailnet. Matrix end-to-end encryption is currently disabled, so Synapse can read stored room content. Before using shared rooms or adding other tailnet users, set `MATRIX_ALLOWED_ROOMS` for Hermes and restrict Tailscale access to the intended devices.
+
 Game mode is available from the controller chip in the Hyprland bar or with
 `Super+Alt+G`. It pauses configured nonessential user services, enables Mako
-do-not-disturb, disables compositor effects and idle handling, and can switch
-the CPU governor without prompting after installing its narrow sudo helper:
-
-```bash
-sudo ~/.config/hypr/scripts/install-game-mode-governor.sh
-```
+do-not-disturb, and disables compositor effects and idle handling. If the local
+grammar-correction model was active, game mode stops it and restores it only
+when gaming ends.
 
 Review `MANAGED_UNITS` in `hyprland/.config/hypr/scripts/game-mode.sh` first; those user services are paused while game mode is active.
 
@@ -326,18 +380,19 @@ Every application follows the same template: a top-level package mirrors its des
 | **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
-| **codex** | Codex Remote Control systemd user service plus a native-Wayland ChatGPT desktop launcher override |
+| **codex** | Codex Remote Control systemd user service plus a ChatGPT desktop launcher that keeps the default XWayland backend |
+| **disk-health** | Low-overhead hourly root-filesystem space warnings with no automatic cleanup |
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; available as the secondary editor |
 | **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
 | **eww** | Legacy Eww bar retained for migration reference |
 | **foot** | Foot terminal with standalone launches, optional socket-activated server/client mode, and a Wallust color include |
 | **fuzzel** | Fast native Wayland application launcher and dmenu-compatible picker with a compact square theme |
-| **hyprland** | Hyprland, Hyprpaper (with a two-image 30-minute slideshow), hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
+| **hyprland** | Active Lua-backed Hyprland session with Hyprpaper (a two-image 30-minute slideshow), hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
 | **mako** | Notification daemon launched by the qtile session |
-| **mcp-services** | Loopback-only HTTP/SSE wrappers for memory and time MCP servers, plus an optional dormant Friend bridge |
+| **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools and an optional dormant Friend bridge |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
-| **qtile** | Active tiling Wayland session: Hyprland-style keybinds ported to qtile, Fuzzel-based menus (applications, tools, power, clipboard history, keybind viewer, screen recording, emoji/Unicode picker, OCR, wallpaper picker), mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, active-window state, CPU/game-mode/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
+| **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr terminal-native agent multiplexer configuration |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
@@ -348,14 +403,13 @@ Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agen
 
 ## Current Desktop
 
-The active desktop is qtile. It provides Hyprland-style keybinds, Fuzzel-based
-menus (drun, apps, tools, power, clipboard history, and a keybind viewer), mako
-notifications, scratchpad dropdowns, and Foot. The tools menu also covers
-screen recording, an emoji/Unicode picker, OCR, and a wallpaper picker.
+The active desktop is Hyprland, with `~/.config/hypr/hyprland.lua` as its live
+configuration provider. It provides Fuzzel menus and the minimal Quickshell bar.
+qtile remains available as an alternate Wayland session with its own Fuzzel
+menus, mako notifications, scratchpad dropdowns, and idle and portal helpers.
 
-The minimal Qtile bar reads its palette from Wallust's generated `colors.py`.
-Image palettes and the random light/dark theme helpers refresh the running
-desktop automatically after Wallust rewrites its theme files.
+The minimal Hyprland bar reads Wallust's generated palette, so theme changes
+update its colors without restarting Quickshell.
 
 Helium is the default browser, with LibreWolf retained as the alternate.
 Default programs are centralized in the

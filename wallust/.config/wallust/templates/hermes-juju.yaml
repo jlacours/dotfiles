@@ -1,0 +1,78 @@
+name: juju
+description: Juju slate — Wallust-driven layered surfaces with high-detail status and chat output
+
+colors:
+  background: "{{background}}"
+  ui_primary: "{{color4}}"
+  ui_accent: "{{color4}}"
+  ui_border: "{{background | lighten(0.28)}}"
+  ui_text: "{{foreground}}"
+  ui_tool: "{{color6}}"
+  ui_thinking: "{{foreground | darken(0.24)}}"
+  banner_border: "{{background | lighten(0.28)}}"
+  banner_title: "{{color4}}"
+  banner_accent: "{{color12}}"
+  banner_dim: "{{foreground | darken(0.24)}}"
+  banner_text: "{{foreground}}"
+  ui_label: "{{color12}}"
+  ui_ok: "{{color2}}"
+  ui_error: "{{color1}}"
+  ui_warn: "{{color3}}"
+  prompt: "{{foreground}}"
+  input_rule: "{{background | lighten(0.28)}}"
+  response_border: "{{background | lighten(0.28)}}"
+  session_label: "{{color12}}"
+  session_border: "{{background | lighten(0.28)}}"
+  status_bar_bg: "{{background | lighten(0.10)}}"
+  status_bar_text: "{{foreground}}"
+  status_bar_strong: "{{color4}}"
+  status_bar_dim: "{{foreground | darken(0.42)}}"
+  status_bar_good: "{{color2}}"
+  status_bar_warn: "{{color3}}"
+  status_bar_bad: "{{color1}}"
+  status_bar_critical: "{{color9}}"
+  voice_status_bg: "{{background | lighten(0.10)}}"
+  completion_menu_bg: "{{background | lighten(0.10)}}"
+  completion_menu_current_bg: "{{background | lighten(0.18)}}"
+  completion_menu_meta_bg: "{{background | lighten(0.07)}}"
+  completion_menu_meta_current_bg: "{{background | lighten(0.24)}}"
+  selection_bg: "{{background | lighten(0.24)}}"
+  shell_dollar: "{{color6}}"
+  diff_added: "{{background | lighten(0.10)}}"
+  diff_removed: "{{background | lighten(0.18)}}"
+  diff_added_word: "{{color10}}"
+  diff_removed_word: "{{color9}}"
+  syntax_string: "{{color10}}"
+  syntax_number: "{{color13}}"
+  syntax_keyword: "{{color12}}"
+  syntax_comment: "{{foreground | darken(0.42)}}"
+
+spinner:
+  waiting_faces:
+    - "|"
+    - "/"
+    - "-"
+    - "\\"
+  thinking_faces:
+    - "|"
+    - "/"
+    - "-"
+    - "\\"
+  thinking_verbs:
+    - reading
+    - mapping
+    - checking
+    - shaping
+    - building
+    - finishing
+  wings: []
+
+branding:
+  agent_name: "Juju Agent"
+  welcome: "Welcome to Juju Agent. Type your message or /help for commands."
+  goodbye: "Goodbye from Juju."
+  response_label: " ✦ Juju "
+  prompt_symbol: "❯"
+  help_header: "(✦) Juju Commands"
+
+tool_prefix: "·"

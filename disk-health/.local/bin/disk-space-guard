@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+mountpoint=${1:-/}
+warn_percent=${DISK_SPACE_WARN_PERCENT:-85}
+critical_percent=${DISK_SPACE_CRITICAL_PERCENT:-90}
+reminder_seconds=${DISK_SPACE_REMINDER_SECONDS:-43200}
+
+die() {
+    printf 'disk-space-guard: %s\n' "$*" >&2
+    exit 2
+}
+
+for value in "$warn_percent" "$critical_percent" "$reminder_seconds"; do
+    [[ $value =~ ^[0-9]+$ ]] || die "thresholds and reminder interval must be integers"
+done
+(( warn_percent < critical_percent && critical_percent <= 100 )) || \
+    die "require warn percentage < critical percentage <= 100"
+
+read -r filesystem blocks used available capacity mounted_at < <(df -Pk -- "$mountpoint" | awk 'NR == 2')
+[[ -n ${mounted_at:-} ]] || die "could not inspect $mountpoint"
+used_percent=${capacity%%%}
+[[ $used_percent =~ ^[0-9]+$ ]] || die "unexpected df output for $mountpoint"
+
+if (( used_percent >= critical_percent )); then
+    level=critical
+    urgency=critical
+elif (( used_percent >= warn_percent )); then
+    level=warning
+    urgency=normal
+else
+    level=ok
+    urgency=low
+fi
+
+available_gib=$(awk -v kib="$available" 'BEGIN { printf "%.1f", kib / 1048576 }')
+message="$mounted_at is ${used_percent}% used (${available_gib} GiB free)."
+printf 'level=%s filesystem=%s mount=%s used_percent=%s available_gib=%s\n' \
+    "$level" "$filesystem" "$mounted_at" "$used_percent" "$available_gib"
+
+state_dir=${XDG_STATE_HOME:-$HOME/.local/state}/disk-space-guard
+state_file=$state_dir/state
+previous_level=unknown
+last_notification=0
+if [[ -r $state_file ]]; then
+    read -r previous_level last_notification < "$state_file" || true
+fi
+
+now=$(date +%s)
+should_notify=0
+if [[ $level != "$previous_level" ]]; then
+    [[ $previous_level != unknown || $level != ok ]] && should_notify=1
+elif [[ $level != ok ]] && (( now - last_notification >= reminder_seconds )); then
+    should_notify=1
+fi
+
+mkdir -p -- "$state_dir"
+if (( should_notify )); then
+    if [[ $level == ok ]]; then
+        title='Disk space recovered'
+        message="$message Usage is below the warning threshold again."
+    elif [[ $level == critical ]]; then
+        title='Root disk critically full'
+        message="$message Review Trash and large caches now; cleanup is never automatic."
+    else
+        title='Root disk space warning'
+        message="$message Review Trash and large caches before it becomes critical."
+    fi
+
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send --urgency="$urgency" "$title" "$message" >/dev/null 2>&1 || true
+    fi
+    last_notification=$now
+fi
+
+state_tmp=$state_file.$$
+printf '%s %s\n' "$level" "$last_notification" > "$state_tmp"
+mv -f -- "$state_tmp" "$state_file"

@@ -1,0 +1,20 @@
+[Unit]
+Description=Hermes local llama.cpp model
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/llama-choose launch qwen3.6-35b-a3b server
+WorkingDirectory=%h
+Environment="HOME=%h"
+Environment="PATH=%h/.local/bin:%h/.cargo/bin:/usr/bin:/bin"
+Restart=no
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStartSec=0
+TimeoutStopSec=60
+Nice=5
+
+[Install]
+WantedBy=default.target

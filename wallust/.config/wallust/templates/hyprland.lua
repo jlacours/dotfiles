@@ -5,14 +5,14 @@
 hl.config({
   general = {
     col = {
-      active_border = "rgba({{color2 | rgb}},1)",
+      active_border = "rgba({{color4 | rgb}},1)",
       inactive_border = "rgba({{color8 | rgb}},1)",
     },
   },
 
   group = {
     col = {
-      border_active = "rgba({{color2 | rgb}},1)",
+      border_active = "rgba({{color4 | rgb}},1)",
       border_inactive = "rgba({{color8 | rgb}},1)",
       border_locked_active = "rgba({{color5 | rgb}},1)",
       border_locked_inactive = "rgba({{color8 | rgb}},1)",
@@ -24,7 +24,7 @@ hl.config({
       text_color_locked_active = "rgba({{color15 | rgb}},1)",
       text_color_locked_inactive = "rgba({{foreground | rgb}},1)",
       col = {
-        active = "rgba({{color2 | rgb}},1)",
+        active = "rgba({{color4 | rgb}},1)",
         inactive = "rgba({{color0 | rgb}},1)",
         locked_active = "rgba({{color5 | rgb}},1)",
         locked_inactive = "rgba({{color8 | rgb}},1)",

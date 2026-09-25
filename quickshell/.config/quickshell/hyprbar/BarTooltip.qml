@@ -33,7 +33,7 @@ PopupWindow {
             anchors.centerIn: parent
             text: root.labelText
             color: root.foregroundColor
-            font.family: "monospace"
+            font.family: "Comic Code"
             font.pixelSize: 12
             font.weight: Font.Medium
             elide: Text.ElideNone

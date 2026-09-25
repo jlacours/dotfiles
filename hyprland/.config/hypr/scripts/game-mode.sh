@@ -8,13 +8,14 @@ MANAGED_UNITS=(
   vdirsyncer.timer
   borg-backup.timer
   mcp-memory.service
-  mcp-searxng.service
+  mcp-exa.service
   mcp-time.service
-  searxng-vpn.service
-  searxng.service
   hermes-gateway.service
-  signal-cli-hermes.service
+  matrix-synapse.service
+  hermes-matrix-gateway.service
+  signal-cli.service
   hsd-web.service
+  llm-corrector.service
   mpd.service
   mpd-mpris.service
   hypridle-video-inhibit.service
@@ -37,11 +38,7 @@ game_mode_on() {
   errors=()
   mkdir -p "${STATE_DIR}"
 
-  # 1. Record current CPU governor
-  local prev_governor
-  prev_governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "powersave")
-
-  # 2. Snapshot active units in dependency order, then stop them in reverse.
+  # 1. Snapshot active units in dependency order, then stop them in reverse.
   # This keeps dependants such as mpd-mpris and searxng from disappearing
   # before their state can be recorded.
   local active_units=()
@@ -74,7 +71,7 @@ game_mode_on() {
     fi
   done
 
-  # 3. Disable Hyprland eye-candy at runtime. Lua providers reject the legacy
+  # 2. Disable Hyprland eye-candy at runtime. Lua providers reject the legacy
   # `keyword` IPC command, while the retained rollback config still uses it.
   if hyprctl systeminfo | grep -q '^configProvider: lua$'; then
     run_step "disable compositor effects" hyprctl eval \
@@ -85,12 +82,7 @@ game_mode_on() {
     run_step "disable shadow" hyprctl keyword decoration:shadow:enabled 0
   fi
 
-  # 4. Set CPU governor to performance (graceful — sudo rule may not be installed yet)
-  if ! sudo -n /usr/local/bin/game-mode-governor performance 2>/dev/null; then
-    errors+=("CPU governor unchanged (run the install step)")
-  fi
-
-  # 5. Enable Mako's real DND mode, but remember if it was already active.
+  # 3. Enable Mako's real DND mode, but remember if it was already active.
   local dnd_added="false"
   if command -v makoctl >/dev/null 2>&1; then
     if ! makoctl mode 2>/dev/null | grep -Fxq 'do-not-disturb'; then
@@ -104,7 +96,7 @@ game_mode_on() {
     errors+=("FAILED: makoctl is unavailable")
   fi
 
-  # 6. Build stoppedUnits JSON array and write state.
+  # 4. Build stoppedUnits JSON array and write state.
   local stopped_json="[]"
   if (( ${#stopped_units[@]} > 0 )); then
     stopped_json=$(printf '%s\n' "${stopped_units[@]}" | jq -R . | jq -s .)
@@ -113,14 +105,13 @@ game_mode_on() {
     --argjson active true \
     --argjson stoppedUnits "${stopped_json}" \
     --argjson dndAdded "${dnd_added}" \
-    --arg prevGovernor "${prev_governor}" \
-    '{ active: $active, stoppedUnits: $stoppedUnits, dndAdded: $dndAdded, prevGovernor: $prevGovernor }' \
+    '{ active: $active, stoppedUnits: $stoppedUnits, dndAdded: $dndAdded }' \
     > "${STATE_FILE}"
 
-  # 7. Report the transition. Critical notifications remain visible in Mako's
+  # 5. Report the transition. Critical notifications remain visible in Mako's
   # do-not-disturb mode; ordinary application noise does not.
   local n_stopped="${#stopped_units[@]}"
-  local body="Stopped ${n_stopped} background services - effects off - idle paused - DND on - CPU: performance"
+  local body="Stopped ${n_stopped} background services - effects off - idle paused - DND on"
   if (( ${#errors[@]} > 0 )); then
     local error_lines
     error_lines=$(printf '\n  - %s' "${errors[@]}")
@@ -136,11 +127,9 @@ game_mode_off() {
   mkdir -p "${STATE_DIR}"
 
   # Read state
-  local prev_governor="powersave"
   local stopped_units=()
   local dnd_added="false"
   if [[ -f "${STATE_FILE}" ]]; then
-    prev_governor=$(jq -r '.prevGovernor // "powersave"' "${STATE_FILE}" 2>/dev/null || echo "powersave")
     mapfile -t stopped_units < <(jq -r '.stoppedUnits[]?' "${STATE_FILE}" 2>/dev/null)
     dnd_added=$(jq -r '.dndAdded // false' "${STATE_FILE}" 2>/dev/null || echo "false")
   fi
@@ -150,16 +139,11 @@ game_mode_off() {
     errors+=("FAILED: disable Mako DND")
   fi
 
-  # 2. Restore CPU governor
-  if ! sudo -n /usr/local/bin/game-mode-governor "${prev_governor}" 2>/dev/null; then
-    errors+=("CPU governor not restored (run the install step)")
-  fi
-
-  # 3. Reload the active Hyprland provider to restore animations/blur/shadow.
+  # 2. Reload the active Hyprland provider to restore animations/blur/shadow.
   # Note: reload does NOT re-run exec-once, so this is safe.
   run_step "hyprctl reload" hyprctl reload
 
-  # 4. Start only the units that were stopped by us.
+  # 3. Start only the units that were stopped by us.
   if (( ${#stopped_units[@]} > 0 )); then
     for unit in "${stopped_units[@]}"; do
       if ! systemctl --user start "${unit}" 2>/dev/null; then
@@ -175,10 +159,10 @@ game_mode_off() {
     done
   fi
 
-  # 5. Clear state
-  jq -n '{ active: false, stoppedUnits: [], dndAdded: false, prevGovernor: "" }' > "${STATE_FILE}"
+  # 4. Clear state
+  jq -n '{ active: false, stoppedUnits: [], dndAdded: false }' > "${STATE_FILE}"
 
-  # 6. Notification
+  # 5. Notification
   if (( ${#errors[@]} > 0 )); then
     local error_lines
     error_lines=$(printf '\n  - %s' "${errors[@]}")

@@ -1,0 +1,16 @@
+[Unit]
+Description=Signal CLI HTTP daemon for Hermes
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/signal-cli daemon --http 127.0.0.1:8080 --no-receive-stdout --receive-mode on-start
+WorkingDirectory=%h
+Environment="HOME=%h"
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

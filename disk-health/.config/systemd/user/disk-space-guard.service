@@ -1,0 +1,6 @@
+[Unit]
+Description=Check root filesystem usage and notify on low space
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/disk-space-guard /

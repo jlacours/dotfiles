@@ -52,6 +52,7 @@ exec(main_mod .. " + SHIFT + W", programs.alternate_web_browser, "Alt. Web Brows
 exec(main_mod .. " + B", programs.apps_menu, "Favorite apps menu")
 exec(main_mod .. " + tab", programs.window_menu, "Window switcher")
 exec(main_mod .. " + F1", "~/.config/hypr/scripts/keybinds-menu.sh", "Show keybindings")
+exec(main_mod .. " + F2", programs.agent_command_menu, "Show live agent commands")
 
 -- Window actions
 dispatch(main_mod .. " + Q", hl.dsp.window.close(), "Close active window")
@@ -88,7 +89,7 @@ exec("XF86AudioMute", "~/.config/hypr/scripts/volume-notify.sh mute", "Toggle mu
 
 -- Layout
 dispatch(main_mod .. " + O", hl.dsp.layout("orientationcycle left top right bottom center"), "Cycle layout orientation")
-exec(main_mod .. " + BackSlash", "~/.local/bin/cycle-layout", "Cycle layout")
+exec(main_mod .. " + grave", "~/.config/hypr/scripts/cycle-layout.sh", "Cycle layout")
 dispatch(main_mod .. " + SHIFT + bracketright", hl.dsp.layout("rollnext"), "Roll stack next")
 dispatch(main_mod .. " + SHIFT + bracketleft", hl.dsp.layout("rollprev"), "Roll stack prev")
 dispatch(main_mod .. " + comma", hl.dsp.layout("colresize -conf"), "Shrink column (preset)")
@@ -190,6 +191,12 @@ for _, group in ipairs(workspace_groups) do
       hl.dsp.window.move({ workspace = workspace }),
       "Move window to workspace " .. workspace
     )
+
+    exec(
+      main_mod .. " + CTRL + SHIFT + " .. key,
+      "~/.config/hypr/scripts/move-workspace-windows.sh " .. workspace,
+      "Move all windows to workspace " .. workspace
+    )
   end
 end
 
@@ -257,7 +264,7 @@ end)
 
 -- Text and voice
 exec(main_mod .. " + CTRL + O", "~/.local/bin/tts-selection", "Read selected text aloud")
-exec(main_mod .. " + semicolon", "~/Projects/repos/llm-corrector-tui/bin/llm-corrector-field", "Correct focused field with local LLM")
+exec(main_mod .. " + semicolon", "~/Projects/repos/llm-corrector-tui/bin/llm-corrector-field", "Correct focused field with local LLM", { release = true })
 exec(main_mod .. " + C", "~/.local/bin/voice-input start", "Start voice input")
 exec(main_mod .. " + C", "~/.local/bin/voice-input stop", "Stop voice input", { release = true })
 dispatch(

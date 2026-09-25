@@ -26,6 +26,8 @@ fzf = { template = 'colors.sh', target = '~/.cache/wallust/colors.sh' }
 neo-matrix = { template = 'neo-matrix.color', target = '~/.config/neo/colors' }
 quickshell = { template = 'quickshell-colors.js', target = '~/.config/quickshell/wallust.js' }
 quickshell-hyprbar = { template = 'quickshell-hyprbar.json', target = '~/.cache/wallust/quickshell-hyprbar.json' }
+fuzzel = { template = 'fuzzel.ini', target = '~/.cache/wallust/fuzzel.ini' }
+hermes-juju = { template = 'hermes-juju.yaml', target = '~/.hermes/skins/juju.yaml' }
 # real file (not a symlink) inside the square config root, so quickshell's
 # live-reload watcher sees the change and hot-reloads the bar
 quickshell-square = { template = 'quickshell-colors.js', target = '~/.config/quickshell/square/wallust.js' }

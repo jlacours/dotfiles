@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Run Exa's official stdio MCP server with only its API key in the child env.
+set -euo pipefail
+
+exec /usr/bin/zsh -dfc '
+  { source "$HOME/.zshenv.local"; } >/dev/null 2>&1
+  if [[ -z "${EXA_API_KEY:-}" ]]; then
+    print -u2 "EXA_API_KEY is missing from ~/.zshenv.local"
+    exit 1
+  fi
+  exec env -i HOME="$HOME" PATH="/usr/local/bin:/usr/bin:/bin" \
+    EXA_API_KEY="$EXA_API_KEY" \
+    npm exec --yes --package=exa-mcp-server@3.4.1 -- exa-mcp-server
+'

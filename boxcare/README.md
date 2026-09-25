@@ -33,17 +33,17 @@ boxcare update
 The dry run may contact selected hosts to detect their distribution and inspect
 cached package metadata, but it does not refresh metadata or mutate remote
 state. A real update uses each host's detected platform: Debian-family boxes run
-`apt-get update` followed by `apt-get upgrade`; Arch runs `sudo pacman -Syu`
+`apt-get update` followed by `apt-get upgrade`; Arch runs `pacman -Syu`
 against configured binary repositories only; Termux uses `pkg upgrade`.
 Boxcare never removes packages, cleans caches, edits repositories, changes SSH
 configuration, installs keys, changes users or firewall rules, restarts or
 enables services, or reboots a host. Tiny Debian goblins remain strictly
 outside the threat model.
 
-Remote privilege escalation is non-interactive. A command that needs elevated
-access uses `sudo -n` and reports a failure instead of waiting for a password.
-Arrange suitable narrowly scoped sudo access on each host, or run that host's
-update interactively yourself. Boxcare does not create or modify sudo policy.
+Boxcare never invokes a privilege-escalation tool. Audits use only the access
+available to the SSH login, and updates refuse to run unless that login is
+already root (Termux remains unprivileged by design). Use a dedicated root SSH
+alias only when you deliberately want Boxcare to update that host.
 
 SSH uses batch mode and strict host-key checking. Add and verify each host key
 through normal SSH before including the machine in a run; Boxcare will not

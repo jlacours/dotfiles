@@ -1,0 +1,12 @@
+[Unit]
+Description=Check root filesystem space hourly
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+RandomizedDelaySec=5min
+Persistent=true
+Unit=disk-space-guard.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Synapse Matrix homeserver (rootless Podman)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/podman run --rm --name matrix-synapse -p 127.0.0.1:8008:8008 -v %h/.local/share/matrix-synapse:/data:Z docker.io/matrixdotorg/synapse:v1.156.0
+ExecStop=/usr/bin/podman stop --time=30 matrix-synapse
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=45
+KillMode=process
+
+[Install]
+WantedBy=default.target

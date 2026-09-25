@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Local stdio MCP server for switchable Laya/Jev judgment.
+set -euo pipefail
+
+root="${JUDGMENT_ROOT:-${HOME}/local-model-harness}"
+python_bin="${JUDGMENT_PYTHON:-${root}/.venv/bin/python}"
+exec "${python_bin}" "${root}/judgment_server.py" "$@"

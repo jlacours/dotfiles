@@ -98,7 +98,7 @@ PanelWindow {
                         color: workspaceButton.active
                             ? bar.background
                             : workspaceButton.occupied ? bar.foreground : bar.muted
-                        font.family: "monospace"
+                        font.family: "Comic Code"
                         font.pixelSize: 13
                         font.weight: workspaceButton.active ? Font.DemiBold : Font.Medium
                     }
@@ -118,10 +118,10 @@ PanelWindow {
 
         Rectangle {
             anchors.centerIn: parent
-            width: Math.min(titleText.implicitWidth + 20, bar.width * 0.34)
+            width: Math.min((LayoutState.visible ? layoutText.implicitWidth : titleText.implicitWidth) + 20, bar.width * 0.34)
             height: 24
             radius: 0
-            color: "transparent"
+            color: bar.surface
 
             Text {
                 id: titleText
@@ -133,11 +133,63 @@ PanelWindow {
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
+                visible: !LayoutState.visible
                 text: ToplevelManager.activeToplevel?.title || "desktop"
                 color: ToplevelManager.activeToplevel ? bar.foreground : bar.muted
-                font.family: "monospace"
+                font.family: "Comic Code"
                 font.pixelSize: 12
                 font.weight: Font.Medium
+            }
+
+            Text {
+                id: layoutText
+                anchors {
+                    fill: parent
+                    leftMargin: 10
+                    rightMargin: 10
+                }
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                visible: LayoutState.visible
+                text: LayoutState.layout
+                color: bar.accent
+                font.family: "Comic Code"
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
+
+                transform: Translate {
+                    id: layoutShift
+                }
+
+                Connections {
+                    target: LayoutState
+
+                    function onRevisionChanged() {
+                        if (LayoutState.visible)
+                            layoutEnter.restart()
+                    }
+                }
+
+                ParallelAnimation {
+                    id: layoutEnter
+
+                    NumberAnimation {
+                        target: layoutShift
+                        property: "y"
+                        from: LayoutState.direction === "down" ? -16 : 16
+                        to: 0
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+                    NumberAnimation {
+                        target: layoutText
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
         }
 
@@ -152,7 +204,7 @@ PanelWindow {
             Row {
                 spacing: 2
 
-                CpuGovernor {
+                GameMode {
                     backgroundColor: bar.background
                     foregroundColor: bar.foreground
                     mutedColor: bar.muted
@@ -162,7 +214,47 @@ PanelWindow {
                     tooltipBelow: !bar.isTopMonitor
                 }
 
-                GameMode {
+                Hypridle {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
+                Correction {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
+                Matrix {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
+                Hermes {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
+                LlamaModel {
                     backgroundColor: bar.background
                     foregroundColor: bar.foreground
                     mutedColor: bar.muted
@@ -211,7 +303,7 @@ PanelWindow {
             Text {
                 text: bar.monitorName
                 color: bar.muted
-                font.family: "monospace"
+                font.family: "Comic Code"
                 font.pixelSize: 11
             }
 
@@ -219,14 +311,14 @@ PanelWindow {
                 implicitWidth: clockText.implicitWidth + 14
                 implicitHeight: 24
                 radius: 0
-                color: "transparent"
+                color: bar.surface
 
                 Text {
                     id: clockText
                     anchors.centerIn: parent
                     text: Qt.formatDateTime(clock.date, "ddd  MMM d  HH:mm")
                     color: bar.foreground
-                    font.family: "monospace"
+                    font.family: "Comic Code"
                     font.pixelSize: 12
                     font.weight: Font.DemiBold
                 }

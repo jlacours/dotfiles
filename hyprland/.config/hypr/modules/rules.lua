@@ -39,9 +39,11 @@ local window_rules = {
     no_focus = true,
   },
   {
-    name = "chatgpt-pet-no-blur",
-    match = { class = "^chatgpt$", title = "^Codex$" },
+    name = "chatgpt-pet-overlay",
+    match = { class = "^[Cc]hat[Gg][Pp][Tt]$", float = true },
     no_blur = true,
+    no_shadow = true,
+    border_size = 0,
   },
   {
     name = "move-hyprland-run",
@@ -87,6 +89,13 @@ local window_rules = {
     size = { 720, 320 },
     center = true,
     stay_focused = true,
+  },
+  {
+    name = "bitwarden-extension-float",
+    match = { class = "^chrome-nngceckbapebfimnlniiiahkandclblb-Default$" },
+    float = true,
+    size = { 480, 620 },
+    center = true,
   },
   {
     name = "zenity-color-float",

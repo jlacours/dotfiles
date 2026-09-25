@@ -1,0 +1,14 @@
+[Unit]
+Description=Dedicated local grammar-correction model
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/repos/llama.cpp/build/bin/llama-server --model %h/models/LFM2-700M-grammar-correction/LFM2-700M.Q4_K_M.gguf --alias llm-corrector --host 127.0.0.1 --port 3003 --ctx-size 4096 --parallel 1 --threads 6 --device none --n-gpu-layers 0 --flash-attn auto --jinja --reasoning off --no-ui
+Restart=on-failure
+RestartSec=2
+Nice=10
+
+[Install]
+WantedBy=default.target
