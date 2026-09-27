@@ -145,8 +145,8 @@ only to `127.0.0.1`, which is the exposure boundary. The user units also request
 Tailscale-range filtering with `IPAddressDeny=`, but systemd warns that they
 configure an IP firewall without running as root. Treat those directives as
 defense in depth rather than relying on them instead of the loopback bind.
-OpenCode's memory, HSD, and local-harness integrations run as local stdio
-processes. Codex, OpenCode, Hermes, the llama.cpp Web UI, and Pi can connect to
+The memory, HSD, and local-harness integrations run as local stdio
+processes. Codex, Hermes, the llama.cpp Web UI, and Pi can connect to
 the shared Exa endpoint at `http://127.0.0.1:8769/mcp`; Pi uses the
 `pi-mcp-adapter` package and the shared `~/.config/mcp/mcp.json` file. The
 configured DeepWiki MCP is a remote HTTPS integration, not a local Tailscale
@@ -216,8 +216,8 @@ clipboard-history, keybinding, screen-management, and live-agent-command menus.
 `Super+Ctrl+Shift+number` moves every window on the current workspace to that
 numbered workspace, then focuses it. It leaves windows untouched and shows a
 notification when a special workspace is visible.
-`Super+F2` groups live commands by their recognized agent (`codex`, `opencode`,
-`claude`, `aider`, `gemini`, or `amp`), focuses an existing terminal
+`Super+F2` groups live commands by their recognized agent (`claude`, `codex`,
+`pi`, `agy`, or `hermes`), focuses an existing terminal
 when one exists, and otherwise opens a read-only Foot process monitor for the
 hidden command. The tools menu
 also covers screen recording, an emoji/Unicode picker, OCR, and a wallpaper

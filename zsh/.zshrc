@@ -365,7 +365,6 @@ if command -v carapace >/dev/null 2>&1; then
   unset native_completers completion_command completion_function
 fi
 
-source_if_readable "$HOME/.zfunc/_opencode"
 source_if_readable "$HOME/.zfunc/_claude"
 
 # --- FZF Setup ---
@@ -518,3 +517,4 @@ function llm-approve() {
 # >>> Codex installer >>>
 export PATH="$HOME/.local/bin:$PATH"
 # <<< Codex installer <<<
+export PATH="$HOME/bin:$PATH"

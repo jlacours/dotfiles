@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-agent_commands=(codex opencode claude aider gemini amp)
+agent_commands=(claude codex pi agy hermes)
 terminal_commands=(foot kitty alacritty wezterm ghostty)
 
 agent_kind_for_pid() {
