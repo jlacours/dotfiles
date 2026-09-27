@@ -515,3 +515,10 @@ function llm-approve() {
 }
 
 export PATH="$HOME/bin:$PATH"
+
+# >>> Codex installer >>>
+# Pre-seeded (portable form) so the Codex CLI installer/updater sees its
+# marker block and skips its PATH append. Redundant with path_prepend above;
+# kept only to keep the installer from re-adding a hard-coded variant.
+export PATH="$HOME/.local/bin:$PATH"
+# <<< Codex installer <<<
