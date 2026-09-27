@@ -1,4 +1,6 @@
 import QtQuick 6.0
+import QtQuick.Effects
+import Quickshell.Widgets
 
 // Compact read-only host resource summary.
 Rectangle {
@@ -12,20 +14,146 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: vitalsText.implicitWidth + 11
+    implicitWidth: vitalsRow.implicitWidth + 11
     implicitHeight: 22
     radius: 0
     color: vitalsMouse.containsMouse ? root.hoverColor : "transparent"
 
-    Text {
-        id: vitalsText
+    Row {
+        id: vitalsRow
+
         anchors.centerIn: parent
-        text: " " + SystemVitalsState.cpu + "%   " + SystemVitalsState.ram
-            + "%  󰋊 " + SystemVitalsState.disk + "%   " + SystemVitalsState.temp
-            + "°  󰢮 " + (SystemVitalsState.gpu >= 0 ? SystemVitalsState.gpu + "%" : "—")
-        color: root.foregroundColor
-        font.family: "Symbols Nerd Font Mono"
-        font.pixelSize: 11
+        spacing: 8
+
+        Row {
+            spacing: 3
+
+            IconImage {
+                id: cpuIcon
+
+                implicitSize: 13
+                source: Qt.resolvedUrl("cpu.svg")
+                asynchronous: true
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: root.foregroundColor
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: cpuIcon.verticalCenter
+                text: SystemVitalsState.cpu + "%"
+                color: root.foregroundColor
+                font.family: "Comic Code"
+                font.pixelSize: 11
+            }
+        }
+
+        Row {
+            spacing: 3
+
+            IconImage {
+                id: ramIcon
+
+                implicitSize: 13
+                source: Qt.resolvedUrl("ram.svg")
+                asynchronous: true
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: root.foregroundColor
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: ramIcon.verticalCenter
+                text: SystemVitalsState.ram + "%"
+                color: root.foregroundColor
+                font.family: "Comic Code"
+                font.pixelSize: 11
+            }
+        }
+
+        Row {
+            spacing: 3
+
+            IconImage {
+                id: diskIcon
+
+                implicitSize: 13
+                source: Qt.resolvedUrl("disk.svg")
+                asynchronous: true
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: root.foregroundColor
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: diskIcon.verticalCenter
+                text: SystemVitalsState.disk + "%"
+                color: root.foregroundColor
+                font.family: "Comic Code"
+                font.pixelSize: 11
+            }
+        }
+
+        Row {
+            spacing: 3
+
+            IconImage {
+                id: thermIcon
+
+                implicitSize: 13
+                source: Qt.resolvedUrl("therm.svg")
+                asynchronous: true
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: root.foregroundColor
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: thermIcon.verticalCenter
+                text: SystemVitalsState.temp + "°"
+                color: root.foregroundColor
+                font.family: "Comic Code"
+                font.pixelSize: 11
+            }
+        }
+
+        Row {
+            spacing: 3
+
+            IconImage {
+                id: gpuIcon
+
+                implicitSize: 13
+                source: Qt.resolvedUrl("gpu.svg")
+                asynchronous: true
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: SystemVitalsState.gpu >= 0 ? root.foregroundColor : root.mutedColor
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: gpuIcon.verticalCenter
+                text: SystemVitalsState.gpu >= 0 ? SystemVitalsState.gpu + "%" : "—"
+                color: SystemVitalsState.gpu >= 0 ? root.foregroundColor : root.mutedColor
+                font.family: "Comic Code"
+                font.pixelSize: 11
+            }
+        }
     }
 
     MouseArea {
