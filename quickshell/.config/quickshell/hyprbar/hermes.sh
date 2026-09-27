@@ -4,6 +4,7 @@ set -uo pipefail
 
 readonly JQ="/usr/bin/jq"
 readonly SYSTEMCTL="/usr/bin/systemctl"
+readonly PGREP="/usr/bin/pgrep"
 readonly SIGNAL_DATA="${HOME}/.local/share/signal-cli/data/accounts.json"
 readonly SIGNAL_CONFIGURE="${HOME}/.local/bin/hermes-signal-configure"
 readonly CURL="/usr/bin/curl"
@@ -12,11 +13,20 @@ unit_active() {
     "${SYSTEMCTL}" --user is-active --quiet "$1"
 }
 
+gateway_process_active() {
+    # A live hermes gateway is not always tracked by hermes-gateway.service:
+    # hermes-matrix-gateway.service spawns a multiplexed process that also
+    # serves the default profile (gateway_state.json, served_profiles). The
+    # unit check alone would then report the gateway as down while it runs.
+    "${PGREP}" -f 'hermes_cli[./]main.*gateway' >/dev/null 2>&1
+}
+
 status() {
     local signal_active=false gateway_active=false linked=false state tooltip
 
     unit_active signal-cli.service && signal_active=true
     unit_active hermes-gateway.service && gateway_active=true
+    gateway_process_active && gateway_active=true
     if [[ -r "${SIGNAL_DATA}" ]] && [[ "$("${JQ}" -r '.accounts | length' "${SIGNAL_DATA}" 2>/dev/null)" =~ ^[1-9][0-9]*$ ]]; then
         linked=true
     fi
