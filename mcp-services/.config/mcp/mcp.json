@@ -1,7 +1,12 @@
 {
   "mcpServers": {
-    "exa": {
-      "url": "http://127.0.0.1:8769/mcp"
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@4.1.1"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@0.0.82"]
     }
   }
 }

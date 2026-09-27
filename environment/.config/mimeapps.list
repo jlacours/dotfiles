@@ -3,7 +3,7 @@ x-scheme-handler/discord-409416265891971072=discord-409416265891971072.desktop
 x-scheme-handler/betterdiscord=discord.desktop
 x-scheme-handler/freetube=FreeTube.desktop
 x-scheme-handler/discord=vesktop.desktop
-x-scheme-handler/nxm=modorganizer2-nxm-handler.desktop
+x-scheme-handler/nxm=mo2lint_nxm-handler.desktop
 text/html=helium.desktop
 x-scheme-handler/http=helium.desktop
 x-scheme-handler/https=helium.desktop
@@ -44,6 +44,7 @@ application/xml=nvim.desktop;
 application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
 x-scheme-handler/codex=chatgpt.desktop
 application/xhtml+xml=helium.desktop
+x-scheme-handler/zcode=zcode.desktop
 
 [Added Associations]
 video/mp4=mpv.desktop;

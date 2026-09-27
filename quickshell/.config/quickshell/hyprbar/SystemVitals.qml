@@ -19,6 +19,12 @@ Rectangle {
     radius: 0
     color: vitalsMouse.containsMouse ? root.hoverColor : "transparent"
 
+    FontMetrics {
+        id: vitalsFontMetrics
+        font.family: "Comic Code"
+        font.pixelSize: 11
+    }
+
     Row {
         id: vitalsRow
 
@@ -48,6 +54,8 @@ Rectangle {
                 color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 11
+                width: vitalsFontMetrics.boundingRect("100%").width
+                horizontalAlignment: Text.AlignRight
             }
         }
 
@@ -74,6 +82,8 @@ Rectangle {
                 color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 11
+                width: vitalsFontMetrics.boundingRect("100%").width
+                horizontalAlignment: Text.AlignRight
             }
         }
 
@@ -100,6 +110,8 @@ Rectangle {
                 color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 11
+                width: vitalsFontMetrics.boundingRect("100%").width
+                horizontalAlignment: Text.AlignRight
             }
         }
 
@@ -126,6 +138,8 @@ Rectangle {
                 color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 11
+                width: vitalsFontMetrics.boundingRect("100°").width
+                horizontalAlignment: Text.AlignRight
             }
         }
 
@@ -152,6 +166,8 @@ Rectangle {
                 color: SystemVitalsState.gpu >= 0 ? root.foregroundColor : root.mutedColor
                 font.family: "Comic Code"
                 font.pixelSize: 11
+                width: vitalsFontMetrics.boundingRect("100%").width
+                horizontalAlignment: Text.AlignRight
             }
         }
     }
