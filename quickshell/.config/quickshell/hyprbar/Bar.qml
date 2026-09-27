@@ -123,7 +123,7 @@ PanelWindow {
                 opacity: 0.8
             }
 
-            SystemVitals {
+            UsageSlot {
                 backgroundColor: bar.background
                 foregroundColor: bar.foreground
                 mutedColor: bar.muted

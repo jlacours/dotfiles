@@ -186,6 +186,41 @@ Install a subset by naming packages:
 ./install.sh zsh foot qtile
 ```
 
+The Hyprland bar's AI usage segment uses OpenUsage 0.25.0. Install its Linux
+x86-64 release as an unprivileged user, verifying the published checksum before
+placing the binary on `PATH`, then Stow the secret-free provider configuration
+and `ai-usage` command:
+
+```bash
+(
+set -e
+umask 077
+release=v0.25.0
+asset=openusage_0.25.0_linux_amd64.tar.gz
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+curl -fL "https://github.com/janekbaraniewski/openusage/releases/download/$release/$asset" -o "$tmpdir/$asset"
+curl -fL "https://github.com/janekbaraniewski/openusage/releases/download/$release/checksums.txt" -o "$tmpdir/checksums.txt"
+(cd "$tmpdir" && grep -F " $asset" checksums.txt > selected-checksum && test -s selected-checksum && sha256sum -c selected-checksum)
+tar -xzf "$tmpdir/$asset" -C "$tmpdir" openusage
+install -Dm755 "$tmpdir/openusage" "$HOME/.local/bin/openusage"
+)
+./install.sh ai-usage
+openusage integrations install antigravity
+ai-usage
+```
+
+The `ai-usage` command supplies the bar with cached quota and balance readings,
+including reset times. The left bar slot starts on compact AI provider icons;
+click it to switch to host vitals, hover for detailed readings and resets, or
+right-click the AI view to open the command in a terminal. OpenUsage reads local
+Codex, Claude Code, Antigravity, Pi, and Hermes activity. Z.ai and OpenRouter
+readings require their respective
+`ZAI_API_KEY` and `OPENROUTER_API_KEY` environment variables in the Quickshell
+session. No keys are stored in the Stow package. The Antigravity integration
+adds a local status-line feed; its quota remains unavailable until an
+Antigravity session refreshes it. `ai-usage --json` emits the bar payload.
+
 `install.sh` only manages symlinks. Applications and feature dependencies remain explicit so the script does not turn into a surprise package-manager séance.
 
 The Labwc and full Quickshell desktops have been retired and archived under
@@ -377,6 +412,7 @@ Every application follows the same template: a top-level package mirrors its des
 
 | Package | Software and purpose |
 |---|---|
+| **ai-usage** | OpenUsage provider selection and a cached AI quota/balance command for the Quickshell bar |
 | **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
@@ -392,7 +428,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools and an optional dormant Friend bridge |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, compact CPU/RAM/disk/temperature/GPU vitals, AI quota and OpenRouter balance, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr terminal-native agent multiplexer configuration |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |

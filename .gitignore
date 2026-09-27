@@ -33,6 +33,8 @@ pi-session-*.html
 **/backup.env
 **/excludes.local
 *.local
+!ai-usage/.local/
+!ai-usage/.local/**
 !bitwarden/.local/
 !bitwarden/.local/**
 !borg/.local/

@@ -22,7 +22,7 @@ Rectangle {
     IconImage {
         id: matrixLogo
         anchors.centerIn: parent
-        implicitSize: 18
+        implicitSize: 16
         source: Qt.resolvedUrl("matrix-mask.svg")
         asynchronous: true
         opacity: MatrixState.busy ? 0.55

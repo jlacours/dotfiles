@@ -1,0 +1,81 @@
+{
+  "ui": {
+    "refresh_interval_seconds": 30,
+    "warn_threshold": 0.2,
+    "crit_threshold": 0.05
+  },
+  "theme": "Gruvbox",
+  "data": {
+    "time_window": "30d",
+    "retention_days": 90
+  },
+  "telemetry": {
+    "provider_links": {
+      "anthropic": "claude_code",
+      "azure": "azure_openai",
+      "github-copilot": "copilot",
+      "google": "gemini_api"
+    }
+  },
+  "dashboard": {
+    "providers": null,
+    "view": "grid"
+  },
+  "model_normalization": {
+    "enabled": true,
+    "group_by": "lineage",
+    "min_confidence": 0.8
+  },
+  "auto_detect": false,
+  "accounts": [
+    {
+      "id": "codex",
+      "provider": "codex"
+    },
+    {
+      "id": "claude",
+      "provider": "claude_code"
+    },
+    {
+      "id": "antigravity",
+      "provider": "antigravity"
+    },
+    {
+      "id": "pi",
+      "provider": "pi"
+    },
+    {
+      "id": "hermes",
+      "provider": "hermes"
+    },
+    {
+      "id": "zai",
+      "provider": "zai",
+      "api_key_env": "ZAI_API_KEY"
+    },
+    {
+      "id": "openrouter",
+      "provider": "openrouter",
+      "api_key_env": "OPENROUTER_API_KEY"
+    }
+  ],
+  "auto_detected_accounts": null,
+  "integrations": {
+    "antigravity": {
+      "installed": true,
+      "version": "0.25.0"
+    }
+  },
+  "export": {
+    "target": "",
+    "interval_seconds": 0,
+    "machine_name": ""
+  },
+  "hub": {
+    "listen_addr": "",
+    "stale_timeout_seconds": 0
+  },
+  "tmux": {
+    "alerts": {}
+  }
+}

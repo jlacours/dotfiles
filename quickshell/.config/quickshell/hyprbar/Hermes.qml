@@ -24,7 +24,7 @@ Rectangle {
         color: HermesState.active || HermesState.state === "partial"
             ? root.accentColor : root.mutedColor
         font.family: "Comic Code"
-        font.pixelSize: 16
+        font.pixelSize: 14
         opacity: HermesState.busy ? 0.5 : 1.0
 
         SequentialAnimation on opacity {

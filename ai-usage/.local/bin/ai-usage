@@ -1,0 +1,381 @@
+#!/usr/bin/env bash
+set -u
+
+export PATH="$HOME/.local/bin:$PATH"
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ai-usage"
+cache="$state_dir/result.json"
+lock="$state_dir/refresh.lock"
+mkdir -p "$state_dir"
+chmod 700 "$state_dir"
+if [[ -f "$cache" && $(find "$cache" -mmin -5 -print -quit 2>/dev/null) == "$cache" ]]; then
+    # A corrupt cache falls through to a full refresh instead of failing.
+    python3 - "$cache" "${1-}" <<'PY' && exit 0
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as fh: result = json.load(fh)
+    out = json.dumps(result, separators=(",", ":")) if sys.argv[2] == "--json" else result["tooltip"]
+except (OSError, ValueError, KeyError, TypeError):
+    sys.exit(1)
+print(out)
+PY
+fi
+# flock is released by the kernel on any process death, so a SIGKILLed
+# refresh can never leave a stale lock behind.
+exec 200>"$lock"
+if ! flock -n 200; then
+    if [[ -f "$cache" ]]; then
+        exec python3 - "$cache" "${1-}" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as fh: result = json.load(fh)
+result["state"] = "partial"
+result["tooltip"] += "\nSource: refresh already in progress; showing cached data"
+print(json.dumps(result, separators=(",", ":")) if sys.argv[2] == "--json" else result["tooltip"])
+PY
+    fi
+    exit 1
+fi
+tmp=""
+zai_tmp=""
+cleanup() {
+    [[ -z "$tmp" ]] || rm -f "$tmp" 2>/dev/null || :
+    [[ -z "$zai_tmp" ]] || rm -f "$zai_tmp" 2>/dev/null || :
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# A deliberately thin, read-only adapter around OpenUsage.  The export is
+# collected into a private, short-lived file so credentials or provider
+# diagnostics can never accidentally become part of this command's output.
+tmp=$(mktemp "${TMPDIR:-/tmp}/ai-usage.XXXXXX") || exit 1
+zai_tmp=$(mktemp "${TMPDIR:-/tmp}/ai-usage-zai.XXXXXX") || exit 1
+
+if ! command -v openusage >/dev/null 2>&1; then
+    AI_USAGE_ERROR="openusage is not installed"
+elif ! timeout --foreground 10s openusage export --output - --format json --source direct >"$tmp" 2>/dev/null 200>&-; then
+    AI_USAGE_ERROR="OpenUsage export unavailable or timed out"
+fi
+
+# OpenUsage can expose Z.AI activity while its quota endpoint is unavailable.
+# Feed curl's config over stdin so the API key never appears in argv.
+if [[ -n "${ZAI_API_KEY-}" ]]; then
+    printf 'Authorization: Bearer %s\n' "$ZAI_API_KEY" |
+        timeout --foreground 6s curl --silent --show-error --fail --connect-timeout 2 --max-time 5 --header @- 'https://api.z.ai/api/monitor/usage/quota/limit' >"$zai_tmp" 2>/dev/null 200>&- || :
+fi
+
+python3 - "$tmp" "$zai_tmp" "$cache" "${AI_USAGE_ERROR-}" "$@" <<'PY'
+import datetime as dt
+import json
+import math
+import os
+import sys
+import tempfile
+
+path, zai_path, cache_path, error = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+json_mode = len(sys.argv) > 5 and sys.argv[5] == "--json"
+wanted = [
+    ("codex", "Codex"),
+    ("claude_code", "Claude"),
+    ("antigravity", "Antigravity"),
+    ("zai", "Z.AI"),
+    ("pi", "Pi"),
+    ("hermes", "Hermes"),
+    ("openrouter", "OpenRouter"),
+]
+
+def number(value):
+    if isinstance(value, bool): return None
+    if isinstance(value, (int, float)) and math.isfinite(float(value)): return float(value)
+    if isinstance(value, str):
+        try: return float(value.strip().rstrip("%$"))
+        except ValueError: return None
+    return None
+
+def fmt_number(value):
+    if value is None: return "unknown"
+    return f"{value:.0f}" if abs(value - round(value)) < .01 else f"{value:.1f}"
+
+def parse_time(value):
+    n = number(value)
+    if n is not None:
+        if n > 10_000_000_000: n /= 1000
+        if n > 0: return dt.datetime.fromtimestamp(n, dt.timezone.utc)
+    if isinstance(value, str):
+        try:
+            parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return parsed.replace(tzinfo=dt.timezone.utc) if parsed.tzinfo is None else parsed
+
+        except ValueError: pass
+    return None
+
+def countdown(when, now):
+    if not when: return "unknown"
+    seconds = max(0, int((when - now).total_seconds()))
+    days, rem = divmod(seconds, 86400)
+    hours, rem = divmod(rem, 3600)
+    mins = rem // 60
+    if days: return f"{days}d {hours}h"
+    if hours: return f"{hours}h {mins}m"
+    return f"{mins}m"
+
+def display_time(when):
+    return when.astimezone().strftime("%a %b %-d %H:%M %Z") if when else "unknown"
+
+def left_percent(used):
+    return None if used is None else max(0.0, min(100.0, 100.0 - used))
+
+def provider_id(obj):
+    if not isinstance(obj, dict): return ""
+    for key in ("provider", "provider_id", "id", "name", "source"):
+        val = obj.get(key)
+        if isinstance(val, str): return val.lower().replace("-", "_")
+    return ""
+
+def find_snapshots(doc):
+    snaps = doc.get("snapshots", []) if isinstance(doc, dict) else []
+    return snaps if isinstance(snaps, list) else []
+
+def metric_value(metrics, names, field="used"):
+    if not isinstance(metrics, dict): return None
+    for name in names:
+        item = metrics.get(name)
+        if isinstance(item, dict):
+            value = number(item.get(field))
+            if value is not None: return value
+    return None
+
+def has_http_429(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if str(key).lower() in ("status", "status_code", "http_status") and number(item) == 429:
+                return True
+            if has_http_429(item): return True
+    elif isinstance(value, list):
+        return any(has_http_429(item) for item in value)
+    elif isinstance(value, str) and "429" in value:
+        return True
+    return False
+
+def make_record(pid, label, snap, now):
+    if not isinstance(snap, dict) or str(snap.get("status", "")).upper() in ("AUTH_REQUIRED", "ERROR", "UNKNOWN"):
+        return {"label": label, "details": "unavailable", "reset": None, "expiry": None, "percent": None, "remaining": None}
+    metrics = snap.get("metrics", {})
+    percent = None
+    percent_label = None
+    if pid == "codex":
+        percent = metric_value(metrics, ("rate_limit_primary", "plan_auto_percent_used", "usage_five_hour"))
+        percent_label = "5h" if percent is not None else None
+    elif pid == "zai":
+        percent = metric_value(metrics, ("usage_five_hour",))
+        percent_label = "5h" if percent is not None else None
+    elif pid == "antigravity":
+        percent = metric_value(metrics, ("quota_gemini_5h",))
+        percent_label = "Gemini 5h" if percent is not None else None
+    elif pid == "openrouter":
+        percent_label = "credit used"
+    if pid == "openrouter":
+        limit = metric_value(metrics, ("credit_balance",), "limit")
+        credit_remaining = metric_value(metrics, ("credit_balance",), "remaining")
+        if credit_remaining is not None and limit:
+            percent = 100 * (limit - credit_remaining) / limit
+    reset = None
+    resets = snap.get("resets")
+    if pid != "claude_code" and isinstance(resets, dict):
+        preferred = ("rate_limit_primary", "usage_five_hour", "plan_auto_percent_used", "quota_gemini_5h_reset")
+        for key in preferred:
+            reset = parse_time(resets.get(key))
+            if reset: break
+    expiry = None
+    if isinstance(metrics, dict):
+        for key in ("credit_expiry", "credit_expiration", "credit_valid_until"):
+            expiry = parse_time(metrics.get(key))
+            if expiry: break
+    remaining = metric_value(metrics, ("credit_balance",), "remaining")
+    weekly_used = None
+    weekly_reset = None
+    if pid == "codex":
+        weekly_used = metric_value(metrics, ("rate_limit_secondary",))
+        weekly_reset = parse_time(resets.get("rate_limit_secondary")) if isinstance(resets, dict) else None
+    elif pid == "zai":
+        weekly_used = metric_value(metrics, ("usage_seven_day",))
+        weekly_reset = parse_time(resets.get("usage_seven_day")) if isinstance(resets, dict) else None
+    elif pid == "antigravity":
+        weekly_used = metric_value(metrics, ("quota_gemini_weekly",))
+        weekly_reset = parse_time(resets.get("quota_gemini_weekly_reset")) if isinstance(resets, dict) else None
+    if pid == "openrouter" and remaining is None:
+        credits = metric_value(metrics, ("credit_balance",), "limit")
+        usage = metric_value(metrics, ("credit_balance",), "used")
+        if credits is not None and usage is not None: remaining = max(0, credits - usage)
+    bits = []
+    if pid == "claude_code":
+        suffix = " (usage endpoint 429)" if has_http_429(snap.get("diagnostics")) or has_http_429(snap.get("message")) else ""
+        bits.append(f"quota unknown{suffix}")
+    elif percent is not None:
+        if pid == "openrouter": bits.append(f"credit {fmt_number(percent)}% used")
+        else: bits.append(f"{percent_label} {fmt_number(left_percent(percent))}% left")
+    if remaining is not None: bits.append(f"${remaining:.2f} left")
+    if percent is None and remaining is None:
+        cost = None if pid == "claude_code" else metric_value(metrics, ("window_cost", "today_api_cost", "5h_block_cost"))
+        tokens = metric_value(metrics, ("total_tokens",))
+        token_label = "total tokens"
+        if tokens is None:
+            tokens = metric_value(metrics, ("window_tokens",))
+            token_label = "recent tokens"
+        if cost is not None: bits.append(f"${cost:.2f} used")
+        elif tokens is not None: bits.append(f"{int(tokens):,} {token_label}")
+    if pid in ("pi", "hermes", "claude_code"):
+        reset = None
+    reset_label = "5h resets"
+    bits.append(f"{reset_label} {display_time(reset)} (in {countdown(reset, now)})") if pid in ("codex", "zai", "antigravity") else None
+    extras = list(snap.get("extra_resets", [])) if isinstance(snap, dict) else []
+    if pid != "claude_code" and isinstance(resets, dict):
+        if pid == "antigravity":
+            for key, reset_label in (("quota_gemini_weekly_reset", "Gemini 7d"), ("quota_3p_5h_reset", "3p 5h"), ("quota_3p_weekly_reset", "3p 7d")):
+                if key in resets: extras.append((reset_label, resets[key]))
+        else:
+            for key, value in resets.items():
+                if key in ("rate_limit_secondary", "usage_seven_day"): extras.append(("7d", value))
+    for extra in extras:
+        if not isinstance(extra, (list, tuple)) or len(extra) != 2: continue
+        extra_label, extra_reset = extra
+        when = parse_time(extra_reset)
+        if when and (not reset or when != reset):
+            bits.append(f"{extra_label} resets {display_time(when)} (in {countdown(when, now)})")
+    if pid == "openrouter":
+        bits.append(f"expires {expiry.date().isoformat() if expiry else 'unknown'}")
+    extra_percent = metric_value(metrics, ("rate_limit_secondary", "usage_seven_day")) if pid in ("codex", "zai") else None
+    if pid == "antigravity":
+        quota_lines = []
+        for quota_label, names in (("Gemini 7d", ("quota_gemini_weekly",)), ("3p 5h", ("quota_3p_5h",)), ("3p 7d", ("quota_3p_weekly",))):
+            value = metric_value(metrics, names)
+            if value is not None: quota_lines.append(f"{quota_label} {fmt_number(left_percent(value))}% left")
+        bits[1:1] = quota_lines
+    if extra_percent is not None: bits.insert(1, f"7d {fmt_number(left_percent(extra_percent))}% left")
+    five_left = left_percent(percent) if pid in ("codex", "antigravity", "zai") else None
+    record = {"label": label, "details": ", ".join(bits), "reset": reset, "expiry": expiry, "percent": percent, "remaining": remaining,
+              "five_hour_left": five_left, "seven_day_left": left_percent(weekly_used),
+              "weekly_reset_short": weekly_reset.astimezone().strftime("%b %-d") if weekly_reset else None,
+              "weekly_reset": weekly_reset.isoformat() if weekly_reset else None}
+    return record
+
+try:
+    with open(path, encoding="utf-8") as fh: doc = json.load(fh)
+except Exception:
+    doc = None
+
+try:
+    with open(zai_path, encoding="utf-8") as fh: zai_doc = json.load(fh)
+except Exception:
+    zai_doc = None
+
+if isinstance(zai_doc, dict) and zai_doc.get("success") is True and isinstance(zai_doc.get("data"), dict):
+    limits = zai_doc["data"].get("limits", [])
+    if isinstance(limits, list):
+        five, weekly = None, None
+        for item in limits:
+            if not isinstance(item, dict) or item.get("unit") != 3 or item.get("number") != 5:
+                if isinstance(item, dict) and item.get("unit") == 6 and item.get("number") == 1:
+                    weekly = item
+                continue
+            five = item
+        if isinstance(five, dict) or isinstance(weekly, dict):
+            metrics = {}
+            resets = {}
+            if isinstance(five, dict) and number(five.get("percentage")) is not None and parse_time(five.get("nextResetTime")):
+                metrics["usage_five_hour"] = {"used": number(five["percentage"]), "unit": "%"}
+                resets["usage_five_hour"] = five["nextResetTime"]
+            if isinstance(weekly, dict) and number(weekly.get("percentage")) is not None and parse_time(weekly.get("nextResetTime")):
+                metrics["usage_seven_day"] = {"used": number(weekly["percentage"]), "unit": "%"}
+                resets["usage_seven_day"] = weekly["nextResetTime"]
+            if metrics:
+                zai_fallback = {"provider_id": "zai", "status": "OK", "metrics": metrics, "resets": resets}
+            else:
+                zai_fallback = None
+        else:
+            zai_fallback = None
+    else:
+        zai_fallback = None
+else:
+    zai_fallback = None
+
+now = dt.datetime.now(dt.timezone.utc)
+records = []
+for pid, label in wanted:
+    found = None
+    for snap in find_snapshots(doc):
+        if provider_id(snap) == pid:
+            if found is None or str(snap.get("status", "")).upper() not in ("AUTH_REQUIRED", "ERROR", "UNKNOWN"):
+                found = snap
+    if pid == "zai" and zai_fallback and (not found or not found.get("resets")):
+        found = zai_fallback
+    records.append(make_record(pid, label, found, now) if found else {"label": label, "details": "unavailable", "reset": None, "expiry": None, "percent": None, "remaining": None})
+
+generated = doc.get("generated_at") if isinstance(doc, dict) else None
+updated = parse_time(generated) or now
+bar_labels = {"Codex", "Claude", "Antigravity", "Z.AI", "OpenRouter"}
+quota_unknown = any(r["label"] in bar_labels and r["percent"] is None and r["label"] != "OpenRouter" for r in records)
+state = "ok" if not error and doc is not None and all(r["details"] != "unavailable" for r in records) and not quota_unknown else "partial"
+if doc is None: state = "error"
+if (now - updated).total_seconds() > 300: state = "partial"
+bar_ids = {"Codex", "Claude", "Antigravity", "Z.AI", "OpenRouter"}
+bar_bits = []
+for record in records:
+    if record["label"] not in bar_ids: continue
+    if record["label"] == "Codex": prefix = "C"
+    elif record["label"] == "Claude": prefix = "L"
+    elif record["label"] == "Antigravity": prefix = "G"
+    elif record["label"] == "Z.AI": prefix = "Z"
+    else: prefix = "R"
+    if record["label"] == "OpenRouter":
+        value = f"${record['remaining']:.2f}" if record["remaining"] is not None else "?"
+    else:
+        bar_value = record.get("five_hour_left")
+        value = f"{fmt_number(bar_value)}%" if bar_value is not None else "?"
+    bar_bits.append(f"{prefix}{value}")
+text = "AI " + " ".join(bar_bits)
+tooltip_lines = []
+for record in records:
+    if tooltip_lines:
+        tooltip_lines.append("")
+    tooltip_lines.append(record["label"])
+    for detail in record["details"].split(", "):
+        tooltip_lines.append(f"  {detail}")
+tooltip = "\n".join(tooltip_lines)
+if error: tooltip += f"\nSource: {error}"
+result = {"text": text, "tooltip": tooltip, "state": state, "updated_at": updated.isoformat().replace("+00:00", "Z")}
+result["providers"] = [
+    {"id": pid, "label": record["label"], "percent": record["percent"], "remaining": record["remaining"], "details": record["details"],
+     "five_hour_left": record.get("five_hour_left"), "seven_day_left": record.get("seven_day_left"),
+     "weekly_reset_short": record.get("weekly_reset_short"), "weekly_reset": record.get("weekly_reset")}
+    for (pid, _), record in zip(wanted, records)
+]
+if state == "error":
+    try:
+        with open(cache_path, encoding="utf-8") as fh: old = json.load(fh)
+        old["state"] = "partial"
+        old["tooltip"] += "\nSource: refresh failed; showing stale cached data"
+        result = old
+    except Exception:
+        pass
+else:
+    cache_tmp = None
+    try:
+        fd, cache_tmp = tempfile.mkstemp(prefix=".result.", dir=os.path.dirname(cache_path))
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(result, fh, separators=(",", ":"))
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(cache_tmp, cache_path)
+        cache_tmp = None
+    finally:
+        if cache_tmp:
+            try: os.unlink(cache_tmp)
+            except OSError: pass
+if json_mode:
+    print(json.dumps(result, separators=(",", ":")))
+else:
+    print(result["tooltip"])
+PY

@@ -183,11 +183,13 @@ Rectangle {
         triggerItem: root
         below: root.tooltipBelow
         shown: vitalsMouse.containsMouse
-        labelText: "CPU " + SystemVitalsState.cpu + "%  •  RAM " + SystemVitalsState.ram
-            + "%  •  / " + SystemVitalsState.disk + "%\n"
-            + "Temp " + SystemVitalsState.temp + "°C  •  GPU "
-            + (SystemVitalsState.gpu >= 0
-                ? SystemVitalsState.gpu + "% / " + SystemVitalsState.gpuTemp + "°C"
+        labelText: "SYSTEM VITALS\n"
+            + "CPU     " + SystemVitalsState.cpu + "%\n"
+            + "RAM     " + SystemVitalsState.ram + "%\n"
+            + "DISK    " + SystemVitalsState.disk + "%\n"
+            + "TEMP    " + SystemVitalsState.temp + "°C\n"
+            + "GPU     " + (SystemVitalsState.gpu >= 0
+                ? SystemVitalsState.gpu + "%  /  " + SystemVitalsState.gpuTemp + "°C"
                 : "unavailable")
         backgroundColor: root.backgroundColor
         foregroundColor: root.foregroundColor

@@ -23,7 +23,7 @@ Rectangle {
         text: CorrectionState.working ? "✦" : "󰏫"
         color: CorrectionState.active ? root.accentColor : root.mutedColor
         font.family: CorrectionState.working ? "monospace" : "Symbols Nerd Font Mono"
-        font.pixelSize: CorrectionState.working ? 15 : 13
+        font.pixelSize: CorrectionState.working ? 14 : 13
         opacity: CorrectionState.state === "starting" ? 0.5 : 1.0
 
         RotationAnimator {
