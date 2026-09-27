@@ -11,8 +11,8 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: gameModeMouse.containsMouse ? root.hoverColor : "transparent"
 
@@ -21,7 +21,7 @@ Rectangle {
         text: "󰊴"
         color: GameModeState.active ? root.accentColor : root.mutedColor
         font.family: "Symbols Nerd Font Mono"
-        font.pixelSize: 15
+        font.pixelSize: 13
         opacity: GameModeState.busy ? 0.45 : 1.0
     }
 

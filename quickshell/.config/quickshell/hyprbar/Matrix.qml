@@ -14,15 +14,15 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: matrixMouse.containsMouse ? root.hoverColor : "transparent"
 
     IconImage {
         id: matrixLogo
         anchors.centerIn: parent
-        implicitSize: 20
+        implicitSize: 18
         source: Qt.resolvedUrl("matrix-mask.svg")
         asynchronous: true
         opacity: MatrixState.busy ? 0.55

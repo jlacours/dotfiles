@@ -19,8 +19,8 @@ PopupWindow {
 
     visible: root.shown
     color: "transparent"
-    implicitWidth: tooltipText.implicitWidth + 14
-    implicitHeight: tooltipText.implicitHeight + 8
+    implicitWidth: tooltipText.implicitWidth + 13
+    implicitHeight: tooltipText.implicitHeight + 7
 
     Rectangle {
         anchors.fill: parent
@@ -34,7 +34,7 @@ PopupWindow {
             text: root.labelText
             color: root.foregroundColor
             font.family: "Comic Code"
-            font.pixelSize: 12
+            font.pixelSize: 11
             font.weight: Font.Medium
             elide: Text.ElideNone
             wrapMode: Text.NoWrap

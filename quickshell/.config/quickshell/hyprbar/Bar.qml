@@ -11,6 +11,7 @@ PanelWindow {
     readonly property color background: palette.background
     readonly property color surface: palette.surface
     readonly property color surfaceHover: palette.surfaceHover
+    readonly property color border: palette.border
     readonly property color foreground: palette.foreground
     readonly property color muted: palette.muted
     readonly property color accent: palette.accent
@@ -27,8 +28,8 @@ PanelWindow {
     }
 
     color: "transparent"
-    implicitHeight: 24
-    exclusiveZone: 24
+    implicitHeight: 22
+    exclusiveZone: 22
 
     anchors {
         top: !bar.isTopMonitor
@@ -44,7 +45,7 @@ PanelWindow {
         RowLayout {
             anchors {
                 left: parent.left
-                leftMargin: 8
+                leftMargin: 7
                 verticalCenter: parent.verticalCenter
             }
             spacing: 2
@@ -71,8 +72,8 @@ PanelWindow {
                     readonly property string workspaceName: workspaceNames.nameFor(workspaceId)
                     readonly property bool occupied: workspaceData?.toplevels.values.length > 0
 
-                    implicitWidth: Math.max(26, Math.min(128, workspaceLabel.implicitWidth + 16))
-                    implicitHeight: 24
+                    implicitWidth: Math.max(23, Math.min(115, workspaceLabel.implicitWidth + 14))
+                    implicitHeight: 22
                     radius: 0
                     color: active ? bar.accent : workspaceMouse.containsMouse ? bar.surfaceHover : "transparent"
 
@@ -88,8 +89,8 @@ PanelWindow {
                         id: workspaceLabel
                         anchors {
                             fill: parent
-                            leftMargin: 8
-                            rightMargin: 8
+                            leftMargin: 7
+                            rightMargin: 7
                         }
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -99,7 +100,7 @@ PanelWindow {
                             ? bar.background
                             : workspaceButton.occupied ? bar.foreground : bar.muted
                         font.family: "Comic Code"
-                        font.pixelSize: 13
+                        font.pixelSize: 12
                         font.weight: workspaceButton.active ? Font.DemiBold : Font.Medium
                     }
 
@@ -114,12 +115,29 @@ PanelWindow {
                     }
                 }
             }
+
+            Rectangle {
+                implicitWidth: 1
+                implicitHeight: 13
+                color: bar.border
+                opacity: 0.8
+            }
+
+            SystemVitals {
+                backgroundColor: bar.background
+                foregroundColor: bar.foreground
+                mutedColor: bar.muted
+                accentColor: bar.accent
+                hoverColor: bar.surfaceHover
+                panelWindow: bar
+                tooltipBelow: !bar.isTopMonitor
+            }
         }
 
         Rectangle {
             anchors.centerIn: parent
-            width: Math.min((LayoutState.visible ? layoutText.implicitWidth : titleText.implicitWidth) + 20, bar.width * 0.34)
-            height: 24
+            width: Math.min((LayoutState.visible ? layoutText.implicitWidth : titleText.implicitWidth) + 18, bar.width * 0.3)
+            height: 22
             radius: 0
             color: bar.surface
 
@@ -127,8 +145,8 @@ PanelWindow {
                 id: titleText
                 anchors {
                     fill: parent
-                    leftMargin: 10
-                    rightMargin: 10
+                    leftMargin: 9
+                    rightMargin: 9
                 }
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
@@ -137,7 +155,7 @@ PanelWindow {
                 text: ToplevelManager.activeToplevel?.title || "desktop"
                 color: ToplevelManager.activeToplevel ? bar.foreground : bar.muted
                 font.family: "Comic Code"
-                font.pixelSize: 12
+                font.pixelSize: 11
                 font.weight: Font.Medium
             }
 
@@ -145,8 +163,8 @@ PanelWindow {
                 id: layoutText
                 anchors {
                     fill: parent
-                    leftMargin: 10
-                    rightMargin: 10
+                    leftMargin: 9
+                    rightMargin: 9
                 }
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
@@ -154,7 +172,7 @@ PanelWindow {
                 text: LayoutState.layout
                 color: bar.accent
                 font.family: "Comic Code"
-                font.pixelSize: 12
+                font.pixelSize: 11
                 font.weight: Font.DemiBold
 
                 transform: Translate {
@@ -176,7 +194,7 @@ PanelWindow {
                     NumberAnimation {
                         target: layoutShift
                         property: "y"
-                        from: LayoutState.direction === "down" ? -16 : 16
+                        from: LayoutState.direction === "down" ? -14 : 14
                         to: 0
                         duration: 180
                         easing.type: Easing.OutCubic
@@ -196,10 +214,10 @@ PanelWindow {
         RowLayout {
             anchors {
                 right: parent.right
-                rightMargin: 8
+                rightMargin: 7
                 verticalCenter: parent.verticalCenter
             }
-            spacing: 8
+            spacing: 7
 
             Row {
                 spacing: 2
@@ -304,12 +322,12 @@ PanelWindow {
                 text: bar.monitorName
                 color: bar.muted
                 font.family: "Comic Code"
-                font.pixelSize: 11
+                font.pixelSize: 10
             }
 
             Rectangle {
-                implicitWidth: clockText.implicitWidth + 14
-                implicitHeight: 24
+                implicitWidth: clockText.implicitWidth + 13
+                implicitHeight: 22
                 radius: 0
                 color: bar.surface
 
@@ -319,7 +337,7 @@ PanelWindow {
                     text: Qt.formatDateTime(clock.date, "ddd  MMM d  HH:mm")
                     color: bar.foreground
                     font.family: "Comic Code"
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                     font.weight: Font.DemiBold
                 }
 

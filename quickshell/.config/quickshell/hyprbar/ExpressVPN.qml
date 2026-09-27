@@ -12,8 +12,8 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: vpnMouse.containsMouse ? root.hoverColor : "transparent"
 
@@ -22,7 +22,7 @@ Rectangle {
         text: ExpressVPNState.active ? "󰒘" : "󰒙"
         color: ExpressVPNState.active ? root.accentColor : root.mutedColor
         font.family: "Symbols Nerd Font Mono"
-        font.pixelSize: 15
+        font.pixelSize: 13
         opacity: ExpressVPNState.busy ? 0.45 : 1.0
     }
 

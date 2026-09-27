@@ -12,8 +12,8 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: hermesMouse.containsMouse ? root.hoverColor : "transparent"
 
@@ -24,7 +24,7 @@ Rectangle {
         color: HermesState.active || HermesState.state === "partial"
             ? root.accentColor : root.mutedColor
         font.family: "Comic Code"
-        font.pixelSize: 18
+        font.pixelSize: 16
         opacity: HermesState.busy ? 0.5 : 1.0
 
         SequentialAnimation on opacity {

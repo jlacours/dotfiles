@@ -12,8 +12,8 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: hypridleMouse.containsMouse ? root.hoverColor : "transparent"
 
@@ -24,7 +24,7 @@ Rectangle {
             ? "#e5a84b"
             : HypridleState.active ? root.accentColor : root.mutedColor
         font.family: "Symbols Nerd Font Mono"
-        font.pixelSize: 15
+        font.pixelSize: 13
         opacity: HypridleState.busy || (HypridleState.partial && !HypridleState.inhibiting) ? 0.55 : 1.0
     }
 

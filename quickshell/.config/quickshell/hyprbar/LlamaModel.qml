@@ -12,8 +12,8 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: modelMouse.containsMouse ? root.hoverColor : "transparent"
 
@@ -24,7 +24,7 @@ Rectangle {
         color: LlamaModelState.active || LlamaModelState.state === "loading"
             ? root.accentColor : root.mutedColor
         font.family: "Comic Code"
-        font.pixelSize: 16
+        font.pixelSize: 14
         opacity: LlamaModelState.busy ? 0.55 : 1.0
 
         RotationAnimator {

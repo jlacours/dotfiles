@@ -9,13 +9,13 @@ Rectangle {
     required property var item
     required property color hoverColor
 
-    implicitWidth: 24
-    implicitHeight: 24
+    implicitWidth: 22
+    implicitHeight: 22
     color: trayMouse.containsMouse || menuAnchor.visible ? root.hoverColor : "transparent"
 
     IconImage {
         anchors.centerIn: parent
-        implicitSize: 16
+        implicitSize: 14
         source: {
             const icon = root.item.icon || ""
             return (icon.startsWith("/") ? "file://" : "") + icon

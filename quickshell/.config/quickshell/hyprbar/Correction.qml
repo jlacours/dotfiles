@@ -12,8 +12,8 @@ Rectangle {
     required property var panelWindow
     property bool tooltipBelow: false
 
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: correctionMouse.containsMouse ? root.hoverColor : "transparent"
 
@@ -23,7 +23,7 @@ Rectangle {
         text: CorrectionState.working ? "✦" : "󰏫"
         color: CorrectionState.active ? root.accentColor : root.mutedColor
         font.family: CorrectionState.working ? "monospace" : "Symbols Nerd Font Mono"
-        font.pixelSize: CorrectionState.working ? 17 : 15
+        font.pixelSize: CorrectionState.working ? 15 : 13
         opacity: CorrectionState.state === "starting" ? 0.5 : 1.0
 
         RotationAnimator {

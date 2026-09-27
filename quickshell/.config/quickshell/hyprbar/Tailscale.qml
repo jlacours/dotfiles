@@ -14,22 +14,22 @@ Rectangle {
     property bool onlyWhenActive: false
 
     visible: !root.onlyWhenActive || TailscaleState.connected
-    implicitWidth: 26
-    implicitHeight: 24
+    implicitWidth: 23
+    implicitHeight: 22
     radius: 0
     color: tailscaleMouse.containsMouse ? root.hoverColor : "transparent"
 
     Item {
         anchors.centerIn: parent
-        width: 16
-        height: 16
+        width: 14
+        height: 14
         opacity: TailscaleState.busy ? 0.45 : 1.0
 
         Grid {
             anchors.centerIn: parent
             columns: 3
             rows: 3
-            spacing: 1.2
+            spacing: 1
 
             Repeater {
                 model: 9
@@ -37,8 +37,8 @@ Rectangle {
                 delegate: Rectangle {
                     required property int index
 
-                    width: 4.5
-                    height: 4.5
+                    width: 4
+                    height: 4
                     radius: width / 2
                     color: TailscaleState.connected ? root.accentColor : root.mutedColor
                     opacity: index === 3 || index === 4 || index === 5 || index === 7 ? 1.0 : 0.4
