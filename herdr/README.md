@@ -145,7 +145,14 @@ states are hints; collect the helper's report before declaring a task done.
 The tab bar calls the optional `juju.tab-titles.refresh` plugin action every
 three seconds. Install or link [`jlacours/herdr-tab-titles`](https://github.com/jlacours/herdr-tab-titles)
 to update automatically managed titles when foreground programs start or exit.
-The plugin preserves custom labels and resets managed tabs to their shell name
-after a command ends. It changes tab labels without altering terminal OSC titles.
-If the plugin is absent, this silent command has no effect. Polling runs while
+The plugin preserves custom title bodies and keeps the workspace position visible
+for every title. Automatic titles return to their shell name after a command ends.
+It changes tab labels without altering terminal OSC titles. Polling runs while
 a client renders the tab bar; commands shorter than the interval may not appear.
+
+`Ctrl+a`, then `Shift+T`, opens the plugin's rename field. Enter saves, Escape
+cancels, and Ctrl+C clears the field. Saving blank restores the foreground-command
+title; the number is added automatically. This requires the linked plugin's
+`rename` action and Python 3 with `curses`. Without the optional plugin, refresh
+is silent and this rename shortcut is unavailable. Herdr 0.9.1's native
+mouse/context-menu rename dialog still ignores empty submissions.

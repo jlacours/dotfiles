@@ -59,6 +59,11 @@ then other agents appear in attention order, followed by a count of any others.
 Herdr's native badges use colored state symbols. Command status text
 uses the tab bar's text color because Herdr strips ANSI styling from its output.
 
+The optional [`herdr-tab-titles`](https://github.com/jlacours/herdr-tab-titles)
+plugin supplies automatic foreground titles and keeps tab numbers visible.
+`Ctrl+a`, then `Shift+T`, opens its rename field; saving blank restores the
+automatic title. Link the plugin to enable this configured shortcut.
+
 External local CLIs and messenger agents executing as the same user can use
 `herdr-control list` to discover pane IDs, then explicitly target an agent for
 inspection or an authorized prompt. Different hosts use an existing saved SSH

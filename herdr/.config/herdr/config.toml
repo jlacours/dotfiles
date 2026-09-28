@@ -13,6 +13,7 @@ detach = "prefix+d"
 edit_scrollback = "prefix+v"
 previous_tab = ""
 next_tab = ""
+rename_tab = ""
 previous_agent = "prefix+p"
 next_agent = "prefix+n"
 split_vertical = "prefix+|"
@@ -21,6 +22,12 @@ focus_pane_left = "prefix+left"
 focus_pane_down = "prefix+down"
 focus_pane_up = "prefix+up"
 focus_pane_right = "prefix+right"
+
+[[keys.command]]
+key = "prefix+shift+t"
+type = "plugin_action"
+command = "juju.tab-titles.rename"
+description = "rename tab; empty restores automatic title"
 
 [advanced]
 scrollback_limit_bytes = 10000000
