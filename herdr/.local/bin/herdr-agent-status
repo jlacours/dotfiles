@@ -53,7 +53,10 @@ def main():
             return 0
 
         agents = [item for item in agents if isinstance(item, dict)]
-        agents.sort(key=lambda item: STATUS_ORDER.get(str(item.get("agent_status")), 3))
+        agents.sort(key=lambda item: (
+            item.get("focused") is not True,
+            STATUS_ORDER.get(str(item.get("agent_status")), 3),
+        ))
         entries = []
         working_mark = WORKING_FRAMES[int(time.time()) % len(WORKING_FRAMES)]
         for item in agents[:MAX_AGENTS]:
@@ -64,7 +67,10 @@ def main():
             mark = working_mark if status == "working" else STATUS_MARKS.get(status, "?")
             # Keep symbol-font glyphs away from the terminal's right edge and
             # leave an empty cell beside them for wider fallback-font ink.
-            entries.append(f"{mark} {label}")
+            entry = f"{mark} {label}"
+            if item.get("focused") is True:
+                entry = f"[{entry}]"
+            entries.append(entry)
 
         if len(agents) > MAX_AGENTS:
             entries.append(f"+{len(agents) - MAX_AGENTS}")

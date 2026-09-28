@@ -7,6 +7,9 @@ symbol glyphs away from the terminal's right edge. Working agents use
 the rotating `◐◓◑◒` icon; blocked, done, idle, and unknown agents use `!`, `✓`,
 `○`, and `?`. The helper refreshes once per second, Herdr's minimum command
 interval. It reads current agent states without changing them or sending input.
+The agent in the focused pane is bracketed (`[◐ codex]`) and placed first so it
+stays visible when the row's eight-agent limit is reached. When the focused pane
+has no agent, no entry is bracketed. Other agents retain attention ordering.
 
 The native `status_indicators = "symbols"` setting adds distinct colored
 symbols to Herdr's own state badges. The command statusline uses the tab bar's
