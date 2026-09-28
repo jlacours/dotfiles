@@ -1,5 +1,19 @@
 # External Herdr control
 
+## Compact state icons
+
+`herdr-agent-status` shows a state icon before each name on the tab bar, keeping
+symbol glyphs away from the terminal's right edge. Working agents use
+the rotating `◐◓◑◒` icon; blocked, done, idle, and unknown agents use `!`, `✓`,
+`○`, and `?`. The helper refreshes once per second, Herdr's minimum command
+interval. It reads current agent states without changing them or sending input.
+
+The native `status_indicators = "symbols"` setting adds distinct colored
+symbols to Herdr's own state badges. The command statusline uses the tab bar's
+text color: Herdr removes ANSI escape styling from command output.
+
+## External callers
+
 `herdr-control` is a narrow entry point for a local CLI harness or a terminal
 tool such as Hermes. It uses the installed `herdr` CLI, its documented Unix
 socket API for local prompts, and saved SSH machine forwarding. It does not set

@@ -52,9 +52,11 @@ herdr server reload-agent-manifests
 The tab bar sits at the bottom with agent names and states on one line. The
 sidebar starts hidden on the next client launch; `Ctrl+a b` toggles it in an
 existing client. `Ctrl+a n` and `Ctrl+a p` cycle through agents. The status text
-is not clickable. Its marks are `>` working, `!` blocked, `+` done, `.` idle,
-and `?` unknown; at most eight agents appear, with attention states first and a
-count of any others.
+is not clickable. Working agents show a rotating `◐◓◑◒` icon, updated once per
+second. Other states show `!` blocked, `✓` done, `○` idle, and `?` unknown;
+at most eight agents appear, with attention states first and a count of any
+others. Herdr's native badges use colored state symbols. Command status text
+uses the tab bar's text color because Herdr strips ANSI styling from its output.
 
 External local CLIs and messenger agents executing as the same user can use
 `herdr-control list` to discover pane IDs, then explicitly target an agent for

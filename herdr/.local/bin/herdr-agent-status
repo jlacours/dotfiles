@@ -6,16 +6,17 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import unicodedata
 
 
 STATUS_MARKS = {
     "blocked": "!",
-    "working": ">",
-    "done": "+",
-    "idle": ".",
+    "done": "✓",
+    "idle": "○",
     "unknown": "?",
 }
+WORKING_FRAMES = "◐◓◑◒"
 MAX_AGENTS = 8
 MAX_LABEL_LENGTH = 12
 STATUS_ORDER = {"blocked": 0, "working": 1, "done": 2, "unknown": 3, "idle": 4}
@@ -54,13 +55,16 @@ def main():
         agents = [item for item in agents if isinstance(item, dict)]
         agents.sort(key=lambda item: STATUS_ORDER.get(str(item.get("agent_status")), 3))
         entries = []
+        working_mark = WORKING_FRAMES[int(time.time()) % len(WORKING_FRAMES)]
         for item in agents[:MAX_AGENTS]:
             label = clean_label(item.get("name") or item.get("display_agent") or item.get("agent"))
             status = item.get("agent_status", "unknown")
             if not isinstance(status, str):
                 status = "unknown"
-            mark = STATUS_MARKS.get(status, "?")
-            entries.append(f"{label} {mark}")
+            mark = working_mark if status == "working" else STATUS_MARKS.get(status, "?")
+            # Keep symbol-font glyphs away from the terminal's right edge and
+            # leave an empty cell beside them for wider fallback-font ink.
+            entries.append(f"{mark} {label}")
 
         if len(agents) > MAX_AGENTS:
             entries.append(f"+{len(agents) - MAX_AGENTS}")
