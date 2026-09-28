@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+"""Narrow, explicit wrapper around Herdr's supported local/SSH CLI."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import socket
+import stat
+import subprocess
+import sys
+from typing import Any
+
+
+HERDR = os.environ.get("HERDR_BIN_PATH") or shutil.which("herdr") or os.path.expanduser("~/.local/bin/herdr")
+STATUSES = {"idle", "working", "blocked", "done", "unknown"}
+SAFE_FIELDS = {
+    "agent": ("agent", "name", "display_agent", "agent_status", "pane_id", "workspace_id", "tab_id", "state_change_seq", "seen"),
+    "pane": ("pane_id", "workspace_id", "tab_id", "agent", "agent_status"),
+    "workspace": ("workspace_id", "label", "number", "pane_count", "tab_count", "agent_status"),
+}
+
+
+class ControlError(Exception):
+    pass
+
+
+def fail(message: str, code: int = 2) -> int:
+    print(f"herdr-control: {message}", file=sys.stderr)
+    return code
+
+
+def invoke(args: list[str], *, input_text: str | None = None, timeout: int = 20) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            args,
+            input=input_text,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise ControlError("herdr executable was not found in PATH") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ControlError("Herdr command timed out; inspect target state before retrying") from exc
+
+
+def run_json(args: list[str], *, timeout: int = 20) -> Any:
+    result = invoke(args, timeout=timeout)
+    if result.returncode:
+        raise ControlError(f"Herdr command failed (exit {result.returncode})")
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise ControlError("Herdr returned invalid JSON") from exc
+
+
+def local_prompt(target: str, text: str, wait: bool, timeout_ms: int) -> None:
+    """Keep local prompt text off process argv using the documented socket API."""
+    status = run_json([HERDR, "status", "server", "--json"])
+    if not isinstance(status, dict) or not status.get("running") or not status.get("compatible"):
+        raise ControlError("local Herdr server must be running and compatible")
+    path = status.get("socket")
+    if not isinstance(path, str):
+        raise ControlError("Herdr did not report a local socket")
+    try:
+        metadata = os.stat(path, follow_symlinks=False)
+        if not stat.S_ISSOCK(metadata.st_mode) or metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
+            raise ControlError("local Herdr socket must belong to this user and exclude group/other access")
+        params: dict[str, Any] = {"target": target, "text": text}
+        if wait:
+            params["wait"] = {"timeout_ms": timeout_ms, "until": ["idle", "done", "blocked"]}
+        request_id = "herdr-control:prompt"
+        request = {"id": request_id, "method": "agent.prompt", "params": params}
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+            connection.settimeout(timeout_ms / 1000 + 5 if wait else 20)
+            connection.connect(path)
+            connection.sendall(json.dumps(request).encode("utf-8") + b"\n")
+            with connection.makefile("rb") as stream:
+                response_line = stream.readline(1024 * 1024 + 1)
+        if len(response_line) > 1024 * 1024 or not response_line.endswith(b"\n"):
+            raise ControlError("Herdr returned an incomplete or oversized response; inspect target before retrying")
+        response = json.loads(response_line)
+        if not isinstance(response, dict) or response.get("id") != request_id:
+            raise ControlError("Herdr returned an unexpected response; inspect target before retrying")
+        if "error" in response or "result" not in response:
+            raise ControlError("Herdr rejected the prompt; inspect target state before retrying")
+    except (OSError, ValueError) as exc:
+        raise ControlError("local socket request failed; delivery may be ambiguous, inspect target before retrying") from exc
+
+
+def result_value(data: Any) -> Any:
+    if isinstance(data, dict) and "result" in data:
+        return data["result"]
+    return data
+
+
+def rows(data: Any, key: str) -> list[dict[str, Any]]:
+    value = result_value(data)
+    if isinstance(value, dict):
+        value = value.get(key)
+    if not isinstance(value, list) or not all(isinstance(row, dict) for row in value):
+        raise ControlError("Herdr returned an unexpected list response")
+    return value
+
+
+def projection(row: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
+    return {key: row[key] for key in fields if key in row and isinstance(row[key], (str, int, bool))}
+
+
+def validate_machine(machine: str) -> None:
+    if not machine or len(machine) > 128 or machine.startswith("-") or any(ord(ch) < 32 or ord(ch) == 127 for ch in machine):
+        raise ControlError("machine must be an exact saved profile ID or label")
+    data = run_json([HERDR, "machine", "list", "--json"])
+    if not isinstance(data, list):
+        raise ControlError("could not validate saved machine profiles")
+    matches = []
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        identifiers = [row.get(key) for key in ("profile_id", "id", "label")]
+        enabled = row.get("enabled", True)
+        if machine in identifiers and enabled is True:
+            matches.append(row)
+    if len(matches) != 1:
+        raise ControlError("machine must match one enabled saved Herdr profile; arbitrary SSH targets are not accepted")
+
+
+def command_args(machine: str | None, *args: str) -> list[str]:
+    if machine is not None:
+        validate_machine(machine)
+        return [HERDR, "--machine", machine, *args]
+    return [HERDR, *args]
+
+
+def validate_target(target: str) -> None:
+    # Pane IDs are opaque to callers; this only excludes option-like or control input.
+    if not target or len(target) > 128 or target.startswith("-") or not re.fullmatch(r"[A-Za-z0-9._:-]+", target):
+        raise ControlError("target must be an explicit Herdr pane ID")
+
+
+def pane_get(machine: str | None, target: str) -> dict[str, Any]:
+    data = run_json(command_args(machine, "pane", "get", target))
+    value = result_value(data)
+    if isinstance(value, dict):
+        pane = value.get("pane", value)
+        if isinstance(pane, dict):
+            return pane
+    raise ControlError("Herdr returned an unexpected pane response")
+
+
+def validate_live_target(machine: str | None, target: str) -> None:
+    # Pane IDs are server-scoped. Require an exact current ID from that server,
+    # so agent aliases or guessed/focused targets never become implicit input.
+    data = run_json(command_args(machine, "pane", "list"))
+    panes = rows(data, "panes")
+    if not any(pane.get("pane_id") == target for pane in panes):
+        raise ControlError("target must exactly match a live pane ID returned by this Herdr server")
+
+
+def agent_get(machine: str | None, target: str) -> dict[str, Any]:
+    data = run_json(command_args(machine, "agent", "get", target))
+    value = result_value(data)
+    if isinstance(value, dict):
+        agent = value.get("agent", value)
+        if isinstance(agent, dict):
+            return agent
+    raise ControlError("Herdr returned an unexpected agent response")
+
+
+def machine_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--machine", help="exact enabled saved SSH profile ID or label")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="herdr-control",
+        description=(
+            "Explicit, narrow Herdr control for local harnesses and terminal tools. "
+            "This invokes the real Herdr CLI; it is not a permission boundary bypass."
+        ),
+    epilog="Prompt text is read from stdin. No action targets the focused pane implicitly.",
+    )
+    sub = parser.add_subparsers(dest="action", required=True)
+
+    sub.add_parser("status", help="show local server compatibility without pane content")
+
+    listing = sub.add_parser("list", help="list workspace, pane, and agent summaries")
+    machine_argument(listing)
+
+    get = sub.add_parser("get", help="show a safe summary for one explicit pane ID")
+    get.add_argument("--target", required=True, metavar="PANE_ID")
+    machine_argument(get)
+
+    read = sub.add_parser("read", help="read terminal output from one explicit pane ID")
+    read.add_argument("--target", required=True, metavar="PANE_ID")
+    read.add_argument("--lines", type=int, default=80)
+    machine_argument(read)
+
+    wait = sub.add_parser("wait", help="wait for lifecycle state on one explicit agent pane")
+    wait.add_argument("--target", required=True, metavar="PANE_ID")
+    wait.add_argument("--timeout", type=int, default=120000, metavar="MS")
+    machine_argument(wait)
+
+    prompt = sub.add_parser("prompt", help="send stdin text to one explicit idle agent pane")
+    prompt.add_argument("--target", required=True, metavar="PANE_ID")
+    prompt.add_argument("--confirm-send", action="store_true", help="required opt-in to send this prompt")
+    prompt.add_argument("--wait", action="store_true", help="wait for a settled agent state")
+    prompt.add_argument("--timeout", type=int, default=120000, metavar="MS")
+    machine_argument(prompt)
+    return parser
+
+
+def positive_timeout(value: int, maximum: int = 300000) -> None:
+    if not 1000 <= value <= maximum:
+        raise ControlError(f"timeout must be between 1000 and {maximum} milliseconds")
+
+
+def emit(value: Any) -> None:
+    print(json.dumps(value, ensure_ascii=False, separators=(",", ":")))
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    try:
+        if args.action == "status":
+            data = run_json([HERDR, "status", "server", "--json"])
+            if not isinstance(data, dict):
+                raise ControlError("Herdr returned an unexpected server status")
+            allowed = ("status", "running", "version", "protocol", "compatible", "endpoint_compatible", "restart_needed", "server_binary_stale")
+            emit({key: data[key] for key in allowed if key in data})
+            return 0
+
+        if args.action == "list":
+            commands = (
+                ("workspaces", "workspace", "list", "workspaces", SAFE_FIELDS["workspace"]),
+                ("panes", "pane", "list", "panes", SAFE_FIELDS["pane"]),
+                ("agents", "agent", "list", "agents", SAFE_FIELDS["agent"]),
+            )
+            output: dict[str, Any] = {}
+            for name, group, command, key, fields in commands:
+                data = run_json(command_args(args.machine, group, command))
+                output[name] = [projection(row, fields) for row in rows(data, key)]
+            emit(output)
+            return 0
+
+        validate_target(args.target)
+        validate_live_target(args.machine, args.target)
+        if args.action == "get":
+            pane = pane_get(args.machine, args.target)
+            emit(projection(pane, SAFE_FIELDS["pane"]))
+            return 0
+
+        if args.action == "read":
+            if not 1 <= args.lines <= 500:
+                raise ControlError("lines must be between 1 and 500")
+            result = invoke(command_args(args.machine, "pane", "read", args.target, "--lines", str(args.lines), "--format", "text"))
+            if result.returncode:
+                raise ControlError(f"Herdr read failed (exit {result.returncode})")
+            sys.stdout.write(result.stdout)
+            return 0
+
+        if args.action == "wait":
+            positive_timeout(args.timeout)
+            data = run_json(command_args(args.machine, "agent", "wait", args.target, "--timeout", str(args.timeout)), timeout=(args.timeout / 1000) + 5)
+            value = result_value(data)
+            if not isinstance(value, dict):
+                raise ControlError("Herdr returned an unexpected wait response")
+            emit(projection(value.get("agent", value), SAFE_FIELDS["agent"]))
+            return 0
+
+        if args.action == "prompt":
+            if not args.confirm_send:
+                raise ControlError("prompt requires --confirm-send")
+            if sys.stdin.isatty():
+                raise ControlError("provide prompt text on stdin; it is never accepted as an argument")
+            prompt_text = sys.stdin.read(65537)
+            if len(prompt_text.encode("utf-8")) > 65536:
+                raise ControlError("prompt exceeds 64 KiB")
+            if not prompt_text.strip() or "\x00" in prompt_text:
+                raise ControlError("prompt stdin must contain non-empty text without NUL bytes")
+            agent = agent_get(args.machine, args.target)
+            state = agent.get("agent_status", agent.get("status"))
+            if state not in {"idle", "done"}:
+                raise ControlError(f"refusing prompt: target agent state is {state or 'unavailable'}; only idle/done targets are accepted")
+            positive_timeout(args.timeout)
+            if args.machine is None:
+                local_prompt(args.target, prompt_text, args.wait, args.timeout)
+                emit({"submitted": True, "target": args.target, "waited": args.wait})
+                return 0
+            cmd = command_args(args.machine, "agent", "prompt")
+            if args.wait:
+                cmd.extend(("--wait", "--timeout", str(args.timeout)))
+            # Herdr's supported CLI takes TEXT as a positional argument. The
+            # helper reads it from stdin to avoid the caller's own shell argv,
+            # but child process argv visibility follows local procfs permissions.
+            cmd.extend(("--", args.target, prompt_text))
+            result = invoke(cmd, timeout=(args.timeout / 1000) + 5 if args.wait else 20)
+            if result.returncode:
+                raise ControlError(f"Herdr prompt failed (exit {result.returncode}); inspect target state before retrying")
+            emit({"submitted": True, "target": args.target, "waited": args.wait})
+            return 0
+
+    except ControlError as exc:
+        return fail(str(exc), 1)
+    return fail("unsupported action", 2)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

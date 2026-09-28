@@ -38,6 +38,30 @@ Install Herdr, the terminal multiplexer used by this configuration:
 curl -fsSL https://herdr.dev/install.sh | sh
 ```
 
+The `herdr` Stow package also requires Python 3 and installs a compact agent
+status helper plus `herdr-control` for explicitly targeted external callers:
+
+```bash
+./install.sh --dry-run herdr
+./install.sh herdr
+herdr config check
+herdr server reload-config
+herdr server reload-agent-manifests
+```
+
+The tab bar sits at the bottom with agent names and states on one line. The
+sidebar starts hidden on the next client launch; `Ctrl+a b` toggles it in an
+existing client. `Ctrl+a n` and `Ctrl+a p` cycle through agents. The status text
+is not clickable. Its marks are `>` working, `!` blocked, `+` done, `.` idle,
+and `?` unknown; at most eight agents appear, with attention states first and a
+count of any others.
+
+External local CLIs and messenger agents executing as the same user can use
+`herdr-control list` to discover pane IDs, then explicitly target an agent for
+inspection or an authorized prompt. Different hosts use an existing saved SSH
+machine profile. No network service or socket permission change is needed.
+See [`herdr/README.md`](herdr/README.md) for commands and trust boundaries.
+
 The Herdr Zsh completion is vendored at `zsh/.zfunc/_herdr` and stowed into
 `~/.zfunc`, which is already on `fpath`. Regenerate it after a Herdr upgrade:
 
@@ -430,7 +454,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
 | **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, compact CPU/RAM/disk/temperature/GPU vitals, AI quota and OpenRouter balance, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
-| **herdr** | Herdr terminal-native agent multiplexer configuration |
+| **herdr** | Herdr configuration, compact agent status, and targeted external control |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
 | **wallust** | Wallust color-generation configuration, application templates, and live desktop refresh hook |
 | **zsh** | zsh shell configuration, prompt schema, native completion, and Carapace coverage for unsupported commands |

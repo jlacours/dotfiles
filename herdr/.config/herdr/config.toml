@@ -38,6 +38,14 @@ pane_gaps = false
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "priority"
 hide_tab_bar_when_single_tab = false
+sidebar_start_collapsed = true
+sidebar_collapsed_mode = "hidden"
+tab_bar_position = "bottom"
+tab_bar_right = [
+  { type = "command", command = "~/.local/bin/herdr-agent-status", interval_seconds = 3, timeout_seconds = 2 },
+  { type = "command", command = "~/.local/bin/herdr plugin action invoke juju.tab-titles.refresh >/dev/null 2>&1", interval_seconds = 3, timeout_seconds = 5 },
+]
+tab_bar_right_separator = " "
 
 [ui.sidebar.agents]
-rows = [["state_icon", "agent", "state_text"], ["workspace"]]
+rows = [["state_icon", "agent", "state_text"]]

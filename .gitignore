@@ -43,6 +43,8 @@ pi-session-*.html
 !boxcare/.local/**
 !codex/.local/
 !codex/.local/**
+!herdr/.local/
+!herdr/.local/**
 !mcp-services/.local/
 !mcp-services/.local/**
 !quickshell/.local/
