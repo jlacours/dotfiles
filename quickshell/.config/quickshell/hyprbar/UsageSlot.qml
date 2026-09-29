@@ -1,8 +1,8 @@
 import QtQuick 6.0
 import QtQuick.Effects
-import Quickshell.Widgets
 
-// The left status slot toggles between host vitals and aggregate AI usage.
+// A single fixed-width badge cycles through the providers represented by the
+// ai-usage snapshot. The tooltip always shows the complete provider report.
 Rectangle {
     id: root
 
@@ -13,11 +13,24 @@ Rectangle {
     required property color hoverColor
     required property var panelWindow
     property bool tooltipBelow: false
+    property int providerIndex: 0
+
+    readonly property var providers: [
+        { id: "codex", label: "Codex", shortLabel: "Codex", source: "ai-codex.svg" },
+        { id: "claude_code", label: "Claude", shortLabel: "Claude", source: "ai-claude.svg" },
+        { id: "antigravity", label: "Antigravity", shortLabel: "Antig.", source: "ai-antigravity.svg" },
+        { id: "zai", label: "Z.AI", shortLabel: "Z.AI", source: "ai-zai.svg" },
+        { id: "pi", label: "Pi", shortLabel: "Pi", source: "" },
+        { id: "hermes", label: "Hermes", shortLabel: "Hermes", source: "" },
+        { id: "openrouter", label: "OpenRouter", shortLabel: "Router", source: "ai-openrouter.svg" }
+    ]
+    readonly property var currentInfo: providers[providerIndex]
+    readonly property var currentProvider: currentInfo
+        ? AiUsageState.providerFor(currentInfo.id) : null
 
     function formatLeft(value) {
         if (value === undefined || value === null || String(value).length === 0)
             return "?"
-
         const percent = Number(value)
         if (!isFinite(percent))
             return "?"
@@ -30,132 +43,101 @@ Rectangle {
             return "—"
 
         if (provider.id === "openrouter") {
-            const rawBalance = provider.remaining !== undefined && provider.remaining !== null
-                ? String(provider.remaining).trim() : ""
-            const balance = rawBalance.length > 0 ? Number(rawBalance.replace("$", "")) : NaN
-            if (isFinite(balance))
-                return "$" + (balance >= 100 ? Math.round(balance) : balance.toFixed(2))
-            if (rawBalance.startsWith("$"))
-                return rawBalance
-            return "$?"
+            const amount = provider.remaining === null || provider.remaining === undefined
+                ? NaN : Number(provider.remaining)
+            return isFinite(amount) ? "$" + amount.toFixed(2) : "?"
         }
 
-        if (provider.five_hour_left == null)
-            return "?"
+        if (provider.five_hour_left !== null && provider.five_hour_left !== undefined)
+            return formatLeft(provider.five_hour_left)
 
-        return root.formatLeft(provider.five_hour_left)
+        const details = String(provider.details || "")
+        const cost = details.match(/\$[0-9]+(?:\.[0-9]+)? used/)
+        if (cost)
+            return cost[0].replace(" used", "")
+
+        const tokens = details.match(/([0-9,]+) total tokens/)
+        if (tokens) {
+            const count = Number(tokens[1].replace(/,/g, ""))
+            if (isFinite(count))
+                return count >= 1000000
+                    ? (count / 1000000).toFixed(1) + "M"
+                    : count >= 1000 ? Math.round(count / 1000) + "K" : String(count)
+        }
+
+        return "?"
     }
 
-    function secondaryValue(provider) {
-        if (!provider || provider.seven_day_left == null)
-            return ""
-        return "7d " + root.formatLeft(provider.seven_day_left)
-            + "  " + String(provider.weekly_reset_short || "?")
-    }
-
-    readonly property int slotWidth: UsageSlotState.showingAiUsage
-        ? aiView.implicitWidth + switchIndicator.implicitWidth + 15
-        : vitalsView.implicitWidth + 12
-    implicitWidth: root.slotWidth
+    implicitWidth: 116
     implicitHeight: 22
     radius: 0
     color: slotMouse.containsMouse ? root.hoverColor : "transparent"
 
-    SystemVitals {
-        id: vitalsView
-        anchors.fill: parent
-        anchors.rightMargin: 12
-        visible: !UsageSlotState.showingAiUsage
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
-        mutedColor: root.mutedColor
-        accentColor: root.accentColor
-        hoverColor: root.hoverColor
-        panelWindow: root.panelWindow
-        tooltipBelow: root.tooltipBelow
-    }
-
     Row {
-        id: aiView
-        anchors.left: parent.left
-        anchors.leftMargin: 5
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 7
-        visible: UsageSlotState.showingAiUsage
+        anchors {
+            left: parent.left
+            leftMargin: 6
+            right: parent.right
+            rightMargin: 6
+            verticalCenter: parent.verticalCenter
+        }
+        height: parent.height
+        spacing: 5
 
-        Repeater {
-            model: [
-                { id: "codex", source: "ai-codex.svg" },
-                { id: "claude_code", source: "ai-claude.svg" },
-                { id: "antigravity", source: "ai-antigravity.svg" },
-                { id: "zai", source: "ai-zai.svg" },
-                { id: "openrouter", source: "ai-openrouter.svg" }
-            ]
+        Item {
+            width: 14
+            height: 22
+            anchors.verticalCenter: parent.verticalCenter
 
-            delegate: Item {
-                required property var modelData
-                readonly property var provider: AiUsageState.providerFor(modelData.id)
-                width: provider ? providerRow.implicitWidth : 0
-                height: 22
-                visible: provider !== null
+            Image {
+                anchors.centerIn: parent
+                width: 13
+                height: 13
+                source: root.currentInfo && root.currentInfo.source.length > 0
+                    ? Qt.resolvedUrl(root.currentInfo.source) : ""
+                asynchronous: true
+                fillMode: Image.PreserveAspectFit
+                visible: source.toString().length > 0
 
-                Row {
-                    id: providerRow
-                    // Fixed row height pins every logo to the delegate's centre,
-                    // whether or not the provider has a secondary line.
-                    height: parent.height
-                    spacing: 2
-
-                    Image {
-                        // Integer y avoids half-pixel softness: (22 - 13) / 2 -> 5.
-                        y: Math.round((parent.height - height) / 2)
-                        width: 13
-                        height: 13
-                        source: Qt.resolvedUrl(modelData.source)
-                        asynchronous: true
-                        fillMode: Image.PreserveAspectFit
-
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            colorization: 1.0
-                            colorizationColor: root.foregroundColor
-                        }
-                    }
-
-                    Column {
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: -1
-
-                        Text {
-                            text: root.primaryValue(provider)
-                            color: root.primaryValue(provider).indexOf("?") >= 0
-                                ? root.mutedColor : root.foregroundColor
-                            font.family: "Comic Code"
-                            font.pixelSize: 11
-                        }
-
-                        Text {
-                            visible: text.length > 0
-                            text: root.secondaryValue(provider)
-                            color: root.mutedColor
-                            font.family: "Comic Code"
-                            font.pixelSize: 8
-                        }
-                    }
+                layer.enabled: visible
+                layer.effect: MultiEffect {
+                    colorization: 1.0
+                    colorizationColor: root.foregroundColor
                 }
             }
-        }
-    }
 
-    Text {
-        id: switchIndicator
-        anchors.right: parent.right
-        anchors.rightMargin: 2
-        anchors.verticalCenter: parent.verticalCenter
-        text: "⇄"
-        color: UsageSlotState.showingAiUsage ? root.accentColor : root.mutedColor
-        font.family: "Symbols Nerd Font Mono"
-        font.pixelSize: 10
+            Text {
+                anchors.centerIn: parent
+                visible: !root.currentInfo || root.currentInfo.source.length === 0
+                text: root.currentInfo ? root.currentInfo.label.slice(0, 1) : "?"
+                color: root.foregroundColor
+                font.family: "Comic Code"
+                font.pixelSize: 11
+                font.weight: Font.DemiBold
+            }
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 43
+            text: root.currentInfo ? root.currentInfo.shortLabel : "AI"
+            color: root.foregroundColor
+            font.family: "Comic Code"
+            font.pixelSize: 10
+            font.weight: Font.Medium
+            elide: Text.ElideRight
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 34
+            text: root.primaryValue(root.currentProvider)
+            color: text === "?" || text === "—" ? root.mutedColor : root.accentColor
+            font.family: "Comic Code"
+            font.pixelSize: 10
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+        }
     }
 
     MouseArea {
@@ -165,16 +147,22 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
         onClicked: function(mouse) {
-            if (mouse.button === Qt.RightButton && UsageSlotState.showingAiUsage)
+            if (mouse.button === Qt.RightButton)
                 aiPanel.shown = !aiPanel.shown
             else
-                UsageSlotState.toggle()
+                AiUsageState.refresh()
         }
+    }
+
+    Timer {
+        interval: 4500
+        running: root.providers.length > 1
+        repeat: true
+        onTriggered: root.providerIndex = (root.providerIndex + 1) % root.providers.length
     }
 
     AiPanel {
         id: aiPanel
-
         panelWindow: root.panelWindow
         triggerItem: root
         below: root.tooltipBelow
@@ -189,17 +177,9 @@ Rectangle {
         triggerItem: root
         below: root.tooltipBelow
         shown: slotMouse.containsMouse
-        labelText: UsageSlotState.showingAiUsage
-            ? AiUsageState.tooltip
-            : "SYSTEM VITALS\n"
-                + "CPU     " + SystemVitalsState.cpu + "%\n"
-                + "RAM     " + SystemVitalsState.ram + "%\n"
-                + "DISK    " + SystemVitalsState.disk + "%\n"
-                + "TEMP    " + SystemVitalsState.temp + "°C\n"
-                + "GPU     " + (SystemVitalsState.gpu >= 0
-                    ? SystemVitalsState.gpu + "%  /  " + SystemVitalsState.gpuTemp + "°C"
-                    : "unavailable")
-                + "\nLeft-click to show AI usage"
+        labelText: "AI PROVIDER USAGE\n\n"
+            + AiUsageState.tooltip
+            + "\n\nLeft-click to refresh · right-click for quota meters"
         backgroundColor: root.backgroundColor
         foregroundColor: root.foregroundColor
     }
