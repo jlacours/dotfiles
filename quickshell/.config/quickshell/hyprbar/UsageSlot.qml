@@ -2,7 +2,7 @@ import QtQuick 6.0
 import QtQuick.Effects
 
 // A single fixed-width badge cycles through the providers represented by the
-// ai-usage snapshot. The tooltip always shows the complete provider report.
+// ai-usage snapshot. Hover shows only the current provider's primary reading.
 Rectangle {
     id: root
 
@@ -172,15 +172,16 @@ Rectangle {
         accentColor: root.accentColor
     }
 
-    BarTooltip {
+    ProviderTooltip {
         panelWindow: root.panelWindow
         triggerItem: root
         below: root.tooltipBelow
         shown: slotMouse.containsMouse
-        labelText: "AI PROVIDER USAGE\n\n"
-            + AiUsageState.tooltip
-            + "\n\nLeft-click to refresh · right-click for quota meters"
+        provider: root.currentProvider
+        providerInfo: root.currentInfo
         backgroundColor: root.backgroundColor
         foregroundColor: root.foregroundColor
+        mutedColor: root.mutedColor
+        accentColor: root.accentColor
     }
 }

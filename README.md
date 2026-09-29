@@ -245,9 +245,10 @@ ai-usage
 The `ai-usage` command supplies the bar with cached quota and balance readings,
 including reset times. The left bar slot is one fixed-width badge that rotates
 through Codex, Claude, Antigravity, Z.AI, Pi, Hermes, and OpenRouter without
-changing the space reserved for the rest of the bar. Hover for the complete
-per-provider readings and reset times; left-click to refresh, or right-click to
-open the quota-meter panel. OpenUsage reads local
+changing the space reserved for the rest of the bar. Hover for one compact
+reading and quota meter for the provider currently shown; the tooltip only
+reports reset timing and never triggers a reset. Left-click refreshes, or
+right-click opens the detailed quota panel. OpenUsage reads local
 Codex, Claude Code, Antigravity, Pi, and Hermes activity. Z.ai and OpenRouter
 readings require their respective
 `ZAI_API_KEY` and `OPENROUTER_API_KEY` environment variables in the Quickshell
@@ -462,7 +463,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools and an optional dormant Friend bridge |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge and all-provider tooltip, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge and single-provider quota tooltip, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr configuration, compact agent status, and targeted external control |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
