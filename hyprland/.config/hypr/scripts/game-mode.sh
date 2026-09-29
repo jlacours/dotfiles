@@ -14,6 +14,8 @@ MANAGED_UNITS=(
   matrix-synapse.service
   hermes-matrix-gateway.service
   signal-cli.service
+  seb-bridge.service
+  radicale.service
   hsd-web.service
   llm-corrector.service
   mpd.service
@@ -25,6 +27,11 @@ MANAGED_UNITS=(
 STATE_DIR="${HOME}/.local/state/game-mode"
 STATE_FILE="${STATE_DIR}/state.json"
 errors=()
+
+active_user_services() {
+  systemctl --user list-units --type=service --state=active --no-legend --plain 2>/dev/null |
+    awk '{print $1}'
+}
 
 run_step() {
   # run_step "description" cmd [args...]
@@ -43,6 +50,8 @@ game_mode_on() {
   # before their state can be recorded.
   local active_units=()
   local stopped_units=()
+  local -a running_before=()
+  mapfile -t running_before < <(active_user_services)
   for unit in "${MANAGED_UNITS[@]}"; do
     if systemctl --user is-active --quiet "${unit}" 2>/dev/null; then
       active_units+=("${unit}")
@@ -67,6 +76,18 @@ game_mode_on() {
   # Persist the successful stops in dependency order for a safe restore.
   for unit in "${MANAGED_UNITS[@]}"; do
     if [[ -n "${stopped_map[${unit}]:-}" ]]; then
+      stopped_units+=("${unit}")
+    fi
+  done
+
+  # Services outside the list that went down with a managed unit (for example
+  # through Requires=) are restored after it, so dependants come back too.
+  local -A still_running=()
+  while IFS= read -r unit; do
+    still_running["${unit}"]=1
+  done < <(active_user_services)
+  for unit in "${running_before[@]}"; do
+    if [[ -z "${still_running[${unit}]:-}" && -z "${stopped_map[${unit}]:-}" ]]; then
       stopped_units+=("${unit}")
     fi
   done
