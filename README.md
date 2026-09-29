@@ -244,8 +244,10 @@ ai-usage
 
 The `ai-usage` command supplies the bar with cached quota and balance readings,
 including reset times. The left bar slot starts on compact AI provider icons;
-click it to switch to host vitals, hover for detailed readings and resets, or
-right-click the AI view to open the command in a terminal. OpenUsage reads local
+left-click it to switch to host vitals, hover for detailed readings and resets,
+or right-click the AI view to open a popup panel with per-provider quota meters
+(`5h`/`7d` bars, a 90%-used urgent color, reset countdowns, and the OpenRouter
+credit balance). OpenUsage reads local
 Codex, Claude Code, Antigravity, Pi, and Hermes activity. Z.ai and OpenRouter
 readings require their respective
 `ZAI_API_KEY` and `OPENROUTER_API_KEY` environment variables in the Quickshell

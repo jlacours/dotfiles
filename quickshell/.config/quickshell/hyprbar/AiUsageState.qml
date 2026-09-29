@@ -16,7 +16,7 @@ Singleton {
     property string updatedAt: ""
     property bool stale: true
     property var providers: []
-    readonly property bool busy: statusProcess.running || detailsProcess.running
+    readonly property bool busy: statusProcess.running
 
     function refresh() {
         if (!statusProcess.running)
@@ -65,12 +65,6 @@ Singleton {
         return null
     }
 
-    function openDetails() {
-        if (!detailsProcess.running)
-            detailsProcess.exec(["foot", "--app-id", "ai-usage", "--title", "AI Usage",
-                "--hold", "bash", "-lc", root.command])
-    }
-
     Component.onCompleted: refresh()
 
     Process {
@@ -83,10 +77,6 @@ Singleton {
             if (exitCode !== 0)
                 root.setError("AI usage command failed")
         }
-    }
-
-    Process {
-        id: detailsProcess
     }
 
     Timer {

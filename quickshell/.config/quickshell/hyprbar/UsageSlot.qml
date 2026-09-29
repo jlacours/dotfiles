@@ -166,10 +166,22 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
         onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton && UsageSlotState.showingAiUsage)
-                AiUsageState.openDetails()
+                aiPanel.shown = !aiPanel.shown
             else
                 UsageSlotState.toggle()
         }
+    }
+
+    AiPanel {
+        id: aiPanel
+
+        panelWindow: root.panelWindow
+        triggerItem: root
+        below: root.tooltipBelow
+        backgroundColor: root.backgroundColor
+        foregroundColor: root.foregroundColor
+        mutedColor: root.mutedColor
+        accentColor: root.accentColor
     }
 
     BarTooltip {
@@ -187,7 +199,7 @@ Rectangle {
                 + "GPU     " + (SystemVitalsState.gpu >= 0
                     ? SystemVitalsState.gpu + "%  /  " + SystemVitalsState.gpuTemp + "°C"
                     : "unavailable")
-                + "\nClick to show AI usage"
+                + "\nLeft-click to show AI usage"
         backgroundColor: root.backgroundColor
         foregroundColor: root.foregroundColor
     }
