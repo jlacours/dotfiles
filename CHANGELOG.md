@@ -8,6 +8,15 @@ honours [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new packages or user-visible features.
 - **PATCH** — fixes, small tweaks, lockfile bumps.
 
+## [2.1.4] - 2026-09-30
+
+### Fixed
+- **wallust** `wallust-random-light` and `wallust-random-dark`, which the theme
+  keybinds call, are now tracked and stowed by the wallust package instead of
+  living in an ignored, unstowed folder that a fresh install would miss. They
+  are one script, `wallust-random`, selecting the mode from the invoked name;
+  the candidate theme lists are unchanged.
+
 ## [2.1.3] - 2026-09-30
 
 ### Fixed
