@@ -8,6 +8,39 @@ honours [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new packages or user-visible features.
 - **PATCH** — fixes, small tweaks, lockfile bumps.
 
+## [2.1.0] - 2026-09-30
+
+### Added
+- **quickshell** agents panel popup (right-click the AI slot) with
+  per-provider 5h/7d quota meters, reset countdowns, and the OpenRouter
+  credit balance.
+- **quickshell** middle-click, or `qs ipc -c hyprbar call aiSlot toggle`,
+  expands the AI slot into every provider side by side with 7d/reset lines;
+  the tooltip follows the hovered provider.
+- **quickshell** system vitals return as their own chip and glide beside the
+  right-hand controls while the AI slot is expanded.
+- **ai-usage** tracked harness token totals (daily and all-time) in the
+  provider tooltip.
+
+### Changed
+- **quickshell** the AI slot is one fixed-width badge rotating through Codex,
+  Claude, Antigravity, Z.AI, Pi, Hermes, and OpenRouter, with a slim
+  single-provider tooltip.
+- **environment** now holds the emoji, OCR, clipboard-history, power,
+  screenshot, and screen-recording helpers shared by Hyprland and qtile; the
+  per-compositor script paths remain as wrappers.
+- **quickshell** indicator chips and their status pollers share `BarChip` and
+  `StatusScript` components.
+- **nvim** the treesitter runtime checker moved to the unstowed `scripts/`.
+
+### Fixed
+- **quickshell** OpenRouter balances are no longer truncated in the badge.
+- **zsh** `prompt.schema.json` is no longer stowed into `$HOME`.
+
+### Removed
+- **hyprland** dead `kb-layout-notify.sh` and `wsflash.sh` helpers.
+- **wallust** unregistered kitty, rofi, rofi-todo, and yazi templates.
+
 ## [2.0.0] - 2026-08-23
 
 ### Added
