@@ -21,7 +21,10 @@ Singleton {
 
     function refresh() {
         if (!statusProcess.running)
-            statusProcess.exec([root.command, "--json"])
+            // Run through non-interactive zsh so ~/.zshenv(.local) supplies the
+            // OpenRouter/Z.ai keys the compositor-launched bar lacks; without
+            // them each bar refresh overwrote the shared cache as unavailable.
+            statusProcess.exec(["zsh", "-c", "exec \"$0\" --json", root.command])
     }
 
     function parseStatus(value) {
