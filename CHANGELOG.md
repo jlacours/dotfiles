@@ -8,6 +8,14 @@ honours [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new packages or user-visible features.
 - **PATCH** — fixes, small tweaks, lockfile bumps.
 
+## [2.1.1] - 2026-09-30
+
+### Fixed
+- **quickshell** the AI bar runs `ai-usage` through non-interactive zsh so it
+  receives the OpenRouter and Z.ai keys from `~/.zshenv.local`. Previously the
+  compositor-launched bar lacked them, and each of its refreshes overwrote the
+  shared cache with "unavailable", so those providers flapped to `?`.
+
 ## [2.1.0] - 2026-09-30
 
 ### Added
