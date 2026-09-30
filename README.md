@@ -432,13 +432,18 @@ systemctl --user enable --now cli-proxy-api.service
 The `claudex` Zsh function launches Claude Code through that gateway while
 ordinary `claude` continues to use its native configuration.
 
-The local Matrix homeserver runs Synapse v1.156.0 in a rootless Podman container. The service expects a pre-provisioned `~/.local/share/matrix-synapse` containing `homeserver.yaml` and the server signing key; on a fresh machine, generate and review those files first using the [Synapse Docker instructions](https://github.com/matrix-org/synapse/blob/develop/docker/README.md) with server name `matrix.home.arpa` and reporting disabled. The checked-in unit does not generate or overwrite them. Then install Podman and enable `matrix-synapse.service`. Federation and public registration are disabled. The Hyprland bar indicator checks the client API and Hermes gateway before showing Matrix as healthy, and game mode pauses both services and restores their previous active state. Hermes connection secrets and the phone login are machine-local files outside the repo. Phone access uses Tailscale Serve over HTTPS after Serve is enabled for the device and the phone joins the tailnet. Matrix end-to-end encryption is currently disabled, so Synapse can read stored room content. Before using shared rooms or adding other tailnet users, set `MATRIX_ALLOWED_ROOMS` for Hermes and restrict Tailscale access to the intended devices.
+The local Matrix homeserver runs Synapse v1.156.0 in a rootless Podman container. The service expects a pre-provisioned `~/.local/share/matrix-synapse` containing `homeserver.yaml` and the server signing key; on a fresh machine, generate and review those files first using the [Synapse Docker instructions](https://github.com/matrix-org/synapse/blob/develop/docker/README.md) with server name `matrix.home.arpa` and reporting disabled. The checked-in unit does not generate or overwrite them. Then install Podman and enable `matrix-synapse.service`. Federation and public registration are disabled. The Hyprland bar indicator checks the client API and Hermes gateway before showing Matrix as healthy, and game mode keeps Synapse and the Hermes gateways running so phone notifications and cron remain available. Hermes connection secrets and the phone login are machine-local files outside the repo. Phone access uses Tailscale Serve over HTTPS after Serve is enabled for the device and the phone joins the tailnet. Matrix end-to-end encryption is currently disabled, so Synapse can read stored room content. Before using shared rooms or adding other tailnet users, set `MATRIX_ALLOWED_ROOMS` for Hermes and restrict Tailscale access to the intended devices.
 
 Game mode is available from the controller chip in the Hyprland bar or with
 `Super+Alt+G`. It pauses configured nonessential user services, enables Mako
 do-not-disturb, and disables compositor effects and idle handling. If the local
 grammar-correction model was active, game mode stops it and restores it only
 when gaming ends.
+
+Game mode also stops `llama-server` and marks its shared GPU launch guard active
+before the transition. Local models are relaunched explicitly after gaming.
+Synapse logs pass through `journal-priority`, preserving each line while mapping
+INFO, WARNING and ERROR to their real journal priorities.
 
 Review `MANAGED_UNITS` in `hyprland/.config/hypr/scripts/game-mode.sh` first; those user services are paused while game mode is active.
 
@@ -475,7 +480,8 @@ Every application follows the same template: a top-level package mirrors its des
 
 | Package | Software and purpose |
 |---|---|
-| **ai-usage** | OpenUsage provider selection and a cached quota/balance plus tracked harness-token summary for the Quickshell bar; `agent-metrics` workflow-outcome log and report |
+| **agent-workflow** | Observe-only caretaker, usage/job polling and durable Matrix outbox user timers; deterministic helpers installed from jlacours-tools |
+| **ai-usage** | OpenUsage provider selection and a cached quota/balance plus tracked harness-token summary for the Quickshell bar; `agent-metrics` workflow-outcome and deterministic overhead log/report |
 | **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
@@ -491,7 +497,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools and an optional dormant Friend bridge |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge (middle-click expands it to every provider) with a single-provider quota/token tooltip, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge (middle-click expands it to every provider) with a single-provider quota/token tooltip, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, runtime jobs/findings indicator, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr configuration, compact agent status, and targeted external control |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
@@ -530,3 +536,23 @@ available as the secondary editor.
 The project-local `$commit-dotfiles` skill lives at `.agents/skills/commit-dotfiles/`. It reviews the complete worktree, checks sensitive information and line endings, verifies Stow layout and documentation, runs relevant validation, and commits the intended snapshot.
 
 See [CHANGELOG.md](CHANGELOG.md) for historical release notes.
+
+### Workflow phase 1
+
+Install `~/Projects/repos/jlacours-tools/workflow/install.sh` before enabling
+this Stow package's timers:
+
+```bash
+./install.sh agent-workflow
+systemctl --user daemon-reload
+systemctl --user enable --now agent-runtime.timer agent-outbox.timer caretaker-check.timer caretaker-daily.timer caretaker-digest.timer
+```
+
+The runtime chip shows working / needing-report / findings counts; clicking
+opens a Foot viewer. `agent-board --plain`, `aj status`, `caretaker status`
+and `agent-notify status` expose the machinery. Findings support ack/snooze/
+resolve; failed Matrix deliveries need explicit retry after five attempts.
+The caretaker observes without repairs, sudo, deletion or model calls.
+User lingering is required after logout; persistent daily timers catch up
+after sleep/reboot. See the companion tools' `workflow/README.md` for privacy,
+quota freshness, backup deferral, push approvals, tests and rollback.

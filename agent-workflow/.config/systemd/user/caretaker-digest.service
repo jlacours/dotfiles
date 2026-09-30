@@ -1,0 +1,9 @@
+[Unit]
+Description=Queue a deterministic caretaker digest
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/caretaker digest
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=5min

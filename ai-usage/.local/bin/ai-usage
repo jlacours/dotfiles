@@ -292,7 +292,7 @@ def make_record(pid, label, snap, now):
         bits[1:1] = quota_lines
     if extra_percent is not None: bits.insert(1, f"7d {fmt_number(left_percent(extra_percent))}% left")
     five_left = left_percent(percent) if pid in ("codex", "antigravity", "zai", "claude_code") else None
-    record = {"label": label, "details": ", ".join(bits), "reset": reset, "expiry": expiry, "percent": percent, "remaining": remaining,
+    record = {"rate_limited": has_http_429(snap.get("diagnostics")) or has_http_429(snap.get("message")), "label": label, "details": ", ".join(bits), "reset": reset, "expiry": expiry, "percent": percent, "remaining": remaining,
               "five_hour_left": five_left, "seven_day_left": left_percent(weekly_used),
               "five_hour_reset": reset.isoformat() if reset else None,
               "weekly_reset_short": weekly_reset.astimezone().strftime("%b %-d") if weekly_reset else None,
@@ -427,6 +427,7 @@ result = {"text": text, "tooltip": tooltip, "state": state, "updated_at": update
 result["token_usage"] = token_usage
 result["providers"] = [
     {"id": pid, "label": record["label"], "percent": record["percent"], "remaining": record["remaining"], "details": record["details"],
+     "rate_limited": record.get("rate_limited", False),
      "five_hour_left": record.get("five_hour_left"), "seven_day_left": record.get("seven_day_left"),
      "five_hour_reset": record.get("five_hour_reset"),
      "reset_available": record.get("reset_available"),

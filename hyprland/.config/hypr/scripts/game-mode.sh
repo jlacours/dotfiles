@@ -10,9 +10,6 @@ MANAGED_UNITS=(
   mcp-memory.service
   mcp-exa.service
   mcp-time.service
-  hermes-gateway.service
-  matrix-synapse.service
-  hermes-matrix-gateway.service
   signal-cli.service
   seb-bridge.service
   radicale.service
@@ -24,9 +21,21 @@ MANAGED_UNITS=(
   hypridle.service
 )
 
-STATE_DIR="${HOME}/.local/state/game-mode"
+STATE_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}/game-mode"
 STATE_FILE="${STATE_DIR}/state.json"
 errors=()
+
+# Serialize transitions with guarded model launches. The active flag is durable
+# before any stop, so another launch cannot enter during the transition.
+mkdir -p "${STATE_DIR}"
+exec 8>"${STATE_DIR}/gpu.lock"
+flock -x 8
+write_state() {
+  local temporary
+  temporary=$(mktemp "${STATE_DIR}/state.XXXXXX") || return 1
+  cat > "${temporary}"
+  mv -f -- "${temporary}" "${STATE_FILE}"
+}
 
 active_user_services() {
   systemctl --user list-units --type=service --state=active --no-legend --plain 2>/dev/null |
@@ -45,6 +54,15 @@ game_mode_on() {
   errors=()
   mkdir -p "${STATE_DIR}"
 
+  if [[ -f "${STATE_FILE}" ]] && jq -e '.active == true' "${STATE_FILE}" >/dev/null 2>&1; then
+    return 0
+  fi
+  if [[ -f "${STATE_FILE}" ]] && ! jq -e '.active == false' "${STATE_FILE}" >/dev/null 2>&1; then
+    echo "Game mode state is invalid; inspect it before toggling." >&2
+    return 1
+  fi
+  jq -n --argjson startedAt "$(date +%s)" \
+    '{active:true, stoppedUnits:[], dndAdded:false, startedAt:$startedAt, transitioning:true}' | write_state
   # 1. Snapshot active units in dependency order, then stop them in reverse.
   # This keeps dependants such as mpd-mpris from disappearing
   # before their state can be recorded.
@@ -92,6 +110,19 @@ game_mode_on() {
     fi
   done
 
+  # Stop exact llama-server processes, including a router and its model children.
+  # Do not auto-resume them: the previous inference context cannot be restored.
+  if pgrep -x llama-server >/dev/null 2>&1; then
+    pkill -TERM -x llama-server || errors+=("FAILED: stop llama-server")
+    for (( attempt=0; attempt<100; attempt++ )); do
+      pgrep -x llama-server >/dev/null 2>&1 || break
+      sleep 0.1
+    done
+    if pgrep -x llama-server >/dev/null 2>&1; then
+      errors+=("FAILED: llama-server still running; GPU is not yet free")
+    fi
+  fi
+
   # 2. Disable Hyprland eye-candy at runtime. Lua providers reject the legacy
   # `keyword` IPC command, while the retained rollback config still uses it.
   if hyprctl systeminfo | grep -q '^configProvider: lua$'; then
@@ -126,8 +157,8 @@ game_mode_on() {
     --argjson active true \
     --argjson stoppedUnits "${stopped_json}" \
     --argjson dndAdded "${dnd_added}" \
-    '{ active: $active, stoppedUnits: $stoppedUnits, dndAdded: $dndAdded }' \
-    > "${STATE_FILE}"
+    '{ active: $active, stoppedUnits: $stoppedUnits, dndAdded: $dndAdded, startedAt: now }' \
+    | write_state
 
   # 5. Report the transition. Critical notifications remain visible in Mako's
   # do-not-disturb mode; ordinary application noise does not.
@@ -181,7 +212,7 @@ game_mode_off() {
   fi
 
   # 4. Clear state
-  jq -n '{ active: false, stoppedUnits: [], dndAdded: false }' > "${STATE_FILE}"
+  jq -n '{ active: false, stoppedUnits: [], dndAdded: false }' | write_state
 
   # 5. Notification
   if (( ${#errors[@]} > 0 )); then

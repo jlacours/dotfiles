@@ -303,6 +303,10 @@ PanelWindow {
             Row {
                 spacing: 2
 
+                Agents {
+                    panelWindow: bar
+                }
+
                 GameMode {
                     panelWindow: bar
                 }

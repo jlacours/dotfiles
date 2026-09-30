@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh owned jobs and quota alerts
+
+[Service]
+Type=oneshot
+ExecStart=-%h/.local/bin/aj refresh
+ExecStart=%h/.local/bin/ai-usage-alerts poll
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=5min

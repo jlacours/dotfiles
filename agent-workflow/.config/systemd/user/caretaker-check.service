@@ -1,0 +1,9 @@
+[Unit]
+Description=Observe workstation health
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/caretaker check
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=5min

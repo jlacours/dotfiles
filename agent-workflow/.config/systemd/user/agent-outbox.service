@@ -1,0 +1,9 @@
+[Unit]
+Description=Deliver durable Matrix notifications
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/agent-notify flush
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=5min

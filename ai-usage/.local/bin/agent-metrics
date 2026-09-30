@@ -109,7 +109,13 @@ def build_report(days):
         key = "same-vendor" if r["author"] == r["reviewer"] else "cross-vendor"
         by_independence[key].append(r)
 
+    overhead = [e for e in events if e.get("type") == "overhead"]
     return {
+        "workflow_overhead": {
+            "calls": sum(e.get("calls", 0) for e in overhead),
+            "milliseconds": sum(e.get("milliseconds", 0) for e in overhead),
+            "model_tokens": sum(e.get("model_tokens", 0) for e in overhead),
+        },
         "window_days": days,
         "events": len(events),
         "diff_reviews": {k: review_stats(v) for k, v in sorted(by_independence.items())},
@@ -156,6 +162,8 @@ def print_report(rep):
     for label in ("by_role", "by_from", "by_reason"):
         if fb[label]:
             print(f"  {label[3:]:13} " + ", ".join(f"{k} {v}" for k, v in fb[label].items()))
+    overhead = rep["workflow_overhead"]
+    print(f"\nWorkflow overhead: {overhead['calls']} calls, {overhead['milliseconds']/1000:.1f}s, {overhead['model_tokens']} model tokens")
     print("\nQuota and token spread per provider: ai-usage")
 
 
@@ -183,6 +191,13 @@ def main():
     fb.add_argument("--reason", choices=REASONS, required=True)
     fb.add_argument("--harness", type=slug, default="unknown")
 
+    ov = log.add_parser("overhead", help="deterministic workflow helper cost")
+    ov.add_argument("--tool", type=slug, required=True)
+    ov.add_argument("--calls", type=count, default=1)
+    ov.add_argument("--milliseconds", type=count, required=True)
+    ov.add_argument("--model-tokens", type=count, default=0)
+    ov.add_argument("--harness", type=slug, default="workflow")
+
     rp = sub.add_parser("report", help="summarize outcomes")
     rp.add_argument("--days", type=int, default=30)
     rp.add_argument("--json", action="store_true")
@@ -207,6 +222,9 @@ def main():
                          findings=args.findings, accepted=args.accepted)
             if args.task:
                 event["task"] = args.task
+        elif args.type == "overhead":
+            event.update(tool=args.tool, calls=args.calls, milliseconds=args.milliseconds,
+                         model_tokens=args.model_tokens)
         else:
             event.update(role=args.role, reason=args.reason, **{"from": args.src, "to": args.dst})
         append(event)
