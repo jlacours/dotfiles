@@ -8,6 +8,15 @@ honours [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new packages or user-visible features.
 - **PATCH** — fixes, small tweaks, lockfile bumps.
 
+## [2.1.3] - 2026-09-30
+
+### Fixed
+- **hyprland** away mode now manages `mcp-exa.service` instead of the removed
+  SearXNG units (`searxng`, `searxng-vpn`, `mcp-searxng`), and protects the
+  live remote-control path: `signal-cli.service` (was the nonexistent
+  `signal-cli-hermes`), `hermes-matrix-gateway.service`, and
+  `matrix-synapse.service`.
+
 ## [2.1.2] - 2026-09-30
 
 ### Changed
