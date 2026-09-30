@@ -25,9 +25,10 @@ shell/.shellrc
 
 ## Repository Areas
 
-- `hyprland/`: compositor, idle, and tightly coupled desktop scripts.
-- `qtile/`: the active tiling Wayland session — Hyprland-style keybinds, Fuzzel menus, mako notifications, scratchpads, and idle/portal helpers.
-- `foot/`, `tmux/`, `zsh/`, `nvim/`, `emacs/`: application packages.
+- `hyprland/`: the active Lua-backed Hyprland session — compositor, idle, and tightly coupled desktop scripts.
+- `qtile/`: the alternate tiling Wayland session — Hyprland-style keybinds, Fuzzel menus, mako notifications, scratchpads, and idle/portal helpers.
+- `environment/`: compositor-neutral session environment plus the Wayland menu/capture helpers shared by both sessions (`.config/session/`).
+- `foot/`, `zsh/`, `nvim/`, `emacs/`: application packages.
 - `eww/` and `sway/`: retained legacy configurations.
 - `quickshell/`: the minimal Hyprland bar; the retired full Quickshell desktops live under `legacy/`.
 - `legacy/`: archived material (including the retired `labwc/` and full Quickshell desktops); never stowed automatically.

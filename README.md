@@ -245,10 +245,17 @@ ai-usage
 The `ai-usage` command supplies the bar with cached quota and balance readings,
 including reset times. The left bar slot is one fixed-width badge that rotates
 through Codex, Claude, Antigravity, Z.AI, Pi, Hermes, and OpenRouter without
-changing the space reserved for the rest of the bar. Hover for one compact
-reading and quota meter for the provider currently shown; the tooltip only
-reports reset timing and never triggers a reset. Left-click refreshes, or
-right-click opens the detailed quota panel. OpenUsage reads local
+changing the space reserved for the rest of the bar. Hover for that provider's
+5h/7d remaining percentages and read-only reset time/date, plus daily and
+all-time harness token totals with tracked-coverage counts. Hermes shows its
+today token count; missing provider data is marked as partial. Left-click
+refreshes, middle-click expands the slot into every provider side by side (with
+7d remaining and weekly reset under each) and back, and right-click opens the
+detailed quota panel. In the expanded view the tooltip follows the provider
+under the pointer. `qs ipc -c hyprbar call aiSlot toggle` toggles the same view
+from scripts or keybinds. A compact CPU/RAM/disk/temperature/GPU vitals chip
+follows the AI slot; while the slot is expanded it glides over to sit beside the
+right-hand controls, and returns when the slot is compacted. OpenUsage reads local
 Codex, Claude Code, Antigravity, Pi, and Hermes activity. Z.ai and OpenRouter
 readings require their respective
 `ZAI_API_KEY` and `OPENROUTER_API_KEY` environment variables in the Quickshell
@@ -360,6 +367,14 @@ bar use the `wayland-idle-inhibitor.py` helper installed by the `environment`
 package. It requires the Arch `python-pywayland` package; install the package
 before enabling those bindings.
 
+Stow `environment` with either desktop session (`./install.sh environment hyprland`
+or `./install.sh environment qtile`). It also installs the shared emoji, OCR,
+clipboard-history, power-menu, screenshot, and screen-recording implementations
+under `~/.config/session/`. The original `~/.config/hypr/scripts/` and
+`~/.config/qtile/scripts/` entrypoints remain as thin wrappers that select the
+compositor explicitly; edit the shared implementation to customize common
+behavior. Wallpaper and keybinding menus remain session-specific.
+
 qtile uses its own compositor-safe `hypridle` configuration: after 15 minutes
 of uninhibited idle time, `wlopm` powers off both monitors and restores them on
 input. It does not lock or suspend the session.
@@ -447,14 +462,14 @@ Every application follows the same template: a top-level package mirrors its des
 
 | Package | Software and purpose |
 |---|---|
-| **ai-usage** | OpenUsage provider selection and a cached AI quota/balance command for the Quickshell bar |
+| **ai-usage** | OpenUsage provider selection and a cached quota/balance plus tracked harness-token summary for the Quickshell bar |
 | **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
 | **codex** | Codex Remote Control systemd user service plus a ChatGPT desktop launcher that keeps the default XWayland backend |
 | **disk-health** | Low-overhead hourly root-filesystem space warnings with no automatic cleanup |
 | **emacs** | Emacs daemon/client configuration with pixel-precise GUI resizing, Gruber Darker, and local LLM chat with an activity spinner, auto-scroll, native code highlighting, and hidden reasoning output; available as the secondary editor |
-| **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, and portal session cleanup |
+| **environment** | compositor-neutral systemd user environment.d variables, desktop MIME defaults, portal session cleanup, idle inhibition, and the Wayland menu/capture helpers shared by Hyprland and qtile |
 | **eww** | Legacy Eww bar retained for migration reference |
 | **foot** | Foot terminal with standalone launches, optional socket-activated server/client mode, and a Wallust color include |
 | **fuzzel** | Fast native Wayland application launcher and dmenu-compatible picker with a compact square theme |
@@ -463,7 +478,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools and an optional dormant Friend bridge |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge and single-provider quota tooltip, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge (middle-click expands it to every provider) with a single-provider quota/token tooltip, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr configuration, compact agent status, and targeted external control |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |

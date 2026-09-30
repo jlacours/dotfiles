@@ -23,8 +23,6 @@ vim.opt.cursorline = true
 vim.opt.guicursor = "n-v-c-sm-i-ci-ve:block,r-cr-o:hor20"
 -- Workaround for nvimcmp
 vim.opt.completeopt = { "menu", "menuone", "noinsert" }
--- Theme
-vim.cmd("colorscheme darklime")
 -- Always show signcolumn with padding to avoid flicker
 vim.opt.signcolumn = "yes:2"
 -- Hack to keep the cursor in the middle of the screen
@@ -48,21 +46,3 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 -- Faster update time (Refresh)
 vim.opt.updatetime = 250
--- Neovim diagnostic config
-vim.diagnostic.config({
-    virtual_text = true,
-    signs = true,
-    underline = true,
-    update_in_insert = true,
-})
--- Enable list mode
-vim.opt.list = true
--- Configure how whitespace looks
-vim.opt.listchars = {
-  space = '·',
-  tab = '» ',
-  trail = '·',
-  extends = '›',
-  precedes = '‹',
-  nbsp = '␣',
-}

@@ -22,7 +22,6 @@ __pycache__/
 
 # Local screenshots and recordings can capture personal information
 assets/screenshots/
-quickshell/.config/quickshell/win95/assets/mystery-wallpaper-dark-4k.jpg
 *.screencast
 *.cast
 pi-session-*.html
@@ -47,8 +46,6 @@ pi-session-*.html
 !herdr/.local/**
 !mcp-services/.local/
 !mcp-services/.local/**
-!quickshell/.local/
-!quickshell/.local/**
 !wallust/.local/
 !wallust/.local/**
 *.sqlite

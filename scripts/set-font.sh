@@ -25,9 +25,9 @@ FILES=(
   "$DOTFILES/sway/.config/sway/config"
   # Configs outside the dotfiles repo (optional — skipped silently if absent)
   "$HOME/.config/foot/foot.ini"
+  # In-repo again; kept last to preserve --list and detection order
+  "$DOTFILES/qtile/.config/qtile/config.py"
 )
-
-FILES+=("$DOTFILES/qtile/.config/qtile/config.py")
 
 detect_font() {
   local file line detected=""

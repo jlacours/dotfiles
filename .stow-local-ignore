@@ -10,6 +10,7 @@
 (^|/)README[^/]*$
 (^|/)LICENSE[^/]*$
 (^|/)pi-session-.*\.html$
+(^|/)prompt\.schema\.json$
 
 # Local logs and traces
 \.log(\..*)?$
@@ -37,4 +38,3 @@
 \.pid(\.lock)?$
 (^|/)\.config/hypr/generated($|/)
 (^|/)\.config/eww/scripts/(pids|state)($|/)
-(^|/)\.config/rofi/themes/wallust-todo\.rasi$

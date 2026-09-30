@@ -351,7 +351,7 @@ def detect_platform(checks: list[dict]) -> str:
     return "unknown"
 
 
-def enrich_checks(host: dict, defaults: dict, checks: list[dict]) -> list[dict]:
+def enrich_checks(defaults: dict, checks: list[dict]) -> list[dict]:
     for check in checks:
         value = check["value"]
         if check["name"] == "failed_units" and re.search(
@@ -426,7 +426,7 @@ def run_host(host: dict, defaults: dict, operation: str, dry_run: bool) -> dict:
             record["error"] = stderr[-1200:] or f"command exited {completed.returncode} without protocol output"
             checks = []
         else:
-            checks = enrich_checks(host, defaults, raw_checks)
+            checks = enrich_checks(defaults, raw_checks)
         record["checks"] = checks
         record["platform"] = detect_platform(checks)
         assertion = host["distro"]

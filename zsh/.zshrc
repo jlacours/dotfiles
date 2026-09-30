@@ -368,8 +368,6 @@ fi
 source_if_readable "$HOME/.zfunc/_claude"
 
 # --- FZF Setup ---
-unset FZF_DEFAULT_OPTS
-
 # Base settings shared by the native fzf widgets. File previews belong to the
 # file picker only; applying one globally would make history search try to bat
 # shell commands.
