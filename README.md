@@ -483,7 +483,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr configuration, compact agent status, and targeted external control |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
-| **wallust** | Wallust color-generation configuration, application templates, and live desktop refresh hook |
+| **wallust** | Wallust color-generation configuration, application templates, live desktop refresh hook, and the `wallust-random-light`/`wallust-random-dark` random-theme commands behind the theme keybinds |
 | **zsh** | zsh shell configuration, prompt schema, native completion, and Carapace coverage for unsupported commands |
 
 Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agents/` are not Stow packages.

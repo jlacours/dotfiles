@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Pick a random light or dark wallust theme and apply it. The mode comes from
+# the invoked name: wallust-random-light / wallust-random-dark (symlinks here).
+set -euo pipefail
+
+name="$(basename "$0")"
+case "$name" in
+    wallust-random-light) mode=light ;;
+    wallust-random-dark) mode=dark ;;
+    *) echo "usage: invoke as wallust-random-light or wallust-random-dark" >&2; exit 2 ;;
+esac
+
+PRINT_ONLY=0
+if [[ "${1:-}" == "--print-only" ]]; then
+    PRINT_ONLY=1
+    shift
+fi
+
+strip_ansi() {
+    sed -r 's/\x1B\[[0-9;]*[mK]//g'
+}
+
+all_themes() {
+    wallust theme list | strip_ansi | sed -n 's/^- //p' | sed '/^random$/d;/^list$/d'
+}
+
+is_light_theme() {
+    local lower
+    lower="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+    [[ "$lower" =~ (^|[-_])(light|day|dawn|latte|operandi|white)([-_]|$) ]] \
+        || [[ "$lower" =~ (^|[-_])github(-|$) ]] \
+        || [[ "$lower" =~ (^|[-_])tomorrow$ ]] \
+        || [[ "$lower" =~ (^|[-_])3024-light$ ]] \
+        || [[ "$lower" =~ (^|[-_])ashes-light$ ]] \
+        || [[ "$lower" =~ (^|[-_])sexy-mostly-bright$ ]] \
+        || [[ "$lower" =~ (^|[-_])tempus[-_](dawn|day|fugit|past|totus)(-|$) ]]
+}
+
+mapfile -t candidates < <(all_themes | while IFS= read -r theme; do
+    [[ -n "$theme" ]] || continue
+    if is_light_theme "$theme"; then
+        [[ "$mode" == light ]] && printf '%s\n' "$theme"
+    else
+        [[ "$mode" == dark ]] && printf '%s\n' "$theme"
+    fi
+done)
+
+if (( ${#candidates[@]} == 0 )); then
+    echo "$name: no $mode candidates found" >&2
+    exit 1
+fi
+
+theme="$(printf '%s\n' "${candidates[@]}" | shuf -n1)"
+
+if (( PRINT_ONLY )); then
+    printf '%s\n' "$theme"
+    exit 0
+fi
+
+echo "Applying $mode theme: $theme"
+if [[ -f "$HOME/.config/wallust/colorschemes/$theme.json" ]]; then
+    wallust cs "$theme" "$@"
+else
+    wallust theme "$theme" "$@"
+fi
+printf '%s\n' "$theme" > "$HOME/.cache/wallust-current-theme"
+printf '%s\n' "$mode" > "$HOME/.cache/wallust-current-mode"
+
+"$HOME/.local/bin/wallust-refresh-desktop"
