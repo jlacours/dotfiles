@@ -244,13 +244,14 @@ ai-usage
 
 The `ai-usage` command supplies the bar with cached quota and balance readings,
 including reset times. The left bar slot is one fixed-width badge that rotates
-through Codex, Claude, Antigravity, Z.AI, Pi, Hermes, and OpenRouter without
+through Codex, Claude, Antigravity, Z.AI, OpenRouter, Pi, and Hermes without
 changing the space reserved for the rest of the bar. Hover for that provider's
 5h/7d remaining percentages and read-only reset time/date, plus daily and
 all-time harness token totals with tracked-coverage counts. Hermes shows its
 today token count; missing provider data is marked as partial. Left-click
 refreshes, middle-click expands the slot into every provider side by side (with
-7d remaining and weekly reset under each) and back, and right-click opens the
+7d remaining and weekly reset under each; Pi and Hermes share one two-line
+cell) and back, and right-click opens the
 detailed quota panel. In the expanded view the tooltip follows the provider
 under the pointer. `qs ipc -c hyprbar call aiSlot toggle` toggles the same view
 from scripts or keybinds. A compact CPU/RAM/disk/temperature/GPU vitals chip

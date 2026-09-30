@@ -22,9 +22,9 @@ Rectangle {
         { id: "claude_code", label: "Claude", shortLabel: "Claude", source: "ai-claude.svg" },
         { id: "antigravity", label: "Antigravity", shortLabel: "Antig.", source: "ai-antigravity.svg" },
         { id: "zai", label: "Z.AI", shortLabel: "Z.AI", source: "ai-zai.svg" },
-        { id: "pi", label: "Pi", shortLabel: "Pi", source: "" },
-        { id: "hermes", label: "Hermes", shortLabel: "Hermes", source: "" },
-        { id: "openrouter", label: "OpenRouter", shortLabel: "Router", source: "ai-openrouter.svg" }
+        { id: "openrouter", label: "OpenRouter", shortLabel: "Router", source: "ai-openrouter.svg" },
+        { id: "pi", label: "Pi", shortLabel: "Pi", source: "", stacked: true },
+        { id: "hermes", label: "Hermes", shortLabel: "Hermes", source: "", stacked: true }
     ]
     readonly property var currentInfo: providers[providerIndex]
     readonly property var currentProvider: currentInfo
@@ -33,6 +33,8 @@ Rectangle {
         if (!UsageSlotState.expanded || !slotMouse.containsMouse)
             return null
         const item = expandedRow.childAt(slotMouse.mouseX - expandedRow.x, expandedRow.height / 2)
+        if (item && item.infoAt)
+            return item.infoAt(slotMouse.mouseY - expandedRow.y - item.y)
         return item && item.modelData ? item.modelData : null
     }
     // Gaps between icons keep the last provider so the tooltip neither blanks
@@ -185,7 +187,7 @@ Rectangle {
         spacing: 7
 
         Repeater {
-            model: root.providers
+            model: root.providers.filter(info => !info.stacked)
 
             delegate: Item {
                 required property var modelData
@@ -248,6 +250,49 @@ Rectangle {
                             color: root.mutedColor
                             font.family: "Comic Code"
                             font.pixelSize: 8
+                        }
+                    }
+                }
+            }
+        }
+
+        // Single-number readouts (Pi, Hermes) share one two-line cell; the
+        // tooltip picks the line under the pointer.
+        Item {
+            id: stackCell
+            readonly property var stacked: root.providers.filter(info => info.stacked)
+            function infoAt(y) {
+                return stacked[Math.min(stacked.length - 1, Math.max(0, Math.floor(y / (height / stacked.length))))]
+            }
+            width: stackColumn.implicitWidth
+            height: 22
+
+            Column {
+                id: stackColumn
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: -1
+
+                Repeater {
+                    model: stackCell.stacked
+
+                    delegate: Row {
+                        required property var modelData
+                        readonly property string value: root.primaryValue(AiUsageState.providerFor(modelData.id))
+                        spacing: 3
+
+                        Text {
+                            text: modelData.label.slice(0, 1)
+                            color: root.mutedColor
+                            font.family: "Comic Code"
+                            font.pixelSize: 9
+                            font.weight: Font.DemiBold
+                        }
+
+                        Text {
+                            text: value
+                            color: value === "?" || value === "—" ? root.mutedColor : root.foregroundColor
+                            font.family: "Comic Code"
+                            font.pixelSize: 9
                         }
                     }
                 }
