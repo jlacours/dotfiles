@@ -264,6 +264,18 @@ session. No keys are stored in the Stow package. The Antigravity integration
 adds a local status-line feed; its quota remains unavailable until an
 Antigravity session refreshes it. `ai-usage --json` emits the bar payload.
 
+The same package installs `agent-metrics`, a stdlib-only Python logger for
+multi-agent workflow outcomes that quota numbers cannot show. Agents append
+one line per finished review (stage, role, author and reviewer vendor,
+verdict, findings, accepted findings) and per fallback-chain switch to
+`~/.local/state/agent-metrics/events.jsonl` (mode 0600; enums, counts, and
+short slugs only, so no code, secrets, or conversation text). The workflow
+rules that call it live in
+[`jlacours-prompts`](https://github.com/jlacours/jlacours-prompts).
+`agent-metrics report [--days N] [--json]` compares cross-vendor with
+same-vendor reviews, plan reviews with the diff reviews that followed them,
+and fallbacks by role, source, and reason.
+
 `install.sh` only manages symlinks. Applications and feature dependencies remain explicit so the script does not turn into a surprise package-manager séance.
 
 The Labwc and full Quickshell desktops have been retired and archived under
@@ -463,7 +475,7 @@ Every application follows the same template: a top-level package mirrors its des
 
 | Package | Software and purpose |
 |---|---|
-| **ai-usage** | OpenUsage provider selection and a cached quota/balance plus tracked harness-token summary for the Quickshell bar |
+| **ai-usage** | OpenUsage provider selection and a cached quota/balance plus tracked harness-token summary for the Quickshell bar; `agent-metrics` workflow-outcome log and report |
 | **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |

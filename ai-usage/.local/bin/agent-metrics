@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Log and report multi-agent workflow outcomes (reviews and fallbacks).
+
+Append-only JSONL under $XDG_STATE_HOME/agent-metrics/events.jsonl. Fields are
+enums, counts, and short space-free slugs only. That blocks accidental prose,
+but keeping code, secrets, and conversation text out is the caller's job.
+"""
+import argparse
+import fcntl
+import json
+import os
+import re
+import sys
+from collections import Counter, defaultdict
+from datetime import datetime, timedelta, timezone
+
+VENDORS = ["anthropic", "openai", "google", "zai", "local", "openrouter"]
+ROLES = ["junior", "senior", "security"]
+FALLBACK_ROLES = ["orchestrator", "executor", "reading", "junior", "senior",
+                  "security", "chores", "async", "private"]
+VERDICTS = ["ready", "conditional", "not-ready"]
+REASONS = ["rate-limit", "quota", "outage", "error", "other"]
+SLUG = re.compile(r"^[a-z0-9][a-z0-9._:-]{0,63}$")
+# vendor, optionally :model; model IDs may contain "/" (OpenRouter).
+VENDOR_MODEL = re.compile(r"^(%s)(:[a-z0-9][a-z0-9._:/-]{0,63})?$" % "|".join(VENDORS))
+
+state_dir = os.path.join(os.environ.get("XDG_STATE_HOME") or
+                         os.path.expanduser("~/.local/state"), "agent-metrics")
+log_path = os.path.join(state_dir, "events.jsonl")
+
+
+def slug(value):
+    if not SLUG.match(value):
+        raise argparse.ArgumentTypeError(
+            "use a short lowercase slug (a-z 0-9 . _ : -, max 64 chars)")
+    return value
+
+
+def vendor_model(value):
+    if not VENDOR_MODEL.match(value):
+        raise argparse.ArgumentTypeError(
+            f"use vendor[:model]; vendor is one of {', '.join(VENDORS)}")
+    return value
+
+
+def count(value):
+    n = int(value)
+    if n < 0:
+        raise argparse.ArgumentTypeError("must be >= 0")
+    return n
+
+
+def append(event):
+    os.makedirs(state_dir, mode=0o700, exist_ok=True)
+    fd = os.open(log_path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+    with os.fdopen(fd, "a", encoding="utf-8") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        fh.write(json.dumps(event, separators=(",", ":")) + "\n")
+
+
+def load(since):
+    events = []
+    try:
+        with open(log_path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    ev = json.loads(line)
+                    if datetime.fromisoformat(ev["ts"]) >= since:
+                        events.append(ev)
+                except (ValueError, KeyError, TypeError):
+                    continue  # a torn or foreign line never breaks the report
+    except FileNotFoundError:
+        pass
+    return events
+
+
+def review_stats(reviews):
+    n = len(reviews)
+    found = sum(r["findings"] for r in reviews)
+    accepted = sum(r["accepted"] for r in reviews)
+    useful = sum(1 for r in reviews if r["accepted"] > 0)
+    return {
+        "reviews": n,
+        "findings": found,
+        "accepted": accepted,
+        "accepted_per_review": round(accepted / n, 2) if n else None,
+        "acceptance_rate": round(accepted / found, 2) if found else None,
+        "useful_review_rate": round(useful / n, 2) if n else None,
+    }
+
+
+def build_report(days):
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    events = load(since)
+    reviews = [e for e in events if e.get("type") == "review"]
+    fallbacks = [e for e in events if e.get("type") == "fallback"]
+    diff = [r for r in reviews if r["stage"] == "diff"]
+    plan = [r for r in reviews if r["stage"] == "plan"]
+    first_plan = {}
+    for r in plan:
+        if r.get("task"):
+            ts = datetime.fromisoformat(r["ts"])
+            first_plan[r["task"]] = min(ts, first_plan.get(r["task"], ts))
+    after_plan = [r for r in diff if r.get("task") in first_plan
+                  and datetime.fromisoformat(r["ts"]) > first_plan[r["task"]]]
+
+    by_independence = defaultdict(list)
+    for r in diff:
+        key = "same-vendor" if r["author"] == r["reviewer"] else "cross-vendor"
+        by_independence[key].append(r)
+
+    return {
+        "window_days": days,
+        "events": len(events),
+        "diff_reviews": {k: review_stats(v) for k, v in sorted(by_independence.items())},
+        "diff_reviews_by_role": {role: review_stats([r for r in diff if r["role"] == role])
+                                 for role in ROLES if any(r["role"] == role for r in diff)},
+        "plan_reviews": dict(review_stats(plan), plan_changed=sum(
+            1 for r in plan if r["verdict"] != "ready")),
+        "diff_after_plan_review": review_stats(after_plan),
+        "fallbacks": {
+            "total": len(fallbacks),
+            "by_role": dict(Counter(f["role"] for f in fallbacks).most_common()),
+            "by_from": dict(Counter(f["from"] for f in fallbacks).most_common()),
+            "by_reason": dict(Counter(f["reason"] for f in fallbacks).most_common()),
+            "reached_openrouter": sum(1 for f in fallbacks if f["to"].startswith("openrouter")),
+        },
+    }
+
+
+def fmt(stats):
+    if not stats or not stats.get("reviews"):
+        return "no data"
+    stats = {k: ("n/a" if v is None else v) for k, v in stats.items()}
+    return (f"{stats['reviews']} reviews, {stats['accepted']}/{stats['findings']} findings accepted"
+            f" ({stats['acceptance_rate']} rate), {stats['accepted_per_review']} accepted/review,"
+            f" {stats['useful_review_rate']} of reviews found something real")
+
+
+def print_report(rep):
+    print(f"agent-metrics: last {rep['window_days']} days, {rep['events']} events\n")
+    print("Diff reviews by independence")
+    for key in ("cross-vendor", "same-vendor"):
+        print(f"  {key:13} {fmt(rep['diff_reviews'].get(key))}")
+    print("\nDiff reviews by role")
+    for role, stats in rep["diff_reviews_by_role"].items() or [("-", None)]:
+        print(f"  {role:13} {fmt(stats)}")
+    plan = rep["plan_reviews"]
+    print("\nPlan reviews (high-stakes)")
+    print(f"  {'plan':13} {fmt(plan)}")
+    if plan["reviews"]:
+        print(f"  {'':13} {plan['plan_changed']}/{plan['reviews']} plans changed before implementation")
+    print(f"  {'diff after':13} {fmt(rep['diff_after_plan_review'])}")
+    fb = rep["fallbacks"]
+    print(f"\nFallbacks: {fb['total']} total, {fb['reached_openrouter']} reached OpenRouter")
+    for label in ("by_role", "by_from", "by_reason"):
+        if fb[label]:
+            print(f"  {label[3:]:13} " + ", ".join(f"{k} {v}" for k, v in fb[label].items()))
+    print("\nQuota and token spread per provider: ai-usage")
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="agent-metrics", description=__doc__.splitlines()[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    log = sub.add_parser("log", help="append one event").add_subparsers(dest="type", required=True)
+    rv = log.add_parser("review", help="a finished review")
+    rv.add_argument("--stage", choices=["plan", "diff"], required=True)
+    rv.add_argument("--role", choices=ROLES, required=True)
+    rv.add_argument("--author", choices=VENDORS, required=True, help="vendor that produced the work")
+    rv.add_argument("--reviewer", choices=VENDORS, required=True, help="vendor that reviewed it")
+    rv.add_argument("--verdict", choices=VERDICTS, required=True)
+    rv.add_argument("--findings", type=count, required=True, help="findings reported")
+    rv.add_argument("--accepted", type=count, required=True,
+                    help="findings the main thread verified and acted on")
+    rv.add_argument("--task", type=slug,
+                    help="task slug linking plan and diff reviews (required for --stage plan)")
+    rv.add_argument("--harness", type=slug, default="unknown")
+    fb = log.add_parser("fallback", help="a switch to the next entry in a fallback chain")
+    fb.add_argument("--role", choices=FALLBACK_ROLES, required=True)
+    fb.add_argument("--from", dest="src", type=vendor_model, required=True, help="vendor[:model]")
+    fb.add_argument("--to", dest="dst", type=vendor_model, required=True, help="vendor[:model]")
+    fb.add_argument("--reason", choices=REASONS, required=True)
+    fb.add_argument("--harness", type=slug, default="unknown")
+
+    rp = sub.add_parser("report", help="summarize outcomes")
+    rp.add_argument("--days", type=int, default=30)
+    rp.add_argument("--json", action="store_true")
+    sub.add_parser("path", help="print the log path")
+
+    args = ap.parse_args()
+    if args.cmd == "path":
+        print(log_path)
+    elif args.cmd == "report":
+        rep = build_report(args.days)
+        print(json.dumps(rep, indent=2)) if args.json else print_report(rep)
+    else:
+        event = {"ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+                 "type": args.type, "harness": args.harness}
+        if args.type == "review":
+            if args.accepted > args.findings:
+                ap.error("--accepted cannot exceed --findings")
+            if args.stage == "plan" and not args.task:
+                ap.error("--task is required for --stage plan")
+            event.update(stage=args.stage, role=args.role, author=args.author,
+                         reviewer=args.reviewer, verdict=args.verdict,
+                         findings=args.findings, accepted=args.accepted)
+            if args.task:
+                event["task"] = args.task
+        else:
+            event.update(role=args.role, reason=args.reason, **{"from": args.src, "to": args.dst})
+        append(event)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
