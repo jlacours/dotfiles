@@ -25,11 +25,9 @@ MANAGED_UNITS=(
   emacs.service
   syncthing.service
   vdirsyncer.timer
-  searxng-vpn.service
-  searxng.service
   mcp-memory.service
   mcp-time.service
-  mcp-searxng.service
+  mcp-exa.service
   hsd-web.service
   mpd.service
   mpd-mpris.service
@@ -41,7 +39,9 @@ PROTECTED_USER_UNITS=(
   codex-remote-control.service
   cli-proxy-api.service
   hermes-gateway.service
-  signal-cli-hermes.service
+  hermes-matrix-gateway.service
+  matrix-synapse.service
+  signal-cli.service
   borg-backup.timer
   hypridle.service
 )

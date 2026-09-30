@@ -46,7 +46,7 @@ game_mode_on() {
   mkdir -p "${STATE_DIR}"
 
   # 1. Snapshot active units in dependency order, then stop them in reverse.
-  # This keeps dependants such as mpd-mpris and searxng from disappearing
+  # This keeps dependants such as mpd-mpris from disappearing
   # before their state can be recorded.
   local active_units=()
   local stopped_units=()
