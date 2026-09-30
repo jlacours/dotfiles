@@ -16,6 +16,7 @@ Singleton {
     property string updatedAt: ""
     property bool stale: true
     property var providers: []
+    property var tokenUsage: ({})
     readonly property bool busy: statusProcess.running
 
     function refresh() {
@@ -34,6 +35,7 @@ Singleton {
             root.state = resultState
             root.updatedAt = String(result.updated_at || "")
             root.providers = Array.isArray(result.providers) ? result.providers : []
+            root.tokenUsage = result.token_usage || ({})
             root.stale = !root.updatedAt || isStale(root.updatedAt)
 
             if (root.stale)
@@ -54,6 +56,7 @@ Singleton {
         root.state = "error"
         root.updatedAt = ""
         root.providers = []
+        root.tokenUsage = ({})
         root.stale = true
     }
 

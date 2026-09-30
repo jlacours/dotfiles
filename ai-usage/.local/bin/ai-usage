@@ -14,6 +14,8 @@ if [[ -f "$cache" && $(find "$cache" -mmin -5 -print -quit 2>/dev/null) == "$cac
 import json, sys
 try:
     with open(sys.argv[1], encoding="utf-8") as fh: result = json.load(fh)
+    if "token_usage" not in result:
+        sys.exit(1)
     out = json.dumps(result, separators=(",", ":")) if sys.argv[2] == "--json" else result["tooltip"]
 except (OSError, ValueError, KeyError, TypeError):
     sys.exit(1)
@@ -70,6 +72,7 @@ import datetime as dt
 import json
 import math
 import os
+import sqlite3
 import sys
 import tempfile
 
@@ -145,6 +148,41 @@ def metric_value(metrics, names, field="used"):
             value = number(item.get(field))
             if value is not None: return value
     return None
+
+def token_pair(snapshot, names, accepted_windows):
+    if not isinstance(snapshot, dict): return None
+    metrics = snapshot.get("metrics", {})
+    values = []
+    for name in names:
+        item = metrics.get(name) if isinstance(metrics, dict) else None
+        if not isinstance(item, dict) or str(item.get("unit", "")).lower() != "tokens":
+            return None
+        window = str(item.get("window", "")).lower()
+        if accepted_windows and not any(expected in window for expected in accepted_windows):
+            return None
+        value = number(item.get("used"))
+        if value is None: return None
+        values.append(value)
+    return int(sum(values))
+
+def hermes_tokens_today():
+    """Sum input/output tokens for Hermes sessions opened since local midnight."""
+    path = os.path.join(os.path.expanduser("~"), ".hermes", "state.db")
+    if not os.path.isfile(path): return None
+    local_now = dt.datetime.now().astimezone()
+    midnight = local_now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    try:
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=1)
+        try:
+            row = conn.execute(
+                "SELECT SUM(COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)) "
+                "FROM sessions WHERE started_at >= ?", (midnight,)
+            ).fetchone()
+        finally:
+            conn.close()
+        return int(row[0] or 0)
+    except (sqlite3.Error, OSError, TypeError, ValueError):
+        return None
 
 def has_http_429(value):
     if isinstance(value, dict):
@@ -258,6 +296,8 @@ def make_record(pid, label, snap, now):
               "five_hour_left": five_left, "seven_day_left": left_percent(weekly_used),
               "five_hour_reset": reset.isoformat() if reset else None,
               "weekly_reset_short": weekly_reset.astimezone().strftime("%b %-d") if weekly_reset else None,
+              "reset_available": (snap.get("reset_available") if isinstance(snap.get("reset_available"), (str, bool))
+                                  else metrics.get("reset_available") if isinstance(metrics.get("reset_available"), (str, bool)) else None),
               "weekly_reset": weekly_reset.isoformat() if weekly_reset else None}
     return record
 
@@ -303,6 +343,7 @@ else:
 
 now = dt.datetime.now(dt.timezone.utc)
 records = []
+selected_snapshots = {}
 for pid, label in wanted:
     found = None
     for snap in find_snapshots(doc):
@@ -311,7 +352,44 @@ for pid, label in wanted:
                 found = snap
     if pid == "zai" and zai_fallback and (not found or not found.get("resets")):
         found = zai_fallback
-    records.append(make_record(pid, label, found, now) if found else {"label": label, "details": "unavailable", "reset": None, "expiry": None, "percent": None, "remaining": None})
+    selected_snapshots[pid] = found
+    records.append(make_record(pid, label, found, now) if found else {"label": label, "details": "unavailable", "reset": None, "expiry": None, "percent": None, "remaining": None, "reset_available": None})
+
+all_time_fields = {
+    "codex": ("provider_codex_input_tokens", "provider_codex_output_tokens"),
+    "claude_code": ("all_time_input_tokens", "all_time_output_tokens"),
+    "antigravity": ("provider_antigravity_input_tokens", "provider_antigravity_output_tokens"),
+    "pi": ("total_input_tokens", "total_output_tokens"),
+    "hermes": ("provider_hermes_input_tokens", "provider_hermes_output_tokens"),
+}
+all_time_counts = {}
+for pid, fields in all_time_fields.items():
+    amount = token_pair(selected_snapshots.get(pid), fields, ("all-time", "all time"))
+    if amount is not None:
+        all_time_counts[pid] = amount
+
+today_counts = {}
+for pid in ("codex", "claude_code", "antigravity", "pi", "hermes"):
+    snap = selected_snapshots.get(pid)
+    if pid == "hermes":
+        amount = hermes_tokens_today()
+    elif pid == "claude_code":
+        amount = token_pair(snap, ("provider_claude_code_input_tokens", "provider_claude_code_output_tokens"),
+                            ("since midnight", "today"))
+    else:
+        amount = token_pair(snap, ("today_input_tokens", "today_output_tokens"),
+                            ("since midnight", "today"))
+    if amount is not None:
+        today_counts[pid] = amount
+
+token_usage = {
+    "hermes_today": today_counts.get("hermes"),
+    "today_total": sum(today_counts.values()) if today_counts else None,
+    "today_tracked": len(today_counts),
+    "all_time_total": sum(all_time_counts.values()) if all_time_counts else None,
+    "all_time_tracked": len(all_time_counts),
+    "harness_count": 6,
+}
 
 generated = doc.get("generated_at") if isinstance(doc, dict) else None
 updated = parse_time(generated) or now
@@ -346,10 +424,12 @@ for record in records:
 tooltip = "\n".join(tooltip_lines)
 if error: tooltip += f"\nSource: {error}"
 result = {"text": text, "tooltip": tooltip, "state": state, "updated_at": updated.isoformat().replace("+00:00", "Z")}
+result["token_usage"] = token_usage
 result["providers"] = [
     {"id": pid, "label": record["label"], "percent": record["percent"], "remaining": record["remaining"], "details": record["details"],
      "five_hour_left": record.get("five_hour_left"), "seven_day_left": record.get("seven_day_left"),
      "five_hour_reset": record.get("five_hour_reset"),
+     "reset_available": record.get("reset_available"),
      "weekly_reset_short": record.get("weekly_reset_short"), "weekly_reset": record.get("weekly_reset")}
     for (pid, _), record in zip(wanted, records)
 ]

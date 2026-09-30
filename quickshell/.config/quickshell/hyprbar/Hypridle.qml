@@ -1,21 +1,12 @@
 import QtQuick 6.0
 
 // Hypridle timeout and fullscreen-inhibitor status chip.
-Rectangle {
+BarChip {
     id: root
 
-    required property color backgroundColor
-    required property color foregroundColor
-    required property color mutedColor
-    required property color accentColor
-    required property color hoverColor
-    required property var panelWindow
-    property bool tooltipBelow: false
-
-    implicitWidth: 23
-    implicitHeight: 22
-    radius: 0
-    color: hypridleMouse.containsMouse ? root.hoverColor : "transparent"
+    tooltipText: HypridleState.tooltip
+    clickEnabled: HypridleState.available && !HypridleState.busy
+    onClicked: HypridleState.toggle()
 
     Text {
         anchors.centerIn: parent
@@ -26,24 +17,5 @@ Rectangle {
         font.family: "Symbols Nerd Font Mono"
         font.pixelSize: 13
         opacity: HypridleState.busy || (HypridleState.partial && !HypridleState.inhibiting) ? 0.55 : 1.0
-    }
-
-    MouseArea {
-        id: hypridleMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        enabled: HypridleState.available && !HypridleState.busy
-        cursorShape: Qt.PointingHandCursor
-        onClicked: HypridleState.toggle()
-    }
-
-    BarTooltip {
-        panelWindow: root.panelWindow
-        triggerItem: root
-        below: root.tooltipBelow
-        shown: hypridleMouse.containsMouse
-        labelText: HypridleState.tooltip
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
     }
 }

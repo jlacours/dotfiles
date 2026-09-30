@@ -346,7 +346,7 @@ PopupWindow {
 
             Text {
                 width: parent.width
-                text: "left-click bar slot: switch views · right-click: this panel"
+                text: "left-click: refresh · middle-click: expand/compact · right-click: this panel"
                 color: root.mutedColor
                 font.family: "Comic Code"
                 font.pixelSize: 8

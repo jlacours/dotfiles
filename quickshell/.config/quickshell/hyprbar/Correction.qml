@@ -1,21 +1,12 @@
 import QtQuick 6.0
 
 // Dedicated local grammar-correction model status and toggle chip.
-Rectangle {
+BarChip {
     id: root
 
-    required property color backgroundColor
-    required property color foregroundColor
-    required property color mutedColor
-    required property color accentColor
-    required property color hoverColor
-    required property var panelWindow
-    property bool tooltipBelow: false
-
-    implicitWidth: 23
-    implicitHeight: 22
-    radius: 0
-    color: correctionMouse.containsMouse ? root.hoverColor : "transparent"
+    tooltipText: CorrectionState.tooltip
+    clickEnabled: !CorrectionState.working
+    onClicked: CorrectionState.toggle()
 
     Text {
         id: correctionIcon
@@ -42,24 +33,5 @@ Rectangle {
             NumberAnimation { to: 0.88; duration: 240; easing.type: Easing.InOutQuad }
             NumberAnimation { to: 1.0; duration: 240; easing.type: Easing.OutQuad }
         }
-    }
-
-    MouseArea {
-        id: correctionMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        enabled: !CorrectionState.working
-        cursorShape: Qt.PointingHandCursor
-        onClicked: CorrectionState.toggle()
-    }
-
-    BarTooltip {
-        panelWindow: root.panelWindow
-        triggerItem: root
-        below: root.tooltipBelow
-        shown: correctionMouse.containsMouse
-        labelText: CorrectionState.tooltip
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
     }
 }

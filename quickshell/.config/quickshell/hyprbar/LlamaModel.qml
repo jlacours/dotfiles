@@ -1,21 +1,11 @@
 import QtQuick 6.0
 
 // Local llama.cpp model status, identity tooltip, and safe start/stop toggle.
-Rectangle {
+BarChip {
     id: root
 
-    required property color backgroundColor
-    required property color foregroundColor
-    required property color mutedColor
-    required property color accentColor
-    required property color hoverColor
-    required property var panelWindow
-    property bool tooltipBelow: false
-
-    implicitWidth: 23
-    implicitHeight: 22
-    radius: 0
-    color: modelMouse.containsMouse ? root.hoverColor : "transparent"
+    tooltipText: LlamaModelState.tooltip
+    onClicked: LlamaModelState.toggle()
 
     Text {
         id: icon
@@ -35,24 +25,5 @@ Rectangle {
             loops: Animation.Infinite
             running: LlamaModelState.state === "loading"
         }
-    }
-
-    MouseArea {
-        id: modelMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        enabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: LlamaModelState.toggle()
-    }
-
-    BarTooltip {
-        panelWindow: root.panelWindow
-        triggerItem: root
-        below: root.tooltipBelow
-        shown: modelMouse.containsMouse
-        labelText: LlamaModelState.tooltip
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
     }
 }

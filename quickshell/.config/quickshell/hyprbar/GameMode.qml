@@ -1,20 +1,14 @@
 import QtQuick 6.0
 
-Rectangle {
+// Game mode status and toggle chip.
+BarChip {
     id: root
 
-    required property color backgroundColor
-    required property color foregroundColor
-    required property color mutedColor
-    required property color accentColor
-    required property color hoverColor
-    required property var panelWindow
-    property bool tooltipBelow: false
-
-    implicitWidth: 23
-    implicitHeight: 22
-    radius: 0
-    color: gameModeMouse.containsMouse ? root.hoverColor : "transparent"
+    tooltipText: GameModeState.active
+        ? "Game mode on — click to restore services"
+        : "Game mode off — click to pause background services"
+    clickEnabled: !GameModeState.busy
+    onClicked: GameModeState.toggle()
 
     Text {
         anchors.centerIn: parent
@@ -23,26 +17,5 @@ Rectangle {
         font.family: "Symbols Nerd Font Mono"
         font.pixelSize: 13
         opacity: GameModeState.busy ? 0.45 : 1.0
-    }
-
-    MouseArea {
-        id: gameModeMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        enabled: !GameModeState.busy
-        cursorShape: Qt.PointingHandCursor
-        onClicked: GameModeState.toggle()
-    }
-
-    BarTooltip {
-        panelWindow: root.panelWindow
-        triggerItem: root
-        below: root.tooltipBelow
-        shown: gameModeMouse.containsMouse
-        labelText: GameModeState.active
-            ? "Game mode on — click to restore services"
-            : "Game mode off — click to pause background services"
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
     }
 }

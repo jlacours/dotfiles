@@ -43,6 +43,7 @@ PanelWindow {
         color: bar.background
 
         RowLayout {
+            id: leftCluster
             anchors {
                 left: parent.left
                 leftMargin: 7
@@ -132,6 +133,85 @@ PanelWindow {
                 panelWindow: bar
                 tooltipBelow: !bar.isTopMonitor
             }
+
+        }
+
+        // Vitals follow the AI slot, then glide over to the right-hand cluster
+        // while the slot is expanded. Both separators always take space (only
+        // the inward-facing one is shown) so the width stays put mid-slide.
+        // Only the toggle animates; cluster geometry changes (tray icons, workspace
+        // names) move the dock instantly. `atRight` is set after `sliding`, so the
+        // Behavior is already enabled when x changes.
+        Item {
+            id: vitalsDock
+
+            readonly property bool docksRight: UsageSlotState.expanded
+            property bool atRight: false
+            property bool sliding: false
+
+            width: vitalsRow.implicitWidth
+            height: 22
+            anchors.verticalCenter: parent.verticalCenter
+            x: atRight
+                ? rightCluster.x - width - 2
+                : leftCluster.x + leftCluster.width + 2
+
+            Behavior on x {
+                enabled: vitalsDock.sliding
+                NumberAnimation { duration: 420; easing.type: Easing.InOutCubic }
+            }
+
+            SequentialAnimation {
+                id: vitalsFade
+                NumberAnimation { target: vitalsDock; property: "opacity"; to: 0.15; duration: 170; easing.type: Easing.OutQuad }
+                NumberAnimation { target: vitalsDock; property: "opacity"; to: 1; duration: 250; easing.type: Easing.InQuad }
+            }
+
+            Timer {
+                id: slideEnd
+                interval: 440
+                onTriggered: vitalsDock.sliding = false
+            }
+
+            onDocksRightChanged: {
+                sliding = true
+                atRight = docksRight
+                vitalsFade.restart()
+                slideEnd.restart()
+            }
+            Component.onCompleted: atRight = docksRight
+
+            Row {
+                id: vitalsRow
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: 1
+                    implicitHeight: 13
+                    color: bar.border
+                    opacity: vitalsDock.atRight ? 0 : 0.8
+                }
+
+                SystemVitals {
+                    backgroundColor: bar.background
+                    foregroundColor: bar.foreground
+                    mutedColor: bar.muted
+                    accentColor: bar.accent
+                    hoverColor: bar.surfaceHover
+                    panelWindow: bar
+                    tooltipBelow: !bar.isTopMonitor
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: 1
+                    implicitHeight: 13
+                    color: bar.border
+                    opacity: vitalsDock.atRight ? 0.8 : 0
+                }
+            }
         }
 
         Rectangle {
@@ -212,6 +292,7 @@ PanelWindow {
         }
 
         RowLayout {
+            id: rightCluster
             anchors {
                 right: parent.right
                 rightMargin: 7
@@ -223,84 +304,35 @@ PanelWindow {
                 spacing: 2
 
                 GameMode {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 Hypridle {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 Correction {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 Matrix {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 Hermes {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 LlamaModel {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
-                // ExpressVPN status and toggle.
                 ExpressVPN {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
 
                 Tailscale {
-                    backgroundColor: bar.background
-                    foregroundColor: bar.foreground
-                    mutedColor: bar.muted
-                    accentColor: bar.accent
-                    hoverColor: bar.surfaceHover
                     panelWindow: bar
-                    tooltipBelow: !bar.isTopMonitor
                 }
             }
 

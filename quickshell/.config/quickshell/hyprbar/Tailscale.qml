@@ -1,23 +1,18 @@
 import QtQuick 6.0
 
 // Tailscale status and up/down toggle chip.
-Rectangle {
+BarChip {
     id: root
 
-    required property color backgroundColor
-    required property color foregroundColor
-    required property color mutedColor
-    required property color accentColor
-    required property color hoverColor
-    required property var panelWindow
-    property bool tooltipBelow: false
     property bool onlyWhenActive: false
 
     visible: !root.onlyWhenActive || TailscaleState.connected
-    implicitWidth: 23
-    implicitHeight: 22
-    radius: 0
-    color: tailscaleMouse.containsMouse ? root.hoverColor : "transparent"
+    tooltipText: !TailscaleState.available
+        ? TailscaleState.tooltip
+        : TailscaleState.tooltip + "\nClick to "
+            + (TailscaleState.connected ? "disconnect" : "connect")
+    clickEnabled: root.visible && TailscaleState.available && !TailscaleState.busy
+    onClicked: TailscaleState.toggle()
 
     Item {
         anchors.centerIn: parent
@@ -45,27 +40,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-    MouseArea {
-        id: tailscaleMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        enabled: root.visible && TailscaleState.available && !TailscaleState.busy
-        cursorShape: Qt.PointingHandCursor
-        onClicked: TailscaleState.toggle()
-    }
-
-    BarTooltip {
-        panelWindow: root.panelWindow
-        triggerItem: root
-        below: root.tooltipBelow
-        shown: tailscaleMouse.containsMouse
-        labelText: !TailscaleState.available
-            ? TailscaleState.tooltip
-            : TailscaleState.tooltip + "\nClick to "
-                + (TailscaleState.connected ? "disconnect" : "connect")
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
     }
 }

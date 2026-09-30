@@ -1,24 +1,14 @@
 import QtQuick 6.0
 
 // Hermes gateway plus Signal transport status and toggle.
-Rectangle {
+BarChip {
     id: root
 
-    required property color backgroundColor
-    required property color foregroundColor
-    required property color mutedColor
-    required property color accentColor
-    required property color hoverColor
-    required property var panelWindow
-    property bool tooltipBelow: false
-
-    implicitWidth: 23
-    implicitHeight: 22
-    radius: 0
-    color: hermesMouse.containsMouse ? root.hoverColor : "transparent"
+    tooltipText: HermesState.tooltip
+    clickEnabled: HermesState.available && !HermesState.busy
+    onClicked: HermesState.toggle()
 
     Text {
-        id: icon
         anchors.centerIn: parent
         text: "☤"
         color: HermesState.active || HermesState.state === "partial"
@@ -33,24 +23,5 @@ Rectangle {
             NumberAnimation { to: 0.35; duration: 450 }
             NumberAnimation { to: 1.0; duration: 450 }
         }
-    }
-
-    MouseArea {
-        id: hermesMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        enabled: HermesState.available && !HermesState.busy
-        cursorShape: Qt.PointingHandCursor
-        onClicked: HermesState.toggle()
-    }
-
-    BarTooltip {
-        panelWindow: root.panelWindow
-        triggerItem: root
-        below: root.tooltipBelow
-        shown: hermesMouse.containsMouse
-        labelText: HermesState.tooltip
-        backgroundColor: root.backgroundColor
-        foregroundColor: root.foregroundColor
     }
 }

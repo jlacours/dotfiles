@@ -3,6 +3,8 @@ import QtQuick.Effects
 
 // A single fixed-width badge cycles through the providers represented by the
 // ai-usage snapshot. Hover shows only the current provider's primary reading.
+// Middle-click expands to every provider side by side (and back); the tooltip
+// then follows the provider under the pointer.
 Rectangle {
     id: root
 
@@ -27,6 +29,18 @@ Rectangle {
     readonly property var currentInfo: providers[providerIndex]
     readonly property var currentProvider: currentInfo
         ? AiUsageState.providerFor(currentInfo.id) : null
+    readonly property var hoveredInfo: {
+        if (!UsageSlotState.expanded || !slotMouse.containsMouse)
+            return null
+        const item = expandedRow.childAt(slotMouse.mouseX - expandedRow.x, expandedRow.height / 2)
+        return item && item.modelData ? item.modelData : null
+    }
+    // Gaps between icons keep the last provider so the tooltip neither blanks
+    // nor flickers, and its provider never flips to null mid-fade.
+    property var lastHoveredInfo: null
+    onHoveredInfoChanged: if (hoveredInfo) lastHoveredInfo = hoveredInfo
+    readonly property var tooltipInfo: UsageSlotState.expanded
+        ? (lastHoveredInfo || currentInfo) : currentInfo
 
     function formatLeft(value) {
         if (value === undefined || value === null || String(value).length === 0)
@@ -42,10 +56,22 @@ Rectangle {
         if (!provider)
             return "—"
 
+        if (provider.id === "hermes") {
+            const rawTokens = AiUsageState.tokenUsage.hermes_today
+            const tokens = rawTokens === null || rawTokens === undefined ? NaN : Number(rawTokens)
+            if (!isFinite(tokens))
+                return "?"
+            return tokens >= 1000000
+                ? (tokens / 1000000).toFixed(1) + "M"
+                : tokens >= 1000 ? Math.round(tokens / 1000) + "K" : String(Math.round(tokens))
+        }
+
         if (provider.id === "openrouter") {
             const amount = provider.remaining === null || provider.remaining === undefined
                 ? NaN : Number(provider.remaining)
-            return isFinite(amount) ? "$" + amount.toFixed(2) : "?"
+            if (!isFinite(amount))
+                return "?"
+            return "$" + (amount >= 100 ? Math.round(amount) : amount.toFixed(2))
         }
 
         if (provider.five_hour_left !== null && provider.five_hour_left !== undefined)
@@ -68,12 +94,21 @@ Rectangle {
         return "?"
     }
 
-    implicitWidth: 116
+    function secondaryValue(provider) {
+        if (!provider || provider.seven_day_left === null || provider.seven_day_left === undefined)
+            return ""
+        return "7d " + formatLeft(provider.seven_day_left)
+            + "  " + String(provider.weekly_reset_short || "?")
+    }
+
+    implicitWidth: UsageSlotState.expanded ? expandedRow.implicitWidth + 12 : 116
     implicitHeight: 22
     radius: 0
     color: slotMouse.containsMouse ? root.hoverColor : "transparent"
 
     Row {
+        id: compactRow
+        visible: !UsageSlotState.expanded
         anchors {
             left: parent.left
             leftMargin: 6
@@ -117,9 +152,11 @@ Rectangle {
             }
         }
 
+        // The label yields space to the value so a balance like "$82.13" is
+        // never elided; the badge itself keeps its fixed width.
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            width: 43
+            width: compactRow.width - 14 - valueText.implicitWidth - 2 * compactRow.spacing
             text: root.currentInfo ? root.currentInfo.shortLabel : "AI"
             color: root.foregroundColor
             font.family: "Comic Code"
@@ -129,14 +166,92 @@ Rectangle {
         }
 
         Text {
+            id: valueText
             anchors.verticalCenter: parent.verticalCenter
-            width: 34
             text: root.primaryValue(root.currentProvider)
             color: text === "?" || text === "—" ? root.mutedColor : root.accentColor
             font.family: "Comic Code"
             font.pixelSize: 10
-            horizontalAlignment: Text.AlignRight
-            elide: Text.ElideRight
+        }
+    }
+
+    Row {
+        id: expandedRow
+        visible: UsageSlotState.expanded
+        anchors.left: parent.left
+        anchors.leftMargin: 6
+        anchors.verticalCenter: parent.verticalCenter
+        height: parent.height
+        spacing: 7
+
+        Repeater {
+            model: root.providers
+
+            delegate: Item {
+                required property var modelData
+                readonly property var provider: AiUsageState.providerFor(modelData.id)
+                width: provider ? providerRow.implicitWidth : 0
+                height: 22
+                visible: provider !== null
+
+                Row {
+                    id: providerRow
+                    height: parent.height
+                    spacing: 2
+
+                    Item {
+                        width: 13
+                        height: parent.height
+
+                        Image {
+                            // Integer y avoids half-pixel softness: (22 - 13) / 2 -> 5.
+                            y: Math.round((parent.height - height) / 2)
+                            width: 13
+                            height: 13
+                            source: modelData.source.length > 0 ? Qt.resolvedUrl(modelData.source) : ""
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectFit
+                            visible: modelData.source.length > 0
+
+                            layer.enabled: visible
+                            layer.effect: MultiEffect {
+                                colorization: 1.0
+                                colorizationColor: root.foregroundColor
+                            }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: modelData.source.length === 0
+                            text: modelData.label.slice(0, 1)
+                            color: root.foregroundColor
+                            font.family: "Comic Code"
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: -1
+
+                        Text {
+                            text: root.primaryValue(provider)
+                            color: text === "?" || text === "—" ? root.mutedColor : root.foregroundColor
+                            font.family: "Comic Code"
+                            font.pixelSize: 11
+                        }
+
+                        Text {
+                            visible: text.length > 0
+                            text: root.secondaryValue(provider)
+                            color: root.mutedColor
+                            font.family: "Comic Code"
+                            font.pixelSize: 8
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -144,11 +259,13 @@ Rectangle {
         id: slotMouse
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
         onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton)
                 aiPanel.shown = !aiPanel.shown
+            else if (mouse.button === Qt.MiddleButton)
+                UsageSlotState.toggle()
             else
                 AiUsageState.refresh()
         }
@@ -156,7 +273,7 @@ Rectangle {
 
     Timer {
         interval: 4500
-        running: root.providers.length > 1
+        running: !UsageSlotState.expanded && root.providers.length > 1
         repeat: true
         onTriggered: root.providerIndex = (root.providerIndex + 1) % root.providers.length
     }
@@ -177,8 +294,8 @@ Rectangle {
         triggerItem: root
         below: root.tooltipBelow
         shown: slotMouse.containsMouse
-        provider: root.currentProvider
-        providerInfo: root.currentInfo
+        provider: root.tooltipInfo ? AiUsageState.providerFor(root.tooltipInfo.id) : null
+        providerInfo: root.tooltipInfo
         backgroundColor: root.backgroundColor
         foregroundColor: root.foregroundColor
         mutedColor: root.mutedColor
