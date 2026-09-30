@@ -82,15 +82,6 @@ def autostart():
     ])
 
 
-def get_governor():
-    try:
-        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
-            gov = f.read().strip()
-        return "PERF" if gov == "performance" else "PWR"
-    except:
-        return "?"
-
-
 keys = [
     # Navigation (Vim + arrows). mod+space stays unbound: it belongs to the
     # XKB layout toggle (grp:win_space_toggle).
@@ -352,10 +343,6 @@ def init_widgets_list():
     ]
 
 
-def init_secondary_widgets_list():
-    """Create fresh widget instances for the second output."""
-    return init_widgets_list()
-
 screens = [
     # Screen 0: right native-resolution 1080p monitor.
     Screen(
@@ -368,7 +355,7 @@ screens = [
     # Screen 1: left 4K monitor at 1.5x scale.
     Screen(
         top=bar.Bar(
-            init_secondary_widgets_list(),
+            init_widgets_list(),
             size=BAR_HEIGHT_4K,
             background=bar_colors["background"],
         ),
