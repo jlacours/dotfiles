@@ -8,6 +8,13 @@ honours [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
 - **MINOR** — new packages or user-visible features.
 - **PATCH** — fixes, small tweaks, lockfile bumps.
 
+## [2.1.2] - 2026-09-30
+
+### Changed
+- **quickshell** OpenRouter now precedes Pi and Hermes in the AI slot, and the
+  expanded view stacks Pi and Hermes into one two-line cell; the tooltip picks
+  the line under the pointer.
+
 ## [2.1.1] - 2026-09-30
 
 ### Fixed
