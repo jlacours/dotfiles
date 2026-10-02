@@ -50,8 +50,13 @@ STATE_ROOT="${XDG_STATE_HOME:-${HOME}/.local/state}"
 STATE_DIR="${STATE_ROOT}/away-mode"
 STATE_FILE="${STATE_DIR}/state.json"
 LOCK_FILE="${STATE_DIR}/lock"
-RGB_PROFILE_BASE="${STATE_DIR}/openrgb-before-away"
-RGB_PROFILE="${RGB_PROFILE_BASE}.orp"
+# OpenRGB 1.0 ignores absolute paths for --save-profile and flattens them into
+# its own profiles directory, so save/restore by bare profile name and verify
+# the resulting file ourselves. Its --profile also exits 0 for missing files,
+# so existence must be checked before trusting a "successful" load.
+OPENRGB_PROFILE_NAME="openrgb-before-away"
+OPENRGB_PROFILES_DIR="${XDG_CONFIG_HOME:-${HOME}/.config}/OpenRGB/profiles"
+OPENRGB_PROFILE_FILE="${OPENRGB_PROFILES_DIR}/${OPENRGB_PROFILE_NAME}.json"
 SUSPEND_STATE_FILE="${STATE_ROOT}/hypridle-suspend-disabled"
 
 errors=()
@@ -185,9 +190,9 @@ save_rgb_profile() {
   rgb_saved=false
   command -v openrgb >/dev/null 2>&1 || return 0
 
-  rm -f "${RGB_PROFILE}" "${RGB_PROFILE}.orp"
-  if timeout 30s openrgb --save-profile "${RGB_PROFILE_BASE}" --noautoconnect \
-      >/dev/null 2>&1 && [[ -s "${RGB_PROFILE}" ]]; then
+  rm -f "${OPENRGB_PROFILE_FILE}"
+  if timeout 30s openrgb --save-profile "${OPENRGB_PROFILE_NAME}" --noautoconnect \
+      >/dev/null 2>&1 && [[ -s "${OPENRGB_PROFILE_FILE}" ]]; then
     rgb_saved=true
   else
     error "could not save the OpenRGB profile"
@@ -231,12 +236,12 @@ write_active_state() {
     --argjson restoreProcesses "${process_json}" \
     --argjson suspendWasDisabled "${suspend_was_disabled}" \
     --argjson rgbProfileSaved "${rgb_saved}" \
-    --arg rgbProfile "${RGB_PROFILE}" \
+    --arg openrgbProfileName "${OPENRGB_PROFILE_NAME}" \
     --argjson errors "${current_errors}" \
     '{active: $active, phase: $phase, startedAt: $startedAt,
       restoreUnits: $restoreUnits, restoreProcesses: $restoreProcesses,
       suspendWasDisabled: $suspendWasDisabled,
-      rgbProfileSaved: $rgbProfileSaved, rgbProfile: $rgbProfile,
+      rgbProfileSaved: $rgbProfileSaved, openrgbProfileName: $openrgbProfileName,
       errors: $errors}' > "${temp_file}" || {
         rm -f "${temp_file}"
         return 1
@@ -501,8 +506,8 @@ away_mode_off() {
     start_restore_unit hyprpaper-slideshow.timer
   fi
 
-  if [[ "${rgb_profile_saved}" == "true" && -s "${RGB_PROFILE}" ]]; then
-    if ! timeout 30s openrgb --profile "${RGB_PROFILE}" --noautoconnect >/dev/null 2>&1; then
+  if [[ "${rgb_profile_saved}" == "true" && -s "${OPENRGB_PROFILE_FILE}" ]]; then
+    if ! timeout 30s openrgb --profile "${OPENRGB_PROFILE_NAME}" --noautoconnect >/dev/null 2>&1; then
       error "failed to restore the OpenRGB profile"
     fi
   fi
