@@ -29,27 +29,44 @@ server_pids() {
 
 status() {
     local health_response health_code health models model context params state tooltip health_status
+    local router="" router_loading="" label="Local model"
     health_response="$("${CURL}" -sS --max-time 2 -w $'\n%{http_code}' "${ENDPOINT}/health" 2>/dev/null)" || health_response=""
     health_code="${health_response##*$'\n'}"
     health="${health_response%$'\n'*}"
     models="$("${CURL}" -fsS --max-time 2 "${ENDPOINT}/v1/models" 2>/dev/null)" || models=""
     if [[ -n "${models}" ]]; then
-        model="$("${JQ}" -r '.data[0].id // empty' <<<"${models}" 2>/dev/null)"
-        context="$("${JQ}" -r '.data[0].meta.n_ctx // .data[0].meta.n_ctx_train // empty' <<<"${models}" 2>/dev/null)"
-        params="$("${JQ}" -r '.data[0].meta.n_params // empty | if . == "" then empty else ((tonumber / 1000000000 * 10 | round) / 10 | tostring) + "B" end' <<<"${models}" 2>/dev/null)"
+        # Router mode lists every preset with a load status; single-model
+        # server mode lists one entry without one. Report the loaded model.
+        # shellcheck disable=SC2016
+        local pick='[.data[]? | select((.status.value // "loaded") == "loaded")][0]'
+        model="$("${JQ}" -r "${pick}.id // empty" <<<"${models}" 2>/dev/null)"
+        context="$("${JQ}" -r "${pick}.meta | .n_ctx // .n_ctx_train // empty" <<<"${models}" 2>/dev/null)"
+        params="$("${JQ}" -r "${pick}.meta.n_params // empty | if . == \"\" then empty else ((tonumber / 1000000000 * 10 | round) / 10 | tostring) + \"B\" end" <<<"${models}" 2>/dev/null)"
+        router="$("${JQ}" -r 'if any(.data[]?; .status != null) then "yes" else empty end' <<<"${models}" 2>/dev/null)"
+        router_loading="$("${JQ}" -r '[.data[]? | select(.status.value == "loading")][0].id // empty' <<<"${models}" 2>/dev/null)"
     else
         model=""
         context=""
         params=""
     fi
+    [[ -n "${router}" ]] && label="Local router"
 
     health_status="$("${JQ}" -r '.status // empty' <<<"${health}" 2>/dev/null)"
 
     if [[ "${health_code}" == "200" && "${health_status}" == "ok" && -n "${model}" ]]; then
         state="on"
-        tooltip="Local model ON • ${model}"
+        tooltip="${label} ON • ${model}"
         [[ -n "${context}" ]] && tooltip+=" • ctx ${context}"
         [[ -n "${params}" ]] && tooltip+=" • ${params} params"
+        tooltip+=$'\nEndpoint: '"${ENDPOINT}"$' • click to stop'
+    elif [[ "${health_code}" == "200" && -n "${router_loading}" ]]; then
+        model="${router_loading}"
+        state="loading"
+        tooltip="${label} loading • ${model}"$'\nEndpoint: '"${ENDPOINT}"
+    elif [[ "${health_code}" == "200" && -n "${router}" ]]; then
+        model=""
+        state="on"
+        tooltip="${label} ON • no model loaded (loads on first request)"
         tooltip+=$'\nEndpoint: '"${ENDPOINT}"$' • click to stop'
     elif [[ -n "$(server_pids)" ]]; then
         model="${DEFAULT_MODEL}"
