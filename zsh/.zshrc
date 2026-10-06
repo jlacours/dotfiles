@@ -515,8 +515,11 @@ function llm-approve() {
 export PATH="$HOME/bin:$PATH"
 
 # >>> Codex installer >>>
-# Pre-seeded (portable form) so the Codex CLI installer/updater sees its
-# marker block and skips its PATH append. Redundant with path_prepend above;
-# kept only to keep the installer from re-adding a hard-coded variant.
+# Pre-seeded so the Codex CLI installer/updater leaves this file alone. It runs
+# `grep -F` for its literal line below; on a miss it rewrites the block via
+# temp file + mv, which replaces the Stow symlink with a regular file. The
+# commented sentinel satisfies that grep; the portable export does the work
+# (and is redundant with path_prepend above).
+# export PATH="/home/juju/.local/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 # <<< Codex installer <<<
