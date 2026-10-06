@@ -170,7 +170,7 @@ border, and shadow while leaving the application's own styling intact.
 
 The `mcp-services` package provides local-only HTTP/SSE wrappers for the memory,
 time, and Exa web-search MCP servers, plus switchable local Laya/OpenRouter Jev
-judgment wrappers and an optional dormant Friend bridge. Exa's API key stays in
+judgment wrappers. Exa's API key stays in
 the machine-local `~/.zshenv.local`; the service passes only that variable to
 the pinned Exa server process. The wrappers bind
 only to `127.0.0.1`, which is the exposure boundary. The user units also request
@@ -207,10 +207,6 @@ The judgment wrappers expect the shared source workspace at
 `~/.local/bin/laya-jev-judge --backend laya` for the private local judge or
 `--backend jev` for an explicit OpenRouter Jev request. The MCP equivalent is
 `~/.local/bin/laya-jev-mcp`; neither wrapper changes backend implicitly.
-
-The Friend bridge is not started by `mcp-llama.target`. It remains dormant
-unless its external bridge script and function directory are installed at the
-paths declared in `mcp-bridge-friend.service`.
 
 Install a subset by naming packages:
 
@@ -494,7 +490,7 @@ Every application follows the same template: a top-level package mirrors its des
 | **fuzzel** | Fast native Wayland application launcher and dmenu-compatible picker with a compact square theme |
 | **hyprland** | Active Lua-backed Hyprland session with Hyprpaper (a two-image 30-minute slideshow), hypridle (with a fullscreen-aware idle inhibitor), keybindings, game and remotely reachable away modes, and compositor helpers |
 | **mako** | Notification daemon launched by the qtile session |
-| **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools and an optional dormant Friend bridge |
+| **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
 | **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge (middle-click expands it to every provider) with a single-provider quota/token tooltip, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, runtime jobs/findings indicator, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
