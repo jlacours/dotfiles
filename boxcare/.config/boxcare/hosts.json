@@ -77,23 +77,6 @@
       ],
       "allowed_tcp_listeners": [],
       "allowed_udp_listeners": []
-    },
-    {
-      "id": "vps",
-      "label": "VPS",
-      "ssh_alias": "vps",
-      "distro": "auto",
-      "tags": [
-        "server",
-        "remote",
-        "debian"
-      ],
-      "enabled": true,
-      "expected_mounts": [
-        "/"
-      ],
-      "allowed_tcp_listeners": [],
-      "allowed_udp_listeners": []
     }
   ]
 }

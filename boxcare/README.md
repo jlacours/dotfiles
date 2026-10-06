@@ -66,7 +66,7 @@ selection.
 Select one or more hosts or tags by repeating the option:
 
 ```bash
-boxcare audit --host pi5 --host vps
+boxcare audit --host pi5 --host pi3
 boxcare audit --tag pi
 boxcare update --dry-run --tag server
 boxcare audit --jobs 2

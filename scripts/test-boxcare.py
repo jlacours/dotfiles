@@ -157,7 +157,7 @@ class InventoryTests(BoxcareTestCase):
         self.assertEqual(inventory["defaults"]["jobs_update"], 1)
 
         hosts = {host["id"]: host for host in inventory["hosts"]}
-        self.assertEqual(set(hosts), {"ordijul", "pixel", "pi5", "pi3", "vps"})
+        self.assertEqual(set(hosts), {"ordijul", "pixel", "pi5", "pi3"})
         self.assertEqual(hosts["ordijul"]["ssh_alias"], "local")
         self.assertFalse(hosts["pixel"]["enabled"])
         self.assertTrue(all(host["distro"] == "auto" for host in hosts.values()))
