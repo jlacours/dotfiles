@@ -307,6 +307,10 @@ PanelWindow {
                     panelWindow: bar
                 }
 
+                Todo {
+                    panelWindow: bar
+                }
+
                 GameMode {
                     panelWindow: bar
                 }
