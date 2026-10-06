@@ -129,7 +129,7 @@ PopupWindow {
                 Text {
                     id: headerLabel
                     text: "AI USAGE"
-                    color: root.accentColor
+                    color: root.foregroundColor
                     font.family: "Comic Code"
                     font.pixelSize: 11
                     font.weight: Font.DemiBold
@@ -140,7 +140,7 @@ PopupWindow {
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.updatedLabel()
-                    color: root.mutedColor
+                    color: root.foregroundColor
                     font.family: "Comic Code"
                     font.pixelSize: 9
                 }
@@ -150,7 +150,7 @@ PopupWindow {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     text: "×"
-                    color: root.mutedColor
+                    color: root.foregroundColor
                     font.family: "Comic Code"
                     font.pixelSize: 12
 
@@ -244,18 +244,7 @@ PopupWindow {
                                         ? "unavailable" : "no quota data"
                                 return root.fmtPercent(provider.five_hour_left) + " left"
                             }
-                            color: {
-                                const provider = providerBlock.provider
-                                if (provider === null)
-                                    return root.mutedColor
-                                if (providerBlock.isCredit)
-                                    return provider.remaining != null
-                                        ? root.foregroundColor : root.mutedColor
-                                if (provider.five_hour_left == null)
-                                    return root.mutedColor
-                                return provider.five_hour_left < 10
-                                    ? root.urgent : root.foregroundColor
-                            }
+                            color: root.foregroundColor
                             font.family: "Comic Code"
                             font.pixelSize: 10
                         }
@@ -300,7 +289,7 @@ PopupWindow {
                                     anchors.left: parent.left
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: meterRow.modelData.label
-                                    color: root.mutedColor
+                                    color: root.foregroundColor
                                     font.family: "Comic Code"
                                     font.pixelSize: 8
                                 }
@@ -334,7 +323,7 @@ PopupWindow {
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: meterRow.countdown
-                                    color: root.mutedColor
+                                    color: root.foregroundColor
                                     font.family: "Comic Code"
                                     font.pixelSize: 8
                                 }
@@ -347,7 +336,7 @@ PopupWindow {
             Text {
                 width: parent.width
                 text: "left-click: refresh · middle-click: expand/compact · right-click: this panel"
-                color: root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 8
             }
