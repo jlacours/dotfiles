@@ -1,3 +1,10 @@
+{#- Mode-aware helpers: `light` is true when the background is bright.
+    lift() moves away from the background's darkness (lighten on dark
+    schemes, darken on light ones); sink() is its inverse. Dark schemes
+    render exactly as plain lighten/darken did. -#}
+{%- set light = ((background | red | int) * 299 + (background | green | int) * 587 + (background | blue | int) * 114) > 140000 -%}
+{%- macro lift(c, a) -%}{% if light %}{{ c | darken(a) }}{% else %}{{ c | lighten(a) }}{% endif %}{%- endmacro -%}
+{%- macro sink(c, a) -%}{% if light %}{{ c | lighten(a) }}{% else %}{{ c | darken(a) }}{% endif %}{%- endmacro -%}
 (deftheme juju
   "Wallust-generated Emacs theme.")
 
@@ -48,7 +55,7 @@
  '(fringe ((t (:background "{{background}}"))))
  '(header-line ((t (:foreground "{{color15}}" :background "{{color0}}"))))
  '(tooltip ((((class color)) (:inherit (variable-pitch) :foreground "black" :background "lightyellow")) (t (:inherit (variable-pitch)))))
- '(mode-line ((t (:foreground "{{foreground}}" :background "{{background | lighten(0.1)}}"))))
+ '(mode-line ((t (:foreground "{{foreground}}" :background "{{ lift(background, 0.1) }}"))))
  '(mode-line-buffer-id ((t (:weight bold))))
  '(mode-line-emphasis ((t (:weight bold))))
  '(mode-line-highlight ((((supports :box t) (class color grayscale) (min-colors 88)) (:box (:line-width (2 . 2) :color "grey40" :style released-button))) (t (:inherit (highlight)))))
@@ -57,9 +64,9 @@
  '(isearch-fail ((((class color) (min-colors 88) (background light)) (:background "RosyBrown1")) (((class color) (min-colors 88) (background dark)) (:background "red4")) (((class color) (min-colors 16)) (:background "red")) (((class color) (min-colors 8)) (:background "red")) (((class color grayscale)) (:foreground "grey")) (t (:inverse-video t))))
  '(lazy-highlight ((t (:foreground "{{color7}}" :background "{{color8}}"))))
  '(match ((((class color) (min-colors 88) (background light)) (:background "khaki1")) (((class color) (min-colors 88) (background dark)) (:background "RoyalBlue3")) (((class color) (min-colors 8) (background light)) (:foreground "black" :background "yellow")) (((class color) (min-colors 8) (background dark)) (:foreground "white" :background "blue")) (((type tty) (class mono)) (:inverse-video t)) (t (:background "gray"))))
- '(hl-line ((t (:background "{{background | lighten(0.1)}}" :extend t))))
+ '(hl-line ((t (:background "{{ lift(background, 0.1) }}" :extend t))))
  '(line-number ((t (:foreground "{{color8}}" :background "{{background}}"))))
- '(line-number-current-line ((t (:foreground "{{foreground}}" :background "{{background | lighten(0.1)}}" :weight bold))))
+ '(line-number-current-line ((t (:foreground "{{foreground}}" :background "{{ lift(background, 0.1) }}" :weight bold))))
  '(next-error ((t (:inherit (region)))))
  '(query-replace ((t (:inherit (isearch))))))
 

@@ -353,8 +353,12 @@ Hyprland package:
 systemctl --user enable --now hyprpaper-slideshow.timer
 ```
 
-Wallust's desktop hook pulses the maintained `adw-gtk3-dark` base theme after
-regenerating GTK CSS, which hot-reloads native dialogs in already-running apps.
+Wallust's desktop hook reads the background of the regenerated GTK CSS and
+switches `color-scheme`, the `adw-gtk3` base theme, Papirus icons, and the GTK
+`settings.ini` files to the matching light or dark variant. Pulsing the base
+theme hot-reloads native dialogs in already-running apps. Templates derive the
+same light/dark flag from the background, so light schemes such as the cream
+`juju-aubade` (`wallust cs juju-aubade`) need no extra step.
 The calibrated desktop palette can be restored independently with
 `wallust theme Tokyo-Night --skip-sequences`.
 
@@ -362,7 +366,9 @@ Fuzzel reads its colors from Wallust's generated cache, so apply one palette
 once after a fresh install with `wallust run <wallpaper> --skip-sequences` or
 `wallust theme <name> --skip-sequences` before launching a menu.
 
-Enable the generated-file watcher once after Stowing the Wallust package:
+Enable the generated-file watcher once after Stowing the Wallust package. It
+is wanted by `default.target` because the Hyprland session never reaches
+`graphical-session.target`:
 
 ```bash
 systemctl --user enable --now wallust-refresh-desktop.path

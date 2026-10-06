@@ -1,5 +1,12 @@
+{#- Mode-aware helpers: `light` is true when the background is bright.
+    lift() moves away from the background's darkness (lighten on dark
+    schemes, darken on light ones); sink() is its inverse. Dark schemes
+    render exactly as plain lighten/darken did. -#}
+{%- set light = ((background | red | int) * 299 + (background | green | int) * 587 + (background | blue | int) * 114) > 140000 -%}
+{%- macro lift(c, a) -%}{% if light %}{{ c | darken(a) }}{% else %}{{ c | lighten(a) }}{% endif %}{%- endmacro -%}
+{%- macro sink(c, a) -%}{% if light %}{{ c | lighten(a) }}{% else %}{{ c | darken(a) }}{% endif %}{%- endmacro -%}
 $bg:  {{background}};
-$bg-light: {{background | lighten(0.2)}};
+$bg-light: {{ lift(background, 0.2) }};
 $fg:  {{foreground}};
 $c0:  {{color0}};
 $c1:  {{color1}};

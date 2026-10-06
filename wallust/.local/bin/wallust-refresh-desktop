@@ -2,14 +2,42 @@
 # Refresh desktop components that do not watch Wallust outputs themselves.
 set -u
 
+# Pick dark or light from the background of the gtk.css that triggered this run,
+# so light schemes are not forced back onto a dark base theme.
+mode=dark
+bg=$(sed -n 's/^@define-color theme_bg *#\([0-9A-Fa-f]\{6\}\).*/\1/p' "$HOME/.config/gtk-3.0/gtk.css" 2>/dev/null | head -n 1)
+if [[ $bg =~ ^[0-9A-Fa-f]{6}$ ]] &&
+    (( 16#${bg:0:2} * 299 + 16#${bg:2:2} * 587 + 16#${bg:4:2} * 114 > 140000 )); then
+    mode=light
+fi
+if [[ $mode == light ]]; then
+    scheme=prefer-light gtk3=adw-gtk3 other=adw-gtk3-dark gtk4=Adwaita icons=Papirus prefer_dark=0
+else
+    scheme=prefer-dark gtk3=adw-gtk3-dark other=adw-gtk3 gtk4=Adwaita-dark icons=Papirus-Dark prefer_dark=1
+fi
+printf '%s\n' "$mode" > "$HOME/.cache/wallust-current-mode"
+
+# settings.ini is the fallback for clients that do not read gsettings; it also
+# carries prefer-dark, which gsettings has no key for.
+for ini in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
+    [[ -f $ini ]] || continue
+    theme=$gtk3
+    [[ $ini == */gtk-4.0/* ]] && theme=$gtk4
+    sed -i -e "s/^gtk-theme-name=.*/gtk-theme-name=$theme/" \
+        -e "s/^gtk-icon-theme-name=.*/gtk-icon-theme-name=$icons/" \
+        -e "s/^gtk-application-prefer-dark-theme=.*/gtk-application-prefer-dark-theme=$prefer_dark/" "$ini"
+done
+
 # GTK only reads its user CSS when the process starts or its base theme changes.
 # Pulse between the installed adw-gtk3 variants so already-running GTK3 clients
 # (including LibreWolf's native file chooser) reparse Wallust's freshly generated
-# gtk.css, then leave the session on the maintained dark base theme.
+# gtk.css, then settle on the base theme matching the palette. color-scheme
+# reaches libadwaita apps and browsers through the settings portal.
 if command -v gsettings >/dev/null 2>&1; then
-    gsettings set org.gnome.desktop.interface color-scheme prefer-dark >/dev/null 2>&1 || true
-    gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3 >/dev/null 2>&1 || true
-    gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark >/dev/null 2>&1 || true
+    gsettings set org.gnome.desktop.interface color-scheme "$scheme" >/dev/null 2>&1 || true
+    gsettings set org.gnome.desktop.interface icon-theme "$icons" >/dev/null 2>&1 || true
+    gsettings set org.gnome.desktop.interface gtk-theme "$other" >/dev/null 2>&1 || true
+    gsettings set org.gnome.desktop.interface gtk-theme "$gtk3" >/dev/null 2>&1 || true
 fi
 
 if pgrep -x qtile >/dev/null 2>&1; then

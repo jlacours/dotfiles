@@ -1,10 +1,7 @@
 vim.o.termguicolors = true
-local mode_file = vim.fn.expand("~/.cache/wallust-current-mode")
-local mode = "dark"
-if vim.fn.filereadable(mode_file) == 1 then
-  mode = vim.trim(table.concat(vim.fn.readfile(mode_file), "\n"))
-end
-vim.o.background = mode == "light" and "light" or "dark"
+-- Derived from the background's luminance when wallust renders this file.
+local mode = "{{ 'light' if ((background | red | int) * 299 + (background | green | int) * 587 + (background | blue | int) * 114) > 140000 else 'dark' }}"
+vim.o.background = mode
 vim.cmd("highlight clear")
 if vim.fn.exists("syntax_on") == 1 then
   vim.cmd("syntax reset")
@@ -57,7 +54,7 @@ hl("LineNr",      { fg = C.color8 })
 hl("CursorLineNr",{ fg = C.color5, bg = cursorline, bold = true })
 hl("StatusLine",  { fg = fg, bg = C.color0 })
 hl("StatusLineNC",{ fg = C.color8, bg = C.color0 })
-hl("TabLineSel",  { fg = C.color15, bg = C.color5 })
+hl("TabLineSel",  { fg = bg, bg = C.color5 })
 hl("TabLine",     { fg = fg, bg = C.color0 })
 hl("Whitespace",   { fg = C.color8 })
 
@@ -74,7 +71,7 @@ hl("Todo",        { fg = C.color11, bg = C.color8 })
 
 -- Floating windows and popups
 hl("Pmenu",       { fg = fg, bg = C.color0 })
-hl("PmenuSel",    { fg = C.color15, bg = C.color5 })
+hl("PmenuSel",    { fg = bg, bg = C.color5 })
 hl("FloatBorder", { fg = C.color4, bg = C.color0 })
 hl("NormalFloat", { fg = fg, bg = C.color0 })
 
@@ -98,7 +95,7 @@ hl("Bold",         { bold = true })
 hl("Italic",       { italic = true })
 hl("Title",        { fg = C.color4, bold = true })
 hl("Conceal",      { fg = C.color8 })
-hl("LazyH1",      { fg = C.color15, bg = C.color4, bold = true })
+hl("LazyH1",      { fg = bg, bg = C.color4, bold = true })
 hl("LazyH2",      { fg = C.color4, bold = true })
 hl("LazyDimmed",  { fg = C.color8 })
 hl("LazyProp",    { fg = C.color8 })

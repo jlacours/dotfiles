@@ -13,7 +13,7 @@ auto_switch = false
 # Setting panel_bg to the wallust background (the same color foot uses, opaque)
 # makes that text the real background color, and it follows theme changes.
 [theme.custom]
-panel_bg = "#121019"
+panel_bg = "#E4D9BA"
 
 [terminal]
 new_cwd = "follow"

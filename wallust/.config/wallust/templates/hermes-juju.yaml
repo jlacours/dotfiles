@@ -1,3 +1,10 @@
+{#- Mode-aware helpers: `light` is true when the background is bright.
+    lift() moves away from the background's darkness (lighten on dark
+    schemes, darken on light ones); sink() is its inverse. Dark schemes
+    render exactly as plain lighten/darken did. -#}
+{%- set light = ((background | red | int) * 299 + (background | green | int) * 587 + (background | blue | int) * 114) > 140000 -%}
+{%- macro lift(c, a) -%}{% if light %}{{ c | darken(a) }}{% else %}{{ c | lighten(a) }}{% endif %}{%- endmacro -%}
+{%- macro sink(c, a) -%}{% if light %}{{ c | lighten(a) }}{% else %}{{ c | darken(a) }}{% endif %}{%- endmacro -%}
 name: juju
 description: Juju slate — Wallust-driven layered surfaces with high-detail status and chat output
 
@@ -5,47 +12,47 @@ colors:
   background: "{{background}}"
   ui_primary: "{{color4}}"
   ui_accent: "{{color4}}"
-  ui_border: "{{background | lighten(0.28)}}"
+  ui_border: "{{ lift(background, 0.28) }}"
   ui_text: "{{foreground}}"
   ui_tool: "{{color6}}"
-  ui_thinking: "{{foreground | darken(0.24)}}"
-  banner_border: "{{background | lighten(0.28)}}"
+  ui_thinking: "{{ sink(foreground, 0.24) }}"
+  banner_border: "{{ lift(background, 0.28) }}"
   banner_title: "{{color4}}"
   banner_accent: "{{color12}}"
-  banner_dim: "{{foreground | darken(0.24)}}"
+  banner_dim: "{{ sink(foreground, 0.24) }}"
   banner_text: "{{foreground}}"
   ui_label: "{{color12}}"
   ui_ok: "{{color2}}"
   ui_error: "{{color1}}"
   ui_warn: "{{color3}}"
   prompt: "{{foreground}}"
-  input_rule: "{{background | lighten(0.28)}}"
-  response_border: "{{background | lighten(0.28)}}"
+  input_rule: "{{ lift(background, 0.28) }}"
+  response_border: "{{ lift(background, 0.28) }}"
   session_label: "{{color12}}"
-  session_border: "{{background | lighten(0.28)}}"
-  status_bar_bg: "{{background | lighten(0.10)}}"
+  session_border: "{{ lift(background, 0.28) }}"
+  status_bar_bg: "{{ lift(background, 0.10) }}"
   status_bar_text: "{{foreground}}"
   status_bar_strong: "{{color4}}"
-  status_bar_dim: "{{foreground | darken(0.42)}}"
+  status_bar_dim: "{{ color8 if light else sink(foreground, 0.42) }}"
   status_bar_good: "{{color2}}"
   status_bar_warn: "{{color3}}"
   status_bar_bad: "{{color1}}"
   status_bar_critical: "{{color9}}"
-  voice_status_bg: "{{background | lighten(0.10)}}"
-  completion_menu_bg: "{{background | lighten(0.10)}}"
-  completion_menu_current_bg: "{{background | lighten(0.18)}}"
-  completion_menu_meta_bg: "{{background | lighten(0.07)}}"
-  completion_menu_meta_current_bg: "{{background | lighten(0.24)}}"
-  selection_bg: "{{background | lighten(0.24)}}"
+  voice_status_bg: "{{ lift(background, 0.10) }}"
+  completion_menu_bg: "{{ lift(background, 0.10) }}"
+  completion_menu_current_bg: "{{ lift(background, 0.18) }}"
+  completion_menu_meta_bg: "{{ lift(background, 0.07) }}"
+  completion_menu_meta_current_bg: "{{ lift(background, 0.24) }}"
+  selection_bg: "{{ lift(background, 0.24) }}"
   shell_dollar: "{{color6}}"
-  diff_added: "{{background | lighten(0.10)}}"
-  diff_removed: "{{background | lighten(0.18)}}"
+  diff_added: "{{ lift(background, 0.10) }}"
+  diff_removed: "{{ lift(background, 0.18) }}"
   diff_added_word: "{{color10}}"
   diff_removed_word: "{{color9}}"
   syntax_string: "{{color10}}"
   syntax_number: "{{color13}}"
   syntax_keyword: "{{color12}}"
-  syntax_comment: "{{foreground | darken(0.42)}}"
+  syntax_comment: "{{ color8 if light else sink(foreground, 0.42) }}"
 
 spinner:
   waiting_faces:
