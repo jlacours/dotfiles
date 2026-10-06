@@ -4,6 +4,14 @@ onboarding = false
 name = "terminal"
 auto_switch = false
 
+# The terminal theme leaves panel_bg as "reset", and text can't be drawn in the
+# terminal's default *background*, so herdr falls back to surface_dim (ANSI
+# bright black, light grey) for text on accent badges like the selected tab.
+# Pinning panel_bg to foot's background (foot/colors.ini, opaque) makes that
+# text the real background color. Update it if the wallust palette changes.
+[theme.custom]
+panel_bg = "#121019"
+
 [terminal]
 new_cwd = "follow"
 
