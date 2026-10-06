@@ -39,6 +39,13 @@ local window_rules = {
     no_focus = true,
   },
   {
+    -- Steam's startup window has no class; keep it centered on its monitor.
+    name = "steam-empty-class-popup",
+    match = { class = "^$", title = "^Steam$", xwayland = true },
+    float = true,
+    center = true,
+  },
+  {
     name = "chatgpt-pet-overlay",
     match = { class = "^[Cc]hat[Gg][Pp][Tt]$", float = true },
     no_blur = true,
