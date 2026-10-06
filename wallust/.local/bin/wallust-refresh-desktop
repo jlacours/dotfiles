@@ -19,3 +19,8 @@ fi
 if pgrep -x mako >/dev/null 2>&1; then
     makoctl reload >/dev/null 2>&1 || true
 fi
+
+# herdr's config.toml is a Wallust output (panel_bg); apply it to the running server.
+if command -v herdr >/dev/null 2>&1 && pgrep -x herdr >/dev/null 2>&1; then
+    herdr server reload-config >/dev/null 2>&1 || true
+fi
