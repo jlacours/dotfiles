@@ -25,4 +25,10 @@ for _, group in ipairs(workspace_groups) do
   end
 end
 
+-- Normal workspaces lose gaps when only one tiled window is visible, or a
+-- window is fullscreen. Special scratchpads keep their usual spacing.
+for _, selector in ipairs({ "r[1-10]w[tv1]s[false]", "r[1-10]f[1]s[false]" }) do
+  hl.workspace_rule({ workspace = selector, gaps_in = 0, gaps_out = 0 })
+end
+
 return workspace_groups

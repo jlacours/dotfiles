@@ -22,6 +22,20 @@ end
 
 local window_rules = {
   {
+    name = "no-decorations-single-tiled",
+    match = { float = false, workspace = "r[1-10]w[tv1]s[false]" },
+    border_size = 0,
+    rounding = 0,
+    no_shadow = true,
+  },
+  {
+    name = "no-decorations-single-fullscreen",
+    match = { float = false, workspace = "r[1-10]f[1]s[false]" },
+    border_size = 0,
+    rounding = 0,
+    no_shadow = true,
+  },
+  {
     name = "suppress-maximize-events",
     match = { class = ".*" },
     suppress_event = "maximize",

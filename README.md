@@ -295,7 +295,10 @@ sudo pacman -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filez
 Hyprland loads `~/.config/hypr/hyprland.lua` as its live provider, with
 monitors, workspaces, keybindings, and rules split into Lua modules. The
 adjacent `hyprland.conf` remains synchronized as a rollback and monitor-layout
-reference for session helpers.
+reference for session helpers. Normal workspaces (1–10) use smart gaps and
+borders: a lone tiled window has no gaps, border, or shadow; multiple tiled
+windows use 3 px inner gaps, 6 px outer gaps, and 2 px borders. Fullscreen
+workspaces also lose gaps and tiled-window decorations.
 
 Hyprland uses Fuzzel for its application, favorites, tools, window, power,
 clipboard-history, keybinding, screen-management, and live-agent-command menus.
