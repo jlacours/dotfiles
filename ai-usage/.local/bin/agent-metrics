@@ -14,7 +14,7 @@ import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
-VENDORS = ["anthropic", "openai", "google", "zai", "local", "openrouter"]
+VENDORS = ["anthropic", "openai", "google", "zai", "meta", "local", "openrouter"]
 ROLES = ["junior", "senior", "security"]
 FALLBACK_ROLES = ["orchestrator", "executor", "reading", "junior", "senior",
                   "security", "chores", "async", "private"]
