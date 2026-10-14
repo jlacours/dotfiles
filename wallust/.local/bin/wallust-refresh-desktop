@@ -2,6 +2,10 @@
 # Refresh desktop components that do not watch Wallust outputs themselves.
 set -u
 
+# Hyprland keybinds and the systemd path unit both run this with a PATH that
+# lacks ~/.local/bin, which hid user-installed clients such as herdr.
+PATH="$HOME/.local/bin:$PATH"
+
 # Pick dark or light from the background of the gtk.css that triggered this run,
 # so light schemes are not forced back onto a dark base theme.
 mode=dark
