@@ -1,0 +1,120 @@
+# Local override of remote Muse manifest 2026.08.26.1. Keep synchronized on refresh.
+# Upstream evidence came from Muse Code 0.2.1; these changes come from live 1.4.7 reads.
+#
+# Muse 1.4.7 prefixes the terminal title with a braille spinner for the whole turn
+# (`⠴ quickshell`) and drops it at idle. The screen-only `esc to interrupt` rule loses
+# the turn while the final answer streams or a todo panel pushes the hint up, which made
+# Herdr flip working -> idle -> working and fire false completion notifications.
+#
+# Approval wording quoted in assistant text (`Allow once` ... `Allow for this session`)
+# matched the upstream blocker pairs. Blockers now yield when the idle input box (border,
+# `❯` line, border, model footer) closes the screen; Muse draws that box during ordinary
+# turns, and an approval or picker needs the keyboard instead.
+#
+# Idle prompt is `❯` in 1.4.7 (`⟩` in 0.2.1), and `max` is a valid effort tier.
+id = "muse"
+version = "2026.10.14.1"
+min_engine_version = 2
+updated_at = "2026-10-14T16:00:00Z"
+aliases = ["muse-code", "muse-cli"]
+
+[[rules]]
+id = "workspace_trust_blocked"
+state = "blocked"
+priority = 970
+region = "bottom_non_empty_lines(12)"
+visible_blocker = true
+contains = ["Do you trust this workspace?"]
+any = [
+  { contains = ["Trust and continue"] },
+  { contains = ["Use Up/Down"] },
+]
+
+[[rules]]
+id = "pick_request_blocked"
+state = "blocked"
+priority = 950
+region = "bottom_non_empty_lines(8)"
+visible_blocker = true
+any = [
+  { contains = ["Enter to select", "Tab for an optional note"] },
+  { contains = ["Enter to toggle", "Esc to interrupt"] },
+]
+not = [
+  { regex = ['(?m)^\s*─{8,}\s*\n\s*[⟩❯][^\n]*(?:\n[^\S\n]+[^─\s][^\n]*)*\n\s*─{8,}\s*\n\s*\S+ · (?:none|minimal|low|medium|high|xhigh|max|ultra) · [^\n]*\s*\z'] },
+]
+
+[[rules]]
+id = "menu_overlay"
+state = "unknown"
+priority = 940
+region = "bottom_non_empty_lines(8)"
+skip_state_update = true
+any = [
+  { contains = ["enter confirm", "esc go back"] },
+  { contains = ["enter save", "esc go back"] },
+  { contains = ["space toggle", "esc close", "type filter"] },
+]
+
+[[rules]]
+id = "blocked_approval"
+state = "blocked"
+priority = 930
+region = "bottom_non_empty_lines(8)"
+visible_blocker = true
+any = [
+  { contains = ["Allow this stage once", "Always allow in this workspace"] },
+  { contains = ["Allow once", "Allow for this session"] },
+  { contains = ["Yes, proceed", "Yes, don't ask again this session"] },
+]
+not = [
+  { regex = ['(?m)^\s*─{8,}\s*\n\s*[⟩❯][^\n]*(?:\n[^\S\n]+[^─\s][^\n]*)*\n\s*─{8,}\s*\n\s*\S+ · (?:none|minimal|low|medium|high|xhigh|max|ultra) · [^\n]*\s*\z'] },
+]
+
+[[rules]]
+id = "osc_title_working"
+state = "working"
+priority = 920
+region = "osc_title"
+visible_working = true
+regex = ['^[\u{2801}-\u{28FF}]']
+
+[[rules]]
+id = "working_esc_interrupt"
+state = "working"
+priority = 900
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+contains = ["esc to interrupt"]
+not = [
+  { contains = ["Enter to select", "Tab for an optional note"] },
+  { contains = ["Enter to toggle", "Esc to interrupt"] },
+]
+
+[[rules]]
+id = "idle_prompt"
+state = "idle"
+priority = 700
+region = "bottom_non_empty_lines(5)"
+visible_idle = true
+any = [
+  { line_regex = ['^\s*[⟩❯]\s*$'] },
+  { line_regex = ['^\s*[⟩❯]\s+\S'] },
+]
+not = [
+  { contains = ["esc to interrupt"] },
+  { contains = ["Enter to select", "Tab for an optional note"] },
+  { contains = ["Enter to toggle", "Esc to interrupt"] },
+  { contains = ["enter confirm", "esc go back"] },
+  { contains = ["enter save", "esc go back"] },
+  { contains = ["space toggle", "esc close", "type filter"] },
+]
+
+[[rules]]
+id = "idle_status_fallback"
+state = "idle"
+priority = 500
+region = "bottom_non_empty_lines(3)"
+visible_idle = true
+line_regex = ['^\s*\S+ · (none|minimal|low|medium|high|xhigh|max|ultra) · ']
+not = [{ contains = ["esc to interrupt"] }]

@@ -140,6 +140,37 @@ This override also shadows future remote manifest updates. Compare it with
 the upstream AGY manifest before updating or removing it. Terminal lifecycle
 states are hints; collect the helper's report before declaring a task done.
 
+## Muse state detection
+
+The local `agent-detection/muse.toml` preserves remote manifest `2026.08.26.1`,
+whose evidence came from Muse Code 0.2.1, and adapts it to 1.4.7:
+
+- Muse prefixes the terminal title with a braille spinner for the whole turn.
+  An `osc_title_working` rule keeps the turn alive while the final answer
+  streams or a todo panel pushes `esc to interrupt` out of the screen region;
+  those gaps used to fire false completion notifications.
+- Approval and picker blockers yield when the idle input box (border, `❯`
+  line, border, model footer) closes the screen, so approval wording quoted in
+  assistant text no longer reports a blocked agent.
+- The idle prompt accepts `❯` as well as `⟩`, and the footer regex accepts the
+  `max` effort tier.
+
+A real 1.4.7 approval dialog has not been captured yet; the blocker guard
+assumes the dialog replaces the input box, as AGY's does. Confirm with
+`herdr agent explain PANE_ID` on the next real prompt.
+
+## Override drift
+
+Local overrides shadow automatic remote manifest updates, so check them now
+and then:
+
+```sh
+herdr-manifest-drift
+```
+
+It compares the base version on each override's first line with Herdr's cached
+remote manifest and exits 1 when upstream has moved on.
+
 ## Foreground tab titles
 
 The tab bar calls the optional `juju.tab-titles.refresh` plugin action every
