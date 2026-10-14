@@ -11,12 +11,12 @@ import unicodedata
 
 
 STATUS_MARKS = {
-    "blocked": "!",
-    "done": "✓",
-    "idle": "○",
-    "unknown": "?",
+    "blocked": "✖",
+    "done": "❋",
+    "idle": "●",
+    "unknown": "⸮",
 }
-WORKING_FRAMES = "◐◓◑◒"
+WORKING_FRAMES = "⣷⣯⣟⡿⢿⣻⣽⣾"
 MAX_AGENTS = 8
 MAX_LABEL_LENGTH = 12
 STATUS_ORDER = {"blocked": 0, "working": 1, "done": 2, "unknown": 3, "idle": 4}
