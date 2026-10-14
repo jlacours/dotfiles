@@ -85,6 +85,7 @@ wanted = [
     ("zai", "Z.AI"),
     ("pi", "Pi"),
     ("hermes", "Hermes"),
+    ("muse", "Muse"),
     ("openrouter", "OpenRouter"),
 ]
 
@@ -183,6 +184,38 @@ def hermes_tokens_today():
         return int(row[0] or 0)
     except (sqlite3.Error, OSError, TypeError, ValueError):
         return None
+
+def muse_tokens_today():
+    """Sum input/output tokens from Muse sessions opened today (local).
+
+    OpenUsage has no Meta provider. Muse's own session logs are the only
+    local source; they record per-call token usage, never quota.
+    """
+    data_home = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    local_now = dt.datetime.now().astimezone()
+    day = os.path.join(data_home, "muse", "sessions",
+                       f"{local_now:%Y}", f"{local_now:%m}", f"{local_now:%d}")
+    if not os.path.isdir(day): return None
+    total = 0
+    seen = False
+    for root, _dirs, files in os.walk(day):
+        for name in files:
+            if name != "session.jsonl": continue
+            try:
+                with open(os.path.join(root, name), encoding="utf-8", errors="replace") as fh:
+                    for line in fh:
+                        if '"model_completed"' not in line: continue
+                        try:
+                            event = (json.loads(line).get("payload") or {}).get("event") or {}
+                            if event.get("kind") != "model_completed": continue
+                            usage = event.get("usage") or {}
+                            total += int(usage.get("input_tokens") or 0) + int(usage.get("output_tokens") or 0)
+                            seen = True
+                        except (ValueError, TypeError, AttributeError):
+                            continue
+            except OSError:
+                continue
+    return total if seen else None
 
 def has_http_429(value):
     if isinstance(value, dict):
@@ -353,6 +386,11 @@ for pid, label in wanted:
     if pid == "zai" and zai_fallback and (not found or not found.get("resets")):
         found = zai_fallback
     selected_snapshots[pid] = found
+    if pid == "muse":
+        # No OpenUsage snapshot exists for Meta; quota stays honestly unknown
+        # and today's tokens come from muse_tokens_today() below.
+        records.append({"label": label, "details": "quota unknown", "reset": None, "expiry": None, "percent": None, "remaining": None, "reset_available": None})
+        continue
     records.append(make_record(pid, label, found, now) if found else {"label": label, "details": "unavailable", "reset": None, "expiry": None, "percent": None, "remaining": None, "reset_available": None})
 
 all_time_fields = {
@@ -369,10 +407,12 @@ for pid, fields in all_time_fields.items():
         all_time_counts[pid] = amount
 
 today_counts = {}
-for pid in ("codex", "claude_code", "antigravity", "pi", "hermes"):
+for pid in ("codex", "claude_code", "antigravity", "pi", "hermes", "muse"):
     snap = selected_snapshots.get(pid)
     if pid == "hermes":
         amount = hermes_tokens_today()
+    elif pid == "muse":
+        amount = muse_tokens_today()
     elif pid == "claude_code":
         amount = token_pair(snap, ("provider_claude_code_input_tokens", "provider_claude_code_output_tokens"),
                             ("since midnight", "today"))
@@ -384,11 +424,12 @@ for pid in ("codex", "claude_code", "antigravity", "pi", "hermes"):
 
 token_usage = {
     "hermes_today": today_counts.get("hermes"),
+    "muse_today": today_counts.get("muse"),
     "today_total": sum(today_counts.values()) if today_counts else None,
     "today_tracked": len(today_counts),
     "all_time_total": sum(all_time_counts.values()) if all_time_counts else None,
     "all_time_tracked": len(all_time_counts),
-    "harness_count": 6,
+    "harness_count": 7,
 }
 
 generated = doc.get("generated_at") if isinstance(doc, dict) else None
