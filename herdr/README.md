@@ -159,6 +159,20 @@ A real 1.4.7 approval dialog has not been captured yet; the blocker guard
 assumes the dialog replaces the input box, as AGY's does. Confirm with
 `herdr agent explain PANE_ID` on the next real prompt.
 
+Muse also reports its own state through a built-in `herdr` plugin, and those
+reports outrank the screen manifest. Its `permission-request` hook reports
+`blocked` before Auto-review decides, so every auto-approved tool call raised a
+Herdr approval notification. That hook is disabled in
+`~/.config/muse/settings.json`; the `Notification` hook still reports approvals
+that stay pending for 6 seconds:
+
+```sh
+muse plugins reject herdr:hook:permission-request
+```
+
+The rejection is pinned to the hook's definition hash, so a Muse update that
+changes the hook can bring the notifications back. Rerun the command then.
+
 ## Override drift
 
 Local overrides shadow automatic remote manifest updates, so check them now

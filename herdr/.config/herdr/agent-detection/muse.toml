@@ -6,14 +6,15 @@
 # the turn while the final answer streams or a todo panel pushes the hint up, which made
 # Herdr flip working -> idle -> working and fire false completion notifications.
 #
-# Approval wording quoted in assistant text (`Allow once` ... `Allow for this session`)
-# matched the upstream blocker pairs. Blockers now yield when the idle input box (border,
+# Approval and trust wording quoted in assistant text (`Allow once` ... `Allow for this
+# session`, `Do you trust this workspace?` ... `Trust and continue`) matched the upstream
+# blocker pairs. Blockers now yield when the idle input box (border,
 # `❯` line, border, model footer) closes the screen; Muse draws that box during ordinary
 # turns, and an approval or picker needs the keyboard instead.
 #
 # Idle prompt is `❯` in 1.4.7 (`⟩` in 0.2.1), and `max` is a valid effort tier.
 id = "muse"
-version = "2026.10.14.1"
+version = "2026.10.14.2"
 min_engine_version = 2
 updated_at = "2026-10-14T16:00:00Z"
 aliases = ["muse-code", "muse-cli"]
@@ -28,6 +29,9 @@ contains = ["Do you trust this workspace?"]
 any = [
   { contains = ["Trust and continue"] },
   { contains = ["Use Up/Down"] },
+]
+not = [
+  { regex = ['(?m)^\s*─{8,}\s*\n\s*[⟩❯][^\n]*(?:\n[^\S\n]+[^─\s][^\n]*)*\n\s*─{8,}\s*\n\s*\S+ · (?:none|minimal|low|medium|high|xhigh|max|ultra) · [^\n]*\s*\z'] },
 ]
 
 [[rules]]
