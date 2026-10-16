@@ -13,8 +13,7 @@
     "provider_links": {
       "anthropic": "claude_code",
       "azure": "azure_openai",
-      "github-copilot": "copilot",
-      "google": "gemini_api"
+      "github-copilot": "copilot"
     }
   },
   "dashboard": {
@@ -37,10 +36,6 @@
       "provider": "claude_code"
     },
     {
-      "id": "antigravity",
-      "provider": "antigravity"
-    },
-    {
       "id": "pi",
       "provider": "pi"
     },
@@ -60,12 +55,7 @@
     }
   ],
   "auto_detected_accounts": null,
-  "integrations": {
-    "antigravity": {
-      "installed": true,
-      "version": "0.25.0"
-    }
-  },
+  "integrations": {},
   "export": {
     "target": "",
     "interval_seconds": 0,

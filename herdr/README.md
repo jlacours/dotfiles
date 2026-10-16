@@ -129,18 +129,6 @@ This local override shadows automatic remote Hermes manifest updates. Compare
 it with a future upstream manifest before updating or removing it; the only
 rule change is the priority of `osc_title_idle`.
 
-## AGY state detection
-
-The local `agent-detection/agy.toml` preserves remote manifest `2026.06.24.1`
-and adds a working rule for the active-turn `esc to cancel` footer. AGY can
-briefly replace its spinner between tools and model output; the footer keeps
-those gaps from becoming false completion notifications. Permission and
-background-task rules remain active.
-
-This override also shadows future remote manifest updates. Compare it with
-the upstream AGY manifest before updating or removing it. Terminal lifecycle
-states are hints; collect the helper's report before declaring a task done.
-
 ## Muse state detection
 
 The local `agent-detection/muse.toml` preserves remote manifest `2026.08.26.1`,
@@ -157,7 +145,7 @@ whose evidence came from Muse Code 0.2.1, and adapts it to 1.4.7:
   `max` effort tier.
 
 A real 1.4.7 approval dialog has not been captured yet; the blocker guard
-assumes the dialog replaces the input box, as AGY's does. Confirm with
+assumes the dialog replaces the input box. Confirm with
 `herdr agent explain PANE_ID` on the next real prompt.
 
 Muse also reports its own state through a built-in `herdr` plugin, and those

@@ -81,7 +81,6 @@ json_mode = len(sys.argv) > 5 and sys.argv[5] == "--json"
 wanted = [
     ("codex", "Codex"),
     ("claude_code", "Claude"),
-    ("antigravity", "Antigravity"),
     ("zai", "Z.AI"),
     ("pi", "Pi"),
     ("hermes", "Hermes"),
@@ -241,9 +240,6 @@ def make_record(pid, label, snap, now):
     elif pid in ("zai", "claude_code"):
         percent = metric_value(metrics, ("usage_five_hour",))
         percent_label = "5h" if percent is not None else None
-    elif pid == "antigravity":
-        percent = metric_value(metrics, ("quota_gemini_5h",))
-        percent_label = "Gemini 5h" if percent is not None else None
     elif pid == "openrouter":
         percent_label = "credit used"
     if pid == "openrouter":
@@ -254,7 +250,7 @@ def make_record(pid, label, snap, now):
     reset = None
     resets = snap.get("resets")
     if isinstance(resets, dict):
-        preferred = ("rate_limit_primary", "usage_five_hour", "plan_auto_percent_used", "quota_gemini_5h_reset")
+        preferred = ("rate_limit_primary", "usage_five_hour", "plan_auto_percent_used")
         for key in preferred:
             reset = parse_time(resets.get(key))
             if reset: break
@@ -272,9 +268,6 @@ def make_record(pid, label, snap, now):
     elif pid in ("zai", "claude_code"):
         weekly_used = metric_value(metrics, ("usage_seven_day",))
         weekly_reset = parse_time(resets.get("usage_seven_day")) if isinstance(resets, dict) else None
-    elif pid == "antigravity":
-        weekly_used = metric_value(metrics, ("quota_gemini_weekly",))
-        weekly_reset = parse_time(resets.get("quota_gemini_weekly_reset")) if isinstance(resets, dict) else None
     if pid == "openrouter" and remaining is None:
         credits = metric_value(metrics, ("credit_balance",), "limit")
         usage = metric_value(metrics, ("credit_balance",), "used")
@@ -299,15 +292,11 @@ def make_record(pid, label, snap, now):
     if pid in ("pi", "hermes"):
         reset = None
     reset_label = "5h resets"
-    bits.append(f"{reset_label} {display_time(reset)} (in {countdown(reset, now)})") if pid in ("codex", "zai", "antigravity") or (pid == "claude_code" and percent is not None) else None
+    bits.append(f"{reset_label} {display_time(reset)} (in {countdown(reset, now)})") if pid in ("codex", "zai") or (pid == "claude_code" and percent is not None) else None
     extras = list(snap.get("extra_resets", [])) if isinstance(snap, dict) else []
     if isinstance(resets, dict):
-        if pid == "antigravity":
-            for key, reset_label in (("quota_gemini_weekly_reset", "Gemini 7d"), ("quota_3p_5h_reset", "3p 5h"), ("quota_3p_weekly_reset", "3p 7d")):
-                if key in resets: extras.append((reset_label, resets[key]))
-        else:
-            for key, value in resets.items():
-                if key in ("rate_limit_secondary", "usage_seven_day"): extras.append(("7d", value))
+        for key, value in resets.items():
+            if key in ("rate_limit_secondary", "usage_seven_day"): extras.append(("7d", value))
     for extra in extras:
         if not isinstance(extra, (list, tuple)) or len(extra) != 2: continue
         extra_label, extra_reset = extra
@@ -317,14 +306,8 @@ def make_record(pid, label, snap, now):
     if pid == "openrouter":
         bits.append(f"expires {expiry.date().isoformat() if expiry else 'unknown'}")
     extra_percent = metric_value(metrics, ("rate_limit_secondary", "usage_seven_day")) if pid in ("codex", "zai", "claude_code") else None
-    if pid == "antigravity":
-        quota_lines = []
-        for quota_label, names in (("Gemini 7d", ("quota_gemini_weekly",)), ("3p 5h", ("quota_3p_5h",)), ("3p 7d", ("quota_3p_weekly",))):
-            value = metric_value(metrics, names)
-            if value is not None: quota_lines.append(f"{quota_label} {fmt_number(left_percent(value))}% left")
-        bits[1:1] = quota_lines
     if extra_percent is not None: bits.insert(1, f"7d {fmt_number(left_percent(extra_percent))}% left")
-    five_left = left_percent(percent) if pid in ("codex", "antigravity", "zai", "claude_code") else None
+    five_left = left_percent(percent) if pid in ("codex", "zai", "claude_code") else None
     record = {"rate_limited": has_http_429(snap.get("diagnostics")) or has_http_429(snap.get("message")), "label": label, "details": ", ".join(bits), "reset": reset, "expiry": expiry, "percent": percent, "remaining": remaining,
               "five_hour_left": five_left, "seven_day_left": left_percent(weekly_used),
               "five_hour_reset": reset.isoformat() if reset else None,
@@ -396,7 +379,6 @@ for pid, label in wanted:
 all_time_fields = {
     "codex": ("provider_codex_input_tokens", "provider_codex_output_tokens"),
     "claude_code": ("all_time_input_tokens", "all_time_output_tokens"),
-    "antigravity": ("provider_antigravity_input_tokens", "provider_antigravity_output_tokens"),
     "pi": ("total_input_tokens", "total_output_tokens"),
     "hermes": ("provider_hermes_input_tokens", "provider_hermes_output_tokens"),
 }
@@ -407,7 +389,7 @@ for pid, fields in all_time_fields.items():
         all_time_counts[pid] = amount
 
 today_counts = {}
-for pid in ("codex", "claude_code", "antigravity", "pi", "hermes", "muse"):
+for pid in ("codex", "claude_code", "pi", "hermes", "muse"):
     snap = selected_snapshots.get(pid)
     if pid == "hermes":
         amount = hermes_tokens_today()
@@ -429,23 +411,22 @@ token_usage = {
     "today_tracked": len(today_counts),
     "all_time_total": sum(all_time_counts.values()) if all_time_counts else None,
     "all_time_tracked": len(all_time_counts),
-    "harness_count": 7,
+    "harness_count": 6,
 }
 
 generated = doc.get("generated_at") if isinstance(doc, dict) else None
 updated = parse_time(generated) or now
-bar_labels = {"Codex", "Claude", "Antigravity", "Z.AI", "OpenRouter"}
+bar_labels = {"Codex", "Claude", "Z.AI", "OpenRouter"}
 quota_unknown = any(r["label"] in bar_labels and r["percent"] is None and r["label"] != "OpenRouter" for r in records)
 state = "ok" if not error and doc is not None and all(r["details"] != "unavailable" for r in records) and not quota_unknown else "partial"
 if doc is None: state = "error"
 if (now - updated).total_seconds() > 300: state = "partial"
-bar_ids = {"Codex", "Claude", "Antigravity", "Z.AI", "OpenRouter"}
+bar_ids = {"Codex", "Claude", "Z.AI", "OpenRouter"}
 bar_bits = []
 for record in records:
     if record["label"] not in bar_ids: continue
     if record["label"] == "Codex": prefix = "C"
     elif record["label"] == "Claude": prefix = "L"
-    elif record["label"] == "Antigravity": prefix = "G"
     elif record["label"] == "Z.AI": prefix = "Z"
     else: prefix = "R"
     if record["label"] == "OpenRouter":

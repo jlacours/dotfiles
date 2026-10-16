@@ -20,7 +20,6 @@ Rectangle {
     readonly property var providers: [
         { id: "codex", label: "Codex", shortLabel: "Codex", source: "ai-codex.svg" },
         { id: "claude_code", label: "Claude", shortLabel: "Claude", source: "ai-claude.svg" },
-        { id: "antigravity", label: "Antigravity", shortLabel: "Antig.", source: "ai-antigravity.svg" },
         { id: "zai", label: "Z.AI", shortLabel: "Z.AI", source: "ai-zai.svg" },
         { id: "openrouter", label: "OpenRouter", shortLabel: "Router", source: "ai-openrouter.svg" },
         { id: "pi", label: "Pi", shortLabel: "Pi", source: "", stacked: true },

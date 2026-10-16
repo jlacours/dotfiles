@@ -30,7 +30,6 @@ PopupWindow {
     readonly property var providers: [
         { id: "codex", label: "Codex", source: "ai-codex.svg" },
         { id: "claude_code", label: "Claude", source: "ai-claude.svg" },
-        { id: "antigravity", label: "Antigravity", source: "ai-antigravity.svg" },
         { id: "zai", label: "Z.AI", source: "ai-zai.svg" },
         { id: "openrouter", label: "OpenRouter", source: "ai-openrouter.svg" }
     ]

@@ -234,13 +234,12 @@ tar -xzf "$tmpdir/$asset" -C "$tmpdir" openusage
 install -Dm755 "$tmpdir/openusage" "$HOME/.local/bin/openusage"
 )
 ./install.sh ai-usage
-openusage integrations install antigravity
 ai-usage
 ```
 
 The `ai-usage` command supplies the bar with cached quota and balance readings,
 including reset times. The left bar slot is one fixed-width badge that rotates
-through Codex, Claude, Antigravity, Z.AI, OpenRouter, Pi, and Hermes without
+through Codex, Claude, Z.AI, OpenRouter, Pi, and Hermes without
 changing the space reserved for the rest of the bar. Hover for that provider's
 5h/7d remaining percentages and read-only reset time/date, plus daily and
 all-time harness token totals with tracked-coverage counts. Hermes shows its
@@ -253,12 +252,10 @@ under the pointer. `qs ipc -c hyprbar call aiSlot toggle` toggles the same view
 from scripts or keybinds. A compact CPU/RAM/disk/temperature/GPU vitals chip
 follows the AI slot; while the slot is expanded it glides over to sit beside the
 right-hand controls, and returns when the slot is compacted. OpenUsage reads local
-Codex, Claude Code, Antigravity, Pi, and Hermes activity. Z.ai and OpenRouter
+Codex, Claude Code, Pi, and Hermes activity. Z.ai and OpenRouter
 readings require their respective
 `ZAI_API_KEY` and `OPENROUTER_API_KEY` environment variables in the Quickshell
-session. No keys are stored in the Stow package. The Antigravity integration
-adds a local status-line feed; its quota remains unavailable until an
-Antigravity session refreshes it. `ai-usage --json` emits the bar payload.
+session. No keys are stored in the Stow package. `ai-usage --json` emits the bar payload.
 
 The same package installs `agent-metrics`, a stdlib-only Python logger for
 multi-agent workflow outcomes that quota numbers cannot show. Agents append
@@ -306,7 +303,7 @@ clipboard-history, keybinding, screen-management, and live-agent-command menus.
 numbered workspace, then focuses it. It leaves windows untouched and shows a
 notification when a special workspace is visible.
 `Super+F2` groups live commands by their recognized agent (`claude`, `codex`,
-`pi`, `agy`, or `hermes`), focuses an existing terminal
+`pi`, or `hermes`), focuses an existing terminal
 when one exists, and otherwise opens a read-only Foot process monitor for the
 hidden command. The tools menu
 also covers screen recording, an emoji/Unicode picker, OCR, and a wallpaper
