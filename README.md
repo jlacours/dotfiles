@@ -52,8 +52,9 @@ herdr server reload-agent-manifests
 The tab bar sits at the bottom with agent names and states on one line. The
 sidebar starts hidden on the next client launch; `Ctrl+a b` toggles it in an
 existing client. `Ctrl+a n` and `Ctrl+a p` cycle through agents. The status text
-is not clickable. Working agents show a rotating `◐◓◑◒` icon, updated once per
-second. Other states show `!` blocked, `✓` done, `○` idle, and `?` unknown;
+is not clickable. Working agents show a rotating `⣷⣯⣟⡿⢿⣻⣽⣾` icon, updated once per
+second. Automatic tab titles use the same glyphs at their refresh interval.
+Other states show `✖` blocked, `✔` done (heavy check mark), `●` idle, and `⸮` unknown;
 at most eight agents appear. The focused agent is bracketed and placed first,
 then other agents appear in attention order, followed by a count of any others.
 Herdr's native badges use colored state symbols. Command status text

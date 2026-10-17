@@ -5,12 +5,15 @@
 `herdr-agent-status` shows a state icon before each name on the tab bar, keeping
 symbol glyphs away from the terminal's right edge. Working agents use the
 rotating braille spinner (`⣷⣯⣟⡿⢿⣻⣽⣾`) once per second; blocked, done, idle, and
-unknown agents use `✖`, `❋`, `●`, and `⸮`. The helper refreshes once per second,
+unknown agents use `✖`, `✔` (heavy check mark), `●`, and `⸮`. The helper refreshes once per second,
 Herdr's minimum command interval. It reads current agent states without changing
 them or sending input. The agent in the focused pane is bracketed (`[⣷ codex]`)
 and placed first so it stays visible when the row's eight-agent limit is
 reached. When the focused pane has no agent, no entry is bracketed. Other agents
 retain attention ordering.
+
+Automatic tab titles from `herdr-tab-titles` use the same state glyphs; their
+spinner advances at the configured three-second title refresh interval.
 
 The native `status_indicators = "symbols"` setting adds distinct colored
 symbols to Herdr's own state badges. The command statusline uses the tab bar's

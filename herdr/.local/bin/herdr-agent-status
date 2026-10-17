@@ -12,7 +12,7 @@ import unicodedata
 
 STATUS_MARKS = {
     "blocked": "✖",
-    "done": "❋",
+    "done": "✔",
     "idle": "●",
     "unknown": "⸮",
 }
