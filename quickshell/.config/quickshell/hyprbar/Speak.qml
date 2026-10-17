@@ -1,7 +1,7 @@
 import QtQuick 6.0
 
-// TTS state: a simple, static mouth. Muted when idle, accent while speech is
-// generated or played. Click stops the current speech.
+// TTS state: a static lips icon (Nerd Font fae-lips, U+E258). Muted when
+// idle, accent while speech is generated or played. Click stops the speech.
 BarChip {
     id: root
 
@@ -11,9 +11,9 @@ BarChip {
 
     Text {
         anchors.centerIn: parent
-        text: "◡"
+        text: "\ue258"
         color: SpeakState.active ? root.accentColor : root.mutedColor
-        font.family: "Comic Code"
+        font.family: "Symbols Nerd Font Mono"
         font.pixelSize: 13
     }
 }

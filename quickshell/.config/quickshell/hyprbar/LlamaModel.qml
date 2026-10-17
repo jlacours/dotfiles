@@ -13,7 +13,7 @@ BarChip {
         text: "󰘚"
         color: LlamaModelState.active || LlamaModelState.state === "loading"
             ? root.accentColor : root.mutedColor
-        font.family: "Comic Code"
+        font.family: "Symbols Nerd Font Mono"
         font.pixelSize: 13
         opacity: LlamaModelState.busy ? 0.55 : 1.0
 
