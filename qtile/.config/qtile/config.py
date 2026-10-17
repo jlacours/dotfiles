@@ -172,6 +172,7 @@ keys = [
 
     # Theme
     Key([mod, "shift"], "semicolon", lazy.spawn(f"{home}/.local/bin/wallust-random-light"), desc="Random light theme"),
+    Key([mod, "control"], "semicolon", lazy.spawn(f"{home}/.local/bin/wallust-theme-menu"), desc="Theme menu"),
 
     # Notifications (mako)
     Key([mod], "n", lazy.spawn("makoctl dismiss --all"), desc="Dismiss notifications"),

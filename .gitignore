@@ -46,8 +46,13 @@ pi-session-*.html
 !herdr/.local/**
 !mcp-services/.local/
 !mcp-services/.local/**
+!tui/.local/
+!tui/.local/**
 !wallust/.local/
 !wallust/.local/**
+# The package re-includes above must not bring Python bytecode back.
+__pycache__/
+*.py[cod]
 *.sqlite
 *.sqlite3
 *.db

@@ -15,8 +15,12 @@ Rectangle {
     property string tooltipText: ""
     property alias clickEnabled: chipMouse.enabled
     property alias cursorShape: chipMouse.cursorShape
+    // Defaults to left button only; chips that need right-click set this to
+    // Qt.LeftButton | Qt.RightButton and listen to rightClicked().
+    property alias acceptedButtons: chipMouse.acceptedButtons
 
     signal clicked()
+    signal rightClicked()
 
     implicitWidth: 23
     implicitHeight: 22
@@ -28,7 +32,12 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton)
+                root.rightClicked()
+            else
+                root.clicked()
+        }
     }
 
     BarTooltip {

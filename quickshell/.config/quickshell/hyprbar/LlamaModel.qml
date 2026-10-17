@@ -10,7 +10,7 @@ BarChip {
     Text {
         id: icon
         anchors.centerIn: parent
-        text: "◈"
+        text: "󰘚"
         color: LlamaModelState.active || LlamaModelState.state === "loading"
             ? root.accentColor : root.mutedColor
         font.family: "Comic Code"

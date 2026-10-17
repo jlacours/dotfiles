@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# Fuzzel menu over every wallust theme: custom colorschemes first (with their
+# wallpaper as a thumbnail), then wallust's built-in themes. A custom scheme
+# that has ~/Pictures/Wallpapers/<scheme>.png switches to that wallpaper too;
+# built-ins keep the current wallpaper.
+set -euo pipefail
+
+SCHEME_DIR="$HOME/.config/wallust/colorschemes"
+WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
+THUMBNAIL_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/wallust-theme-menu"
+CURRENT_FILE="$HOME/.cache/wallust-current-theme"
+
+notify() {
+    command -v notify-send >/dev/null 2>&1 || return 0
+    notify-send -a "Theme" -u "$1" -t 2500 "Theme" "$2" >/dev/null 2>&1 || true
+}
+
+die() {
+    printf 'wallust-theme-menu: %s\n' "$1" >&2
+    notify critical "$1"
+    exit 1
+}
+
+# Relative luminance of a #rrggbb color is below 0.18 -> dark.
+mode_of() {
+    local hex=${1#\#}
+    awk -v r=$((16#${hex:0:2})) -v g=$((16#${hex:2:2})) -v b=$((16#${hex:4:2})) 'function lin(c) {
+        c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4 }
+        BEGIN { print (0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) < 0.18) ? "dark" : "light" }'
+}
+
+# Wallpaper thumbnail when the scheme has one, otherwise a strip of its colors.
+thumbnail_for() {
+    local scheme=$1 file=$2 wallpaper="$WALLPAPER_DIR/$1.png" thumb
+    if [[ -f "$wallpaper" ]]; then
+        thumb="$THUMBNAIL_DIR/$scheme.wall.png"
+        if [[ ! -f "$thumb" || "$wallpaper" -nt "$thumb" ]]; then
+            magick "$wallpaper" -thumbnail 96x64^ -gravity center -extent 96x64 "$thumb" 2>/dev/null || rm -f "$thumb"
+        fi
+    else
+        thumb="$THUMBNAIL_DIR/$scheme.swatch.png"
+        if [[ ! -f "$thumb" || "$file" -nt "$thumb" ]]; then
+            local swatch draw=() i
+            mapfile -t swatch < <(jq -r '.special.background, (.colors | .color1, .color2, .color3, .color4, .color5, .color6)' "$file")
+            for i in 1 2 3 4 5 6; do
+                draw+=(-fill "${swatch[$i]}" -draw "rectangle $(((i - 1) * 16)),40 $((i * 16 - 1)),63")
+            done
+            magick -size 96x64 "xc:${swatch[0]}" "${draw[@]}" "$thumb" 2>/dev/null || rm -f "$thumb"
+        fi
+    fi
+    [[ -f "$thumb" ]] && printf '%s' "$thumb" || printf 'preferences-desktop-theme'
+}
+
+entries() {
+    local current file scheme mark
+    current=$(cat "$CURRENT_FILE" 2>/dev/null || true)
+    for file in "$SCHEME_DIR"/*.json; do
+        [[ -f "$file" ]] || continue
+        scheme=$(basename "$file" .json)
+        mark=" "; [[ "$scheme" == "$current" ]] && mark="●"
+        printf '%s %s  ·  %s\0icon\037%s\n' "$mark" "$scheme" \
+            "$(mode_of "$(jq -r .special.background "$file")")" "$(thumbnail_for "$scheme" "$file")"
+    done
+    wallust theme list | sed -r 's/\x1B\[[0-9;]*[mK]//g' | sed -n 's/^- //p' | sed '/^random$/d;/^list$/d' |
+        while IFS= read -r scheme; do
+            mark=" "; [[ "$scheme" == "$current" ]] && mark="●"
+            printf '%s %s  ·  built-in\0icon\037preferences-desktop-theme\n' "$mark" "$scheme"
+        done
+}
+
+set_wallpaper() {
+    local wallpaper=$1 monitor
+    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+        while IFS= read -r monitor; do
+            hyprctl hyprpaper wallpaper "$monitor, $wallpaper, cover" >/dev/null ||
+                die "Hyprpaper could not set $(basename "$wallpaper")"
+        done < <(hyprctl -j monitors | jq -r '.[].name')
+        printf 'splash = false\n\nwallpaper {\n    monitor =\n    path = %s\n}\n' "$wallpaper" \
+            >"$HOME/.config/hypr/hyprpaper.conf"
+    else
+        # qtile restores the wallpaper with swaybg at startup; restart it.
+        pkill -x swaybg 2>/dev/null || true
+        setsid -f swaybg -m fill -i "$wallpaper" >/dev/null 2>&1
+    fi
+    printf '%s\n' "$wallpaper" >"$HOME/.cache/wallust-current-wallpaper"
+}
+
+mkdir -p "$THUMBNAIL_DIR" || die "Could not create the theme thumbnail cache"
+
+# Build the full list first: piping straight into fuzzel would SIGPIPE the
+# generator (and, with pipefail, look like a cancel) if fuzzel exits early.
+menu=$(mktemp) || die "Could not create a temporary menu file"
+trap 'rm -f "$menu"' EXIT
+entries >"$menu"
+
+selected=$(fuzzel --dmenu --only-match --prompt "Theme> " \
+    --line-height=64 --lines=8 --width=52 <"$menu") || exit 0
+[[ -n "$selected" ]] || exit 0
+
+theme=${selected:2}
+theme=${theme%%  ·  *}
+
+if [[ -f "$SCHEME_DIR/$theme.json" && "$selected" != *"·  built-in" ]]; then
+    wallust cs "$theme" || die "wallust could not apply $theme"
+    [[ -f "$WALLPAPER_DIR/$theme.png" ]] && set_wallpaper "$WALLPAPER_DIR/$theme.png"
+else
+    wallust theme "$theme" || die "wallust could not apply $theme"
+fi
+
+printf '%s\n' "$theme" >"$CURRENT_FILE"
+mode_of "$(jq -r .special.background "$HOME/.cache/wal/colors.json")" >"$HOME/.cache/wallust-current-mode"
+"$HOME/.local/bin/wallust-refresh-desktop"
+notify low "Applied $theme"

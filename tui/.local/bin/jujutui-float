@@ -1,0 +1,24 @@
+#!/usr/bin/python3 -I
+from pathlib import Path
+import os
+import sys
+
+sys.path.insert(0, str(Path.home() / ".local" / "lib"))
+
+from jujutui.floating import FloatingLaunchError, launch_floating
+
+try:
+    wait = len(sys.argv) >= 2 and sys.argv[1] == "--wait"
+    command = sys.argv[2:] if wait else sys.argv[1:]
+    if not command:
+        raise FloatingLaunchError
+    result = launch_floating(command, wait=wait)
+except FloatingLaunchError:
+    try:
+        os.write(2, b"Unable to start the card window.\n")
+    except OSError:
+        pass
+    raise SystemExit(2)
+
+if wait:
+    raise SystemExit(result)

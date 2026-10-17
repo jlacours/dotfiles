@@ -85,18 +85,22 @@ Install local network diagnostic tools:
 sudo pacman -S --needed nmap
 ```
 
-Install the Bitwarden CLI session wrapper to cache only the temporary vault
-session in GNOME Keyring (never the master password):
+Install the Bitwarden CLI session authority (`bw-session`, the `bw` shim and
+`bw-session-guard.service`). It keeps only a short-lived, generation-bound
+session in GNOME Keyring (never the master password) and locks it after
+`TTL_HOURS` or on sleep:
 
 ```bash
-sudo pacman -S --needed bitwarden-cli gnome-keyring libsecret
+yay -S --needed bitwarden-cli gnome-keyring libsecret python-secretstorage nodejs
 ./install.sh --dry-run bitwarden
-./install.sh bitwarden
-bw unlock
 ```
 
-See [`bitwarden/README.md`](bitwarden/README.md) for behavior, requirements, and
-the `/usr/bin/bw` troubleshooting bypass.
+Do not stow it straight over a running setup. Replacing the old `bw` wrapper
+is a staged switch-over: pause `vdirsyncer` and the bar, install the library
+first, swap the shim atomically, migrate, then check the guard before the
+first unlock. See [`bitwarden/README.md`](bitwarden/README.md) for that
+sequence, the guarantees and their limits, the policy file, and the
+`/usr/bin/bw` bypass.
 
 Install the Boxcare fleet-maintenance runtime, then Stow its command and safe
 logical inventory:
@@ -258,6 +262,19 @@ readings require their respective
 `ZAI_API_KEY` and `OPENROUTER_API_KEY` environment variables in the Quickshell
 session. No keys are stored in the Stow package. `ai-usage --json` emits the bar payload.
 
+`Super+F1` opens the keybinding sheet (`KeybindOverlay.qml`) on the focused
+monitor. It runs as its own Quickshell instance, `qs -c keybinds`, beside the
+bar: rebuilding its cards on hyprbar's larger JS heap stalled the garbage
+collector for tens of seconds per toggle. The sheet shows every live
+`hyprctl binds -j` entry as keycap chords in masonry cards, titled by the
+`-- Heading` comments in the Hyprland Lua config.
+`keybinds.py` folds Vim twins, direction sets, and workspace ranges into single
+rows. Type to filter, click a modifier to narrow, and press Esc to clear, then
+close. `qs -c keybinds ipc call keybinds toggle|open|close|search TEXT` drives
+it from scripts. `keybinds-menu.sh` starts the instance if it is not running,
+and falls back to the Fuzzel list if the overlay is unavailable (`--fuzzel`
+forces it).
+
 The same package installs `agent-metrics`, a stdlib-only Python logger for
 multi-agent workflow outcomes that quota numbers cannot show. Agents append
 one line per finished review (stage, role, author and reviewer vendor,
@@ -287,7 +304,7 @@ has an independent instance and server lifecycle. The optional
 The active Hyprland session expects:
 
 ```bash
-sudo pacman -S --needed hyprland hypridle hyprpaper quickshell fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust python-pywayland adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
+sudo pacman -S --needed hyprland hypridle hyprpaper quickshell cava fuzzel foot filezilla jq pipewire-pulse libnotify polkit wallust python-pywayland adw-gtk-theme wl-clipboard ffmpeg grim slurp wf-recorder cliphist tesseract xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-hyprland librewolf helium-browser-bin
 ```
 
 Hyprland loads `~/.config/hypr/hyprland.lua` as its live provider, with
@@ -314,6 +331,50 @@ theme or keep the current palette.
 The minimal Hyprland bar watches Wallust's generated palette, so
 `wallust theme <name>` updates its background, text, hover, border, and accent
 colors without restarting Quickshell.
+
+`Super+Ctrl+;` opens a Fuzzel theme menu (`wallust-theme-menu`). Custom
+schemes from `wallust/.config/wallust/colorschemes/` come first, tagged dark or
+light and shown with their wallpaper (or a color swatch), followed by all of
+Wallust's built-in themes; the current one is marked `●`. Picking a custom
+scheme also sets `~/Pictures/Wallpapers/<scheme>.png` when it exists, through
+Hyprpaper under Hyprland or swaybg under qtile; built-in themes keep the
+current wallpaper. Each scheme's wallpaper is an abstract textured surface
+generated locally with Qwen-Image 2.1 in ComfyUI, and its prompt and seed are
+saved beside it as `<scheme>.prompt.txt`.
+
+`juju-serenade` is the default dark scheme: deep green-teal ink, warm parchment
+text, and candlelit amber, rose, sage, dusk-blue, and mauve accents.
+`juju-nocturne` (dark violet) and the cream `juju-aubade` complete the set. To
+apply one without the menu:
+
+```bash
+wallust cs juju-serenade --skip-sequences
+```
+
+`--skip-sequences` leaves existing terminal sessions alone; omit it to update
+their ANSI palette too. Wallust regenerates the application templates, and
+the bar watches the resulting palette. AI badges show each provider's logo and
+text in the bar foreground as one shade, with aligned five-hour and weekly
+columns. GTK surfaces use small lifts from the background rather than the
+brighter ANSI grey.
+
+A model designing a new scheme should keep all sixteen ANSI slots,
+distinguish status colors, and check text contrast against both the
+background and lifted surfaces before applying it.
+
+The workspace segment has two states: the unchanged 1–10 overview and grouped
+`workspace id · window icons` for every occupied regular workspace, plus active/focused
+empty workspaces across monitors.
+Each compact badge contains the workspace ID and one 11px clickable icon per
+window. In this state, AI usage and vitals sit together between the workspace
+badges and the centered title. Middle-click the segment to switch states; left-click selects a workspace or focuses a window. Window icons have
+focused-window highlighting and app/title tooltips. Window logos match the badge
+text color using `qt6-5compat`. Foot icons use Linux `/proc` foreground
+process groups (including shells, editors and agent CLIs), never title matching.
+A shared Python 3 stdlib collector polls every two seconds; unknown commands,
+process races and ambiguous Foot server sessions fall back to a terminal icon.
+Herdr shows one Herdr icon: its inner PTYs do not reliably identify the active
+pane. Other windows use their application icon when available.
 
 Renamed workspaces set through `fuzzel-tools` appear as `id: title` in the bar;
 default numeric workspaces stay compact. The bar listens for Hyprland's rename
@@ -485,7 +546,7 @@ Every application follows the same template: a top-level package mirrors its des
 |---|---|
 | **agent-workflow** | Observe-only caretaker, usage/job polling and durable Matrix outbox user timers; deterministic helpers installed from jlacours-tools |
 | **ai-usage** | OpenUsage provider selection and a cached quota/balance plus tracked harness-token summary for the Quickshell bar; `agent-metrics` workflow-outcome and deterministic overhead log/report |
-| **bitwarden** | Bitwarden CLI wrapper that keeps the temporary vault session in GNOME Keyring without storing the master password |
+| **bitwarden** | `bw-session` authority, `bw` shim and guard service: an 8-hour, generation-bound Bitwarden CLI session in GNOME Keyring (never the master password), token kept out of argv and exec'd environments, locked on expiry and on sleep |
 | **borg** | Portable, user-level encrypted backups with a daily systemd timer, cache-aware and filesystem-boundary exclusions, low-space retention recovery, and machine-local credentials/settings |
 | **boxcare** | Bounded multi-host security/maintenance audits and explicit serialized updates, using a secret-free logical inventory and strict SSH behavior |
 | **codex** | Codex Remote Control systemd user service plus a ChatGPT desktop launcher that keeps the default XWayland backend |
@@ -500,11 +561,13 @@ Every application follows the same template: a top-level package mirrors its des
 | **mcp-services** | Loopback-only HTTP/SSE wrappers for shared memory, time, and Exa web search, plus judgment tools |
 | **nvim** | Neovim configuration, plugins, mappings, and the Darklime theme; the default editor |
 | **qtile** | Alternate tiling Wayland session with Hyprland-style keybinds, Fuzzel-based menus, mako notifications, scratchpad dropdowns, hypridle monitor idling, and a wlr xdg-desktop-portal config |
-| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge (middle-click expands it to every provider) with a single-provider quota/token tooltip, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, runtime jobs/findings indicator, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock |
+| **quickshell** | Minimal multi-monitor Hyprland bar with Wallust-reactive colors, a fixed-width rotating AI-provider badge (middle-click expands it to every provider) with a single-provider quota/token tooltip, compact CPU/RAM/disk/temperature/GPU vitals, active-window state, runtime jobs/findings indicator, game-mode/idle/correction/Hermes/local-model/VPN/Tailscale controls, aligned system-tray menus, monitor name, and clock; a speech chip (an animated talking mouth while `~/.local/bin/speak` plays; click stops it); and, as its own `qs -c speakscope` instance started from `modules/bootstrap.lua`, a click-through bottom-center overlay of mirrored cava-driven oscilloscopes around a rotating tesseract while `speak` talks (`speak` pushes its state to both over Quickshell IPC) |
 | **sway** | Legacy Sway configuration |
 | **herdr** | Herdr configuration, compact agent status, and targeted external control |
 | **helium** | Helium browser user flags, including suppression of the session-crashed/restore bubble |
-| **wallust** | Wallust color-generation configuration, application templates, live desktop refresh hook, and the `wallust-random-light`/`wallust-random-dark` random-theme commands behind the theme keybinds |
+| **hermes** | Hermes Agent `speak-replies` plugin: a per-session `/speak [on\|off\|stop\|status]` toggle that reads replies aloud through `~/.local/bin/speak` (and so shows the speakscope tesseract overlay), in the CLI/TUI and Matrix chats; enable with `hermes plugins enable speak-replies` |
+| **tui** | `jujutui`: small, short-lived Textual cards in a dedicated non-recording Foot window (`jujutui-float`), used by Bitwarden for the metadata card (`bw-card`, secrets fetched only on explicit copy) and the single-instance unlock card (`bw-unlock-card`); install with `./install.sh bitwarden tui` |
+| **wallust** | Wallust color-generation configuration, application templates, live desktop refresh hook, the `wallust-random-light`/`wallust-random-dark` random-theme commands behind the theme keybinds, and the `wallust-theme-menu` Fuzzel theme picker |
 | **zsh** | zsh shell configuration, prompt schema, native completion, and Carapace coverage for unsupported commands |
 
 Repository-only directories such as `scripts/`, `assets/`, `legacy/`, and `.agents/` are not Stow packages.

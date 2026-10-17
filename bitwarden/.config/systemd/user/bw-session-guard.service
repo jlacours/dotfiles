@@ -1,0 +1,15 @@
+[Unit]
+Description=Bitwarden CLI session guard (reconcile, expiry, lock on sleep)
+Documentation=file://%h/.dotfiles/bitwarden/README.md
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/bw-session guard
+Restart=on-failure
+RestartSec=5
+LimitCORE=0
+NoNewPrivileges=yes
+UMask=0077
+
+[Install]
+WantedBy=default.target

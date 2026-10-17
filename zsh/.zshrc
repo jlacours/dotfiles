@@ -39,7 +39,7 @@ export PNPM_HOME="$HOME/.local/share/pnpm"
 path_prepend "$HOME/.cargo/bin"
 path_prepend "$HOME/.npm-global/bin"
 path_prepend "$PNPM_HOME"
-path_prepend "$HOME/repos/llama.cpp/build/bin"
+path_prepend "$HOME/.local/opt/llama.cpp/current"
 path_prepend "$HOME/.local/bin"
 
 # --- Vanilla Zsh Plugins ---
@@ -76,6 +76,15 @@ source_if_readable "$ZSH_PLUGIN_DIR/colored-man-pages/colored-man-pages.plugin.z
 source_if_readable "$ZSH_PLUGIN_DIR/man/man.plugin.zsh"
 source_if_readable "$ZSH_PLUGIN_DIR/wallust/wallust.plugin.zsh"
 source_if_readable "$ZSH_PLUGIN_DIR/fzf-tab/fzf-tab.plugin.zsh"
+
+# --- Startup banner ---
+if [[ -o interactive ]]; then
+  print -rP '%F{cyan}   ___                              %f'
+  print -rP '%F{cyan}  / _ \_______  ___ ________ ___ ___%f'
+  print -rP '%F{cyan} / ___/ __/ _ \/ _ `/ __/ -_|_-<(_-<%f'
+  print -rP '%F{cyan}/_/  /_/  \___/\_, /_/  \__/___/___/%f'
+  print -rP '%F{cyan}              /___/                 %f'
+fi
 
 # command-not-found: source the platform handler when present.
 for command_not_found_file in \

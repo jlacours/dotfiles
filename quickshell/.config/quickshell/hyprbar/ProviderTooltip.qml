@@ -88,6 +88,12 @@ PopupWindow {
                 ? "Today · token usage unavailable"
                 : "Today · " + formatTokens(amount) + " tokens (sessions opened today)"
         }
+        if (providerInfo && providerInfo.id === "muse") {
+            const amount = AiUsageState.tokenUsage.muse_today
+            return amount === null || amount === undefined
+                ? "Quota unknown · token usage unavailable"
+                : "Quota unknown · today " + formatTokens(amount) + " tokens (sessions opened today)"
+        }
         if (isCredit) {
             const amount = provider.remaining === null || provider.remaining === undefined
                 ? NaN : Number(provider.remaining)
@@ -144,7 +150,7 @@ PopupWindow {
 
             Text {
                 text: root.providerInfo ? root.providerInfo.label : "AI Provider"
-                color: root.accentColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 11
                 font.weight: Font.DemiBold
@@ -153,7 +159,7 @@ PopupWindow {
             Text {
                 id: detailLabel
                 text: root.detailText
-                color: root.provider ? root.foregroundColor : root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 10
                 elide: Text.ElideRight
@@ -165,7 +171,7 @@ PopupWindow {
                 text: "5h " + root.formatPercent(root.provider?.five_hour_left)
                     + " left" + (root.resetTime(root.provider?.five_hour_reset).length > 0
                         ? " · reset at " + root.resetTime(root.provider.five_hour_reset) : "")
-                color: root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 9
                 elide: Text.ElideRight
@@ -177,7 +183,7 @@ PopupWindow {
                 text: "7d " + root.formatPercent(root.provider?.seven_day_left)
                     + " left" + (root.resetDate(root.provider?.weekly_reset).length > 0
                         ? " · reset " + root.resetDate(root.provider.weekly_reset) : "")
-                color: root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 9
                 elide: Text.ElideRight
@@ -187,7 +193,7 @@ PopupWindow {
 
             Text {
                 text: "· " + root.resetAvailability
-                color: root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 9
                 visible: root.resetAvailability.length > 0
@@ -217,7 +223,7 @@ PopupWindow {
 
             Text {
                 text: "Harness tokens"
-                color: root.accentColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 9
                 font.weight: Font.DemiBold
@@ -228,7 +234,7 @@ PopupWindow {
                     + " · " + root.coverageLabel(root.tokenUsage.today_tracked)
                     + " " + Number(root.tokenUsage.today_tracked || 0)
                     + "/" + Number(root.tokenUsage.harness_count || 6)
-                color: root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 9
             }
@@ -238,7 +244,7 @@ PopupWindow {
                     + " · " + root.coverageLabel(root.tokenUsage.all_time_tracked)
                     + " " + Number(root.tokenUsage.all_time_tracked || 0)
                     + "/" + Number(root.tokenUsage.harness_count || 6)
-                color: root.mutedColor
+                color: root.foregroundColor
                 font.family: "Comic Code"
                 font.pixelSize: 9
             }

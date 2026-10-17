@@ -200,12 +200,36 @@ get_formatted_list() {
 
 formatted_list="$(get_formatted_list)"
 
-selected=$(printf '%s' "$formatted_list" | fuzzel --dmenu --only-match --prompt "Unicode> ") || exit 0
+if selected=$(printf '%s' "$formatted_list" | fuzzel --dmenu --only-match \
+    --prompt "Unicode> " \
+    --mesg 'Select to type · \ to copy only' \
+    --override=key-bindings.custom-1=backslash); then
+    action='type'
+else
+    fuzzel_status=$?
+    if [ "$fuzzel_status" -eq 10 ]; then
+        action='copy'
+    else
+        exit 0
+    fi
+fi
 
 if [ -z "$selected" ]; then
     exit 0
 fi
 
 char="${selected%% *}"
-printf '%s' "$char" | wl-copy
-notify-send -a "Emoji Picker" "Unicode Picker" "Copied: $char" -t 2000
+
+copy_selection() {
+    printf '%s' "$char" | wl-copy
+}
+
+if [ "$action" = copy ]; then
+    copy_selection
+    notify-send -a "Emoji Picker" "Unicode Picker" "Copied to clipboard" -t 2000
+elif command -v wtype >/dev/null 2>&1 && sleep 0.12 && wtype -- "$char"; then
+    :
+else
+    copy_selection
+    notify-send -a "Emoji Picker" "Unicode Picker" "Typing failed; copied to clipboard" -t 3000
+fi

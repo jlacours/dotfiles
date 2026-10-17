@@ -1,0 +1,1 @@
+../hyprbar/WallustPalette.qml

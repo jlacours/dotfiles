@@ -53,6 +53,7 @@ exec(main_mod .. " + B", programs.apps_menu, "Favorite apps menu")
 exec(main_mod .. " + tab", programs.window_menu, "Window switcher")
 exec(main_mod .. " + F1", "~/.config/hypr/scripts/keybinds-menu.sh", "Show keybindings")
 exec(main_mod .. " + F2", programs.agent_command_menu, "Show live agent commands")
+exec(main_mod .. " + Y", "qs -c hyprbar ipc call usage toggle", "AI usage dashboard")
 
 -- Window actions
 dispatch(main_mod .. " + Q", hl.dsp.window.close(), "Close active window")
@@ -68,7 +69,7 @@ dispatch(main_mod .. " + bracketright", hl.dsp.group.next(), "Next tab")
 -- Bars and overlays
 exec(
   main_mod .. " + N",
-  "makoctl dismiss --all",
+  "qs -c hyprbar ipc call notifs dismissAll",
   "Dismiss notifications"
 )
 exec(main_mod .. " + CTRL + SHIFT + slash", programs.restart_bar, "Restart bar")
@@ -76,6 +77,7 @@ exec(main_mod .. " + CTRL + SHIFT + slash", programs.restart_bar, "Restart bar")
 -- Theme
 exec(main_mod .. " + SHIFT + slash", programs.restart_bar, "Restart bar")
 exec(main_mod .. " + SHIFT + semicolon", "~/.local/bin/wallust-random-light", "Random light theme")
+exec(main_mod .. " + CTRL + semicolon", "~/.local/bin/wallust-theme-menu", "Theme menu")
 
 -- Audio
 exec(main_mod .. " + M", "~/.config/hypr/scripts/volume-notify.sh mute", "Toggle mute")

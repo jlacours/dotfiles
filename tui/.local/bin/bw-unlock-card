@@ -1,0 +1,10 @@
+#!/usr/bin/python3 -I
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path.home() / ".local" / "lib"))
+
+from jujutui.base import finish_card_process
+from jujutui.bw_unlock_card import main
+
+raise SystemExit(finish_card_process(main()))

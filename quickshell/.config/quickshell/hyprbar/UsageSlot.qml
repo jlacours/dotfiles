@@ -18,12 +18,13 @@ Rectangle {
     property int providerIndex: 0
 
     readonly property var providers: [
-        { id: "codex", label: "Codex", shortLabel: "Codex", source: "ai-codex.svg" },
-        { id: "claude_code", label: "Claude", shortLabel: "Claude", source: "ai-claude.svg" },
-        { id: "zai", label: "Z.AI", shortLabel: "Z.AI", source: "ai-zai.svg" },
-        { id: "openrouter", label: "OpenRouter", shortLabel: "Router", source: "ai-openrouter.svg" },
-        { id: "pi", label: "Pi", shortLabel: "Pi", source: "", stacked: true },
-        { id: "hermes", label: "Hermes", shortLabel: "Hermes", source: "", stacked: true }
+        { id: "codex", label: "Codex", source: "ai-codex.svg" },
+        { id: "claude_code", label: "Claude", source: "ai-claude.svg" },
+        { id: "zai", label: "Z.AI", source: "ai-zai.svg" },
+        { id: "openrouter", label: "OpenRouter", source: "ai-openrouter.svg" },
+        { id: "muse", label: "Muse", source: "ai-muse.svg" },
+        { id: "pi", label: "Pi", source: "ai-pi.svg", stacked: true },
+        { id: "hermes", label: "Hermes", source: "ai-hermes.svg", stacked: true }
     ]
     readonly property var currentInfo: providers[providerIndex]
     readonly property var currentProvider: currentInfo
@@ -67,6 +68,16 @@ Rectangle {
                 : tokens >= 1000 ? Math.round(tokens / 1000) + "K" : String(Math.round(tokens))
         }
 
+        if (provider.id === "muse") {
+            const rawTokens = AiUsageState.tokenUsage.muse_today
+            const tokens = rawTokens === null || rawTokens === undefined ? NaN : Number(rawTokens)
+            if (!isFinite(tokens))
+                return "?"
+            return tokens >= 1000000
+                ? (tokens / 1000000).toFixed(1) + "M"
+                : tokens >= 1000 ? Math.round(tokens / 1000) + "K" : String(Math.round(tokens))
+        }
+
         if (provider.id === "openrouter") {
             const amount = provider.remaining === null || provider.remaining === undefined
                 ? NaN : Number(provider.remaining)
@@ -99,10 +110,29 @@ Rectangle {
         if (!provider || provider.seven_day_left === null || provider.seven_day_left === undefined)
             return ""
         return "7d " + formatLeft(provider.seven_day_left)
-            + "  " + String(provider.weekly_reset_short || "?")
     }
 
-    implicitWidth: UsageSlotState.expanded ? expandedRow.implicitWidth + 12 : 116
+    function fiveHourReset(provider) {
+        const value = provider ? provider.five_hour_reset : null
+        if (!value)
+            return ""
+        const when = Date.parse(value)
+        return isNaN(when) ? "" : Qt.formatDateTime(new Date(when), "HH:mm")
+    }
+
+    // Compact width is fixed to the widest value any provider can show (six
+    // characters, e.g. "$82.13" or "123.4M") so neighbors never shift while
+    // the slot cycles; the logo and value sit centered inside it.
+    TextMetrics {
+        id: compactValueMetrics
+        font.family: "Comic Code"
+        font.pixelSize: 10
+        text: "$88.88"
+    }
+
+    implicitWidth: UsageSlotState.expanded
+        ? expandedRow.implicitWidth + 12
+        : 12 + 14 + 5 + Math.ceil(compactValueMetrics.advanceWidth)
     implicitHeight: 22
     radius: 0
     color: slotMouse.containsMouse ? root.hoverColor : "transparent"
@@ -110,13 +140,7 @@ Rectangle {
     Row {
         id: compactRow
         visible: !UsageSlotState.expanded
-        anchors {
-            left: parent.left
-            leftMargin: 6
-            right: parent.right
-            rightMargin: 6
-            verticalCenter: parent.verticalCenter
-        }
+        anchors.centerIn: parent
         height: parent.height
         spacing: 5
 
@@ -129,50 +153,38 @@ Rectangle {
                 anchors.centerIn: parent
                 width: 13
                 height: 13
-                source: root.currentInfo && root.currentInfo.source.length > 0
-                    ? Qt.resolvedUrl(root.currentInfo.source) : ""
+                source: root.currentInfo ? Qt.resolvedUrl(root.currentInfo.source) : ""
                 asynchronous: true
                 fillMode: Image.PreserveAspectFit
-                visible: source.toString().length > 0
 
-                layer.enabled: visible
+                layer.enabled: true
                 layer.effect: MultiEffect {
                     colorization: 1.0
                     colorizationColor: root.foregroundColor
                 }
             }
+        }
+
+
+        Column {
+            id: compactValues
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: -1
 
             Text {
-                anchors.centerIn: parent
-                visible: !root.currentInfo || root.currentInfo.source.length === 0
-                text: root.currentInfo ? root.currentInfo.label.slice(0, 1) : "?"
+                text: root.primaryValue(root.currentProvider)
                 color: root.foregroundColor
                 font.family: "Comic Code"
-                font.pixelSize: 11
-                font.weight: Font.DemiBold
+                font.pixelSize: 10
             }
-        }
 
-        // The label yields space to the value so a balance like "$82.13" is
-        // never elided; the badge itself keeps its fixed width.
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            width: compactRow.width - 14 - valueText.implicitWidth - 2 * compactRow.spacing
-            text: root.currentInfo ? root.currentInfo.shortLabel : "AI"
-            color: root.foregroundColor
-            font.family: "Comic Code"
-            font.pixelSize: 10
-            font.weight: Font.Medium
-            elide: Text.ElideRight
-        }
-
-        Text {
-            id: valueText
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.primaryValue(root.currentProvider)
-            color: text === "?" || text === "—" ? root.mutedColor : root.accentColor
-            font.family: "Comic Code"
-            font.pixelSize: 10
+            Text {
+                visible: text.length > 0
+                text: root.fiveHourReset(root.currentProvider)
+                color: root.foregroundColor
+                font.family: "Comic Code"
+                font.pixelSize: 8
+            }
         }
     }
 
@@ -183,7 +195,7 @@ Rectangle {
         anchors.leftMargin: 6
         anchors.verticalCenter: parent.verticalCenter
         height: parent.height
-        spacing: 7
+        spacing: 10
 
         Repeater {
             model: root.providers.filter(info => !info.stacked)
@@ -209,46 +221,81 @@ Rectangle {
                             y: Math.round((parent.height - height) / 2)
                             width: 13
                             height: 13
-                            source: modelData.source.length > 0 ? Qt.resolvedUrl(modelData.source) : ""
+                            source: Qt.resolvedUrl(modelData.source)
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
-                            visible: modelData.source.length > 0
 
-                            layer.enabled: visible
+                            layer.enabled: true
                             layer.effect: MultiEffect {
                                 colorization: 1.0
                                 colorizationColor: root.foregroundColor
                             }
                         }
-
-                        Text {
-                            anchors.centerIn: parent
-                            visible: modelData.source.length === 0
-                            text: modelData.label.slice(0, 1)
-                            color: root.foregroundColor
-                            font.family: "Comic Code"
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
-                        }
                     }
 
                     Column {
+                        id: providerValues
+                        readonly property real leftWidth: Math.max(primaryText.implicitWidth, fiveHourText.implicitWidth)
+                        readonly property real rightWidth: Math.max(weeklyText.implicitWidth, weeklyDateText.implicitWidth)
+                        readonly property real columnGap: rightWidth > 0 ? 8 : 0
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: -1
+                        width: leftWidth + columnGap + rightWidth
 
-                        Text {
-                            text: root.primaryValue(provider)
-                            color: text === "?" || text === "—" ? root.mutedColor : root.foregroundColor
-                            font.family: "Comic Code"
-                            font.pixelSize: 11
+                        Item {
+                            id: usageLine
+                            width: parent.width
+                            implicitHeight: Math.max(primaryText.implicitHeight, weeklyText.implicitHeight)
+                            height: implicitHeight
+
+                            Text {
+                                id: primaryText
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.primaryValue(provider)
+                                color: root.foregroundColor
+                                font.family: "Comic Code"
+                                font.pixelSize: 11
+                            }
+
+                            Text {
+                                id: weeklyText
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: text.length > 0
+                                text: root.secondaryValue(provider)
+                                color: root.foregroundColor
+                                font.family: "Comic Code"
+                                font.pixelSize: 8
+                            }
                         }
 
-                        Text {
-                            visible: text.length > 0
-                            text: root.secondaryValue(provider)
-                            color: root.mutedColor
-                            font.family: "Comic Code"
-                            font.pixelSize: 8
+                        Item {
+                            id: resetLine
+                            width: parent.width
+                            implicitHeight: Math.max(fiveHourText.implicitHeight, weeklyDateText.implicitHeight)
+                            height: visible ? implicitHeight : 0
+                            visible: fiveHourText.text.length > 0 || weeklyDateText.text.length > 0
+
+                            Text {
+                                id: fiveHourText
+                                anchors.left: parent.left
+                                visible: text.length > 0
+                                text: root.fiveHourReset(provider)
+                                color: root.foregroundColor
+                                font.family: "Comic Code"
+                                font.pixelSize: 8
+                            }
+
+                            Text {
+                                id: weeklyDateText
+                                anchors.right: parent.right
+                                visible: text.length > 0
+                                text: provider ? String(provider.weekly_reset_short || "") : ""
+                                color: root.foregroundColor
+                                font.family: "Comic Code"
+                                font.pixelSize: 8
+                            }
                         }
                     }
                 }
@@ -279,17 +326,24 @@ Rectangle {
                         readonly property string value: root.primaryValue(AiUsageState.providerFor(modelData.id))
                         spacing: 3
 
-                        Text {
-                            text: modelData.label.slice(0, 1)
-                            color: root.mutedColor
-                            font.family: "Comic Code"
-                            font.pixelSize: 9
-                            font.weight: Font.DemiBold
+                        Image {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 9
+                            height: 9
+                            source: Qt.resolvedUrl(modelData.source)
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectFit
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                colorization: 1.0
+                                colorizationColor: root.foregroundColor
+                            }
                         }
 
                         Text {
                             text: value
-                            color: value === "?" || value === "—" ? root.mutedColor : root.foregroundColor
+                            color: root.foregroundColor
                             font.family: "Comic Code"
                             font.pixelSize: 9
                         }

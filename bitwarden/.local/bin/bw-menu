@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Bitwarden vault menu glue (component Q). Runs the session authority's
+# picker (component W: `bw-session pick --with-generation`, which owns the
+# fuzzel dmenu over sanitized labels and revalidates its session
+# generation before answering), then opens the item card (component T)
+# bound to that same generation so a stale pick can never adopt a newer
+# session. This script only ever holds the chosen item ID and the 8-hex
+# generation — no vault data.
+#
+# Output contract (W round 2): `pick --with-generation` prints exactly
+# "ITEM_ID GENERATION" (one line, single space) and exits 0; 1 = cancel,
+# 2 = error. The picker bounds its own lifetime (120 s idle, lock, expiry,
+# re-unlock), so no timeout is imposed here.
+
+set -uo pipefail
+
+readonly BW_SESSION="${HOME}/.local/bin/bw-session"
+readonly BW_CARD="${HOME}/.local/bin/bw-card"
+
+if [[ ! -x "${BW_SESSION}" ]]; then
+    printf 'bw-menu: bw-session is not installed\n' >&2
+    exit 2
+fi
+
+if [[ ! -x "${BW_CARD}" ]]; then
+    printf 'bw-card is not installed\n' >&2
+    exit 2
+fi
+
+choice="$("${BW_SESSION}" pick --with-generation)" || exit $?
+
+# Strict validation: a UUID item ID and an 8-hex generation, exactly two
+# fields, nothing else. A single anchored regex does the split and the
+# validation in one step, so extra fields, extra spaces or garbage all
+# fail closed here instead of reaching bw-card.
+if [[ ! "${choice}" =~ ^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\ ([0-9a-f]{8})$ ]]; then
+    printf 'bw-menu: unexpected picker output\n' >&2
+    exit 2
+fi
+
+exec "${BW_CARD}" "${BASH_REMATCH[1]}" --generation "${BASH_REMATCH[2]}"

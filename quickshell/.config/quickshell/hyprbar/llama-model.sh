@@ -9,7 +9,7 @@ readonly PS="/usr/bin/ps"
 readonly AWK="/usr/bin/awk"
 readonly READLINK="/usr/bin/readlink"
 readonly TR="/usr/bin/tr"
-readonly LLAMA_SERVER_BIN="${HOME}/repos/llama.cpp/build/bin/llama-server"
+readonly LLAMA_SERVER_BIN="${HOME}/.local/opt/llama.cpp/current/llama-server"
 readonly ENDPOINT="http://127.0.0.1:3002"
 readonly DEFAULT_MODEL="qwen3.6-35b-a3b"
 

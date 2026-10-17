@@ -1,5 +1,35 @@
 # External Herdr control
 
+## Master and child layout
+
+`~/.local/bin/herdr-master` applies the working layout convention used by this
+setup: one master pane on the left, with child panes in an equally sized
+vertical stack on the right. It discovers live tabs, panes, and agent state
+from Herdr's session snapshot; IDs are never generated or assumed.
+
+```sh
+herdr-master status
+herdr-master apply --ratio 60
+herdr-master spawn --label reviewer --cwd "$PWD" -- pi
+herdr pane list  # copy a live child pane ID from this output
+herdr-master promote PANE_ID_FROM_LIST
+```
+
+Each subcommand accepts `--tab TAB_ID`. Without it, the helper resolves
+`HERDR_TAB_ID` or `HERDR_PANE_ID` inside a Herdr pane, then falls back to the
+live focused tab. `apply` is idempotent for the supported topology and balances
+the left width and child heights. `spawn` creates and runs a child command
+without moving focus, and `promote` swaps a child into the left position
+without closing either pane.
+
+Herdr's public pane CLI can resize or swap existing panes but cannot rebuild an
+arbitrary split tree within its current tab. For safety, `apply`, `spawn`, and
+`promote` stop with a clear error if a multi-pane tab is not already one
+full-width left/right split with a simple vertical child stack. `status` stays
+read-only on other topologies and lists their panes with “no master layout in
+this tab.” A single-pane tab is accepted; the first `spawn` creates the
+master/child split.
+
 ## Compact state icons
 
 `herdr-agent-status` shows a state icon before each name on the tab bar, keeping

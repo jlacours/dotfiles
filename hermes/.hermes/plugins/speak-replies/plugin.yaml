@@ -1,0 +1,5 @@
+name: speak-replies
+version: "1.0"
+description: Toggle (/speak) reading Hermes replies aloud through ~/.local/bin/speak, which also shows the speakscope overlay
+provides_hooks:
+  - post_llm_call

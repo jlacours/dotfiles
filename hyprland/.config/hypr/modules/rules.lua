@@ -112,6 +112,15 @@ local window_rules = {
     stay_focused = true,
   },
   {
+    -- Floating card window shared by the jujutui cards (bw-card,
+    -- bw-unlock-card); deliberately no stay_focused.
+    name = "jujutui-card-float",
+    match = { class = "^jujutui-card$" },
+    float = true,
+    size = { 560, 300 },
+    center = true,
+  },
+  {
     name = "bitwarden-extension-float",
     match = { class = "^chrome-nngceckbapebfimnlniiiahkandclblb-Default$" },
     float = true,

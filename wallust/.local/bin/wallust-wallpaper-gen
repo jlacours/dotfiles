@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Generate a textured wallpaper for a wallust scheme with local Qwen-Image 2.1.
+
+Usage: wallust-wallpaper-gen SCHEME PROMPT_FILE [SEED]
+
+Needs ComfyUI listening on 127.0.0.1:8188 with the Qwen-Image 2.1 GGUF, its
+Qwen3-VL text encoder and VAE; start it with
+`gpu-guard run -- ~/ComfyUI/run-qwen-image-2.1.sh`. Writes
+~/Pictures/Wallpapers/SCHEME.png (1920x1080) and SCHEME.prompt.txt, keeping a
+replaced wallpaper as .SCHEME.previous.png.
+"""
+import json
+import random
+import shutil
+import subprocess
+import sys
+import time
+import urllib.request
+from pathlib import Path
+
+API = "http://127.0.0.1:8188"
+COMFY_OUTPUT = Path("/mnt/Fast/models/qwen-image-2.1-uncensored/output")
+WALLPAPERS = Path.home() / "Pictures/Wallpapers"
+
+
+def call(path, payload=None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    request = urllib.request.Request(API + path, data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
+def graph(prompt, seed, prefix):
+    return {
+        "1": {"class_type": "UnetLoaderGGUF", "inputs": {"unet_name": "qwen-image-2.1-UC-Q4_K_M.gguf"}},
+        "2": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+                                                     "type": "qwen_image", "device": "cpu"}},
+        "3": {"class_type": "VAELoader", "inputs": {"vae_name": "qwen_image_2.1_vae_bf16.safetensors"}},
+        "4": {"class_type": "TextEncodeQwenImage21", "inputs": {"clip": ["2", 0], "vae": ["3", 0], "prompt": prompt,
+                                                                "negative_prompt": "", "resolution": 1024}},
+        # The encoder's empty latent is square; a zero latent resized stays zero.
+        # LatentUpscale divides by 8 and this latent is 1/16, so 832x464 -> 1664x928.
+        "8": {"class_type": "LatentUpscale", "inputs": {"samples": ["4", 2], "upscale_method": "nearest-exact",
+                                                        "width": 832, "height": 464, "crop": "disabled"}},
+        "5": {"class_type": "KSampler", "inputs": {"model": ["1", 0], "positive": ["4", 0], "negative": ["4", 1],
+                                                   "latent_image": ["8", 0], "seed": seed, "steps": 25, "cfg": 1.0,
+                                                   "sampler_name": "euler", "scheduler": "simple", "denoise": 1.0}},
+        "6": {"class_type": "VAEDecode", "inputs": {"samples": ["5", 0], "vae": ["3", 0]}},
+        "7": {"class_type": "SaveImage", "inputs": {"images": ["6", 0], "filename_prefix": prefix}},
+    }
+
+
+def main(argv):
+    if len(argv) not in (2, 3):
+        sys.exit(__doc__.strip())
+    scheme, prompt_file = argv[0], Path(argv[1])
+    prompt = prompt_file.read_text().strip()
+    seed = int(argv[2]) if len(argv) == 3 else random.randint(1, 2**31)
+
+    started = time.time()
+    prompt_id = call("/prompt", {"prompt": graph(prompt, seed, f"wall-{scheme}")})["prompt_id"]
+    while True:
+        time.sleep(3)
+        entry = call(f"/history/{prompt_id}").get(prompt_id)
+        if not entry:
+            continue
+        if entry.get("status", {}).get("status_str") == "error":
+            sys.exit(f"{scheme}: ComfyUI failed: {json.dumps(entry['status'])[:600]}")
+        images = [image for output in entry["outputs"].values() for image in output.get("images", [])]
+        if images:
+            break
+
+    source = COMFY_OUTPUT / images[0].get("subfolder", "") / images[0]["filename"]
+    target = WALLPAPERS / f"{scheme}.png"
+    if target.exists():
+        shutil.copy2(target, WALLPAPERS / f".{scheme}.previous.png")
+    subprocess.run(["magick", str(source), "-filter", "Lanczos", "-resize", "1920x1080^",
+                    "-gravity", "center", "-extent", "1920x1080", str(target)], check=True)
+    (WALLPAPERS / f"{scheme}.prompt.txt").write_text(
+        "Generated locally with Qwen-Image 2.1 (Q4_K_M GGUF) in ComfyUI: 1664x928, 25 steps, "
+        f"euler/simple, cfg 1.0, seed {seed}; Lanczos-scaled to 1920x1080.\n\n{prompt}\n")
+    print(f"{scheme}: {target} (seed {seed}, {time.time() - started:.0f}s)")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

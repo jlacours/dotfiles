@@ -1,0 +1,361 @@
+#!/usr/bin/env python3
+"""Arrange one Herdr tab as a left master and a balanced right stack."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+import unicodedata
+from typing import Any
+
+
+class MasterError(Exception):
+    """Expected user-facing command or layout error."""
+
+
+def herdr_bin() -> str:
+    binary = os.environ.get("HERDR_BIN_PATH") or shutil.which("herdr")
+    if not binary:
+        raise MasterError("herdr was not found on PATH")
+    return binary
+
+
+def invoke(*args: str, timeout: float = 10) -> str:
+    try:
+        result = subprocess.run(
+            [herdr_bin(), *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise MasterError(f"could not run herdr {shlex.join(args)}: {exc}") from exc
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        raise MasterError(detail or f"herdr {shlex.join(args)} failed ({result.returncode})")
+    return result.stdout
+
+
+def json_command(*args: str) -> dict[str, Any]:
+    try:
+        value = json.loads(invoke(*args))
+    except json.JSONDecodeError as exc:
+        raise MasterError(f"Herdr returned invalid JSON for {shlex.join(args)}") from exc
+    if not isinstance(value, dict):
+        raise MasterError(f"Herdr returned an unexpected response for {shlex.join(args)}")
+    return value
+
+
+def snapshot() -> dict[str, Any]:
+    response = json_command("api", "snapshot")
+    data = response.get("result", {}).get("snapshot")
+    if not isinstance(data, dict):
+        raise MasterError("Herdr snapshot did not contain live session state")
+    return data
+
+
+def resolve_tab(data: dict[str, Any], requested: str | None) -> tuple[str, dict[str, Any]]:
+    tabs = data.get("tabs", [])
+    if not isinstance(tabs, list):
+        raise MasterError("Herdr snapshot did not contain a tab list")
+    tab_id = requested or os.environ.get("HERDR_TAB_ID")
+    context_pane = os.environ.get("HERDR_PANE_ID")
+    if not tab_id and context_pane:
+        live_pane = next(
+            (pane for pane in data.get("panes", []) if isinstance(pane, dict) and pane.get("pane_id") == context_pane),
+            None,
+        )
+        if live_pane is None:
+            raise MasterError(f"HERDR_PANE_ID {context_pane!r} is not a live pane in this Herdr session")
+        tab_id = live_pane.get("tab_id")
+    tab_id = tab_id or data.get("focused_tab_id")
+    if not isinstance(tab_id, str) or not tab_id:
+        raise MasterError("cannot resolve a tab; pass --tab TAB_ID or run inside a Herdr pane")
+    for tab in tabs:
+        if isinstance(tab, dict) and tab.get("tab_id") == tab_id:
+            return tab_id, tab
+    raise MasterError(f"tab {tab_id!r} is not a live tab in this Herdr session")
+
+
+def layout_for(data: dict[str, Any], tab_id: str) -> dict[str, Any]:
+    for layout in data.get("layouts", []):
+        if isinstance(layout, dict) and layout.get("tab_id") == tab_id:
+            return layout
+    raise MasterError(f"Herdr has no live layout for tab {tab_id}")
+
+
+def panes_for(data: dict[str, Any], tab_id: str) -> list[dict[str, Any]]:
+    panes = [pane for pane in data.get("panes", []) if isinstance(pane, dict) and pane.get("tab_id") == tab_id]
+    panes.sort(key=lambda pane: (pane.get("pane_id", "")))
+    if not panes:
+        raise MasterError(f"tab {tab_id} has no live panes")
+    return panes
+
+
+def geometry(layout: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+    area = layout.get("area")
+    panes = layout.get("panes")
+    splits = layout.get("splits")
+    if not isinstance(area, dict) or not isinstance(panes, list) or not isinstance(splits, list):
+        raise MasterError("Herdr returned incomplete pane geometry")
+    return area, panes, splits
+
+
+def canonical_layout(layout: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]:
+    area, pane_rects, splits = geometry(layout)
+    if layout.get("zoomed") is True:
+        raise MasterError("cannot apply while a pane is zoomed; unzoom it and retry")
+    panes = [pane for pane in pane_rects if isinstance(pane, dict) and isinstance(pane.get("rect"), dict)]
+    if len(panes) != len(pane_rects):
+        raise MasterError("Herdr returned incomplete pane rectangles")
+    if len(panes) == 1 and not splits:
+        return area, panes, [], None
+    if len(splits) != len(panes) - 1:
+        raise MasterError("cannot normalize this tab: Herdr returned an unexpected split tree")
+
+    full = [
+        split for split in splits
+        if isinstance(split, dict)
+        and split.get("direction") == "right"
+        and split.get("rect") == area
+    ]
+    if len(full) != 1:
+        raise MasterError(
+            "cannot normalize this topology safely: expected one full-width left/right split; "
+            "Herdr's public CLI cannot rebuild arbitrary in-tab split trees"
+        )
+    root = full[0]
+    # The left master spans the full tab height; every child occupies one shared right column.
+    left = [pane for pane in panes if pane["rect"].get("x") == area.get("x")]
+    right = [pane for pane in panes if pane["rect"].get("x") != area.get("x")]
+    if len(left) != 1 or not right:
+        raise MasterError("cannot normalize this topology safely: no unique left master and right child column")
+    master_rect = left[0]["rect"]
+    right.sort(key=lambda pane: (pane["rect"].get("y", 0), pane.get("pane_id", "")))
+    stack_x = right[0]["rect"].get("x")
+    stack_width = right[0]["rect"].get("width")
+    stack_right = area.get("x", 0) + area.get("width", 0)
+    if (
+        master_rect.get("y") != area.get("y")
+        or master_rect.get("height") != area.get("height")
+        or any(pane["rect"].get("x") != stack_x or pane["rect"].get("width") != stack_width for pane in right)
+        or stack_x + stack_width != stack_right
+    ):
+        raise MasterError("cannot normalize this topology safely: panes do not form a left master and right column")
+    cursor = area.get("y", 0)
+    for pane in right:
+        rect = pane["rect"]
+        if rect.get("y") != cursor or rect.get("height", 0) <= 0:
+            raise MasterError("cannot normalize this topology safely: right panes are not a contiguous vertical stack")
+        cursor += rect["height"]
+    if cursor != area.get("y", 0) + area.get("height", 0):
+        raise MasterError("cannot normalize this topology safely: right stack does not fill the tab")
+
+    stack_splits = [split for split in splits if split is not root]
+    stack_bottom = area.get("y", 0) + area.get("height", 0)
+    for split in stack_splits:
+        rect = split.get("rect", {})
+        if split.get("direction") != "down" or rect.get("x") != stack_x or rect.get("width") != stack_width:
+            raise MasterError("cannot normalize this topology safely: child splits must form one vertical right stack")
+        if rect.get("y", 0) + rect.get("height", 0) != stack_bottom:
+            raise MasterError("cannot normalize this topology safely: right stack must be a simple vertical chain")
+        top = next((pane for pane in right if pane["rect"].get("y") == rect.get("y")), None)
+        height = rect.get("height", 0)
+        if top is None or height <= 0:
+            raise MasterError("cannot normalize this topology safely: split does not start at a child pane")
+        expected_ratio = top["rect"].get("height", 0) / height
+        if abs(expected_ratio - float(split.get("ratio", 0))) > (1.0 / height) + 0.001:
+            raise MasterError("cannot normalize this topology safely: right stack must be a simple vertical chain")
+    if len(stack_splits) != len(right) - 1:
+        raise MasterError("cannot normalize this topology safely: split tree does not match the right stack")
+    stack_splits.sort(key=lambda split: (split.get("rect", {}).get("y", 0), -split.get("rect", {}).get("height", 0)))
+    return area, panes, stack_splits, root
+
+
+def master_and_children(layout: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    _, panes, _, _ = canonical_layout(layout)
+    ordered = sorted(panes, key=lambda pane: (pane["rect"].get("x", 0), pane["rect"].get("y", 0)))
+    return ordered[0], ordered[1:]
+
+
+def set_split_ratio(pane_id: str, direction: str, current: float, target: float, cells: int) -> None:
+    delta = target - current
+    if abs(delta) <= min(1.0 / max(cells, 1), 0.02) + 0.0001:
+        return
+    direction_for_delta = {
+        "right": "right" if delta > 0 else "left",
+        "down": "down" if delta > 0 else "up",
+    }[direction]
+    invoke("pane", "resize", "--pane", pane_id, "--direction", direction_for_delta, "--amount", f"{abs(delta):.6f}")
+
+
+def apply_layout(tab_id: str, ratio: float) -> dict[str, Any]:
+    data = snapshot()
+    layout = layout_for(data, tab_id)
+    area, panes, stack_splits, root = canonical_layout(layout)
+    if root is None:
+        return layout
+    master, children = master_and_children(layout)
+    set_split_ratio(master["pane_id"], "right", float(root["ratio"]), ratio, int(area["width"]))
+    for split in stack_splits:
+        rect = split["rect"]
+        count = sum(
+            1 for pane in panes
+            if pane["rect"].get("x") == rect.get("x")
+            and pane["rect"].get("width") == rect.get("width")
+            and rect.get("y", 0) <= pane["rect"].get("y", 0)
+            and pane["rect"].get("y", 0) + pane["rect"].get("height", 0) <= rect.get("y", 0) + rect.get("height", 0)
+        )
+        top = next(
+            (pane for pane in children if pane["rect"].get("y") == rect.get("y")),
+            None,
+        )
+        if count < 2 or top is None:
+            raise MasterError("cannot identify a right-stack split boundary from Herdr's live geometry")
+        set_split_ratio(top["pane_id"], "down", float(split["ratio"]), 1.0 / count, int(rect["height"]))
+    return layout_for(snapshot(), tab_id)
+
+
+def tab_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--tab", metavar="TAB_ID", help="live tab ID (defaults to HERDR_TAB_ID or focused tab)")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="herdr-master",
+        description="Keep one Herdr tab in a left-master, vertically stacked child layout.",
+    )
+    commands = parser.add_subparsers(dest="action", required=True)
+    apply_parser = commands.add_parser("apply", help="balance a supported master-left/right-stack layout")
+    tab_option(apply_parser)
+    apply_parser.add_argument("--ratio", type=float, default=60, metavar="PERCENT", help="master width percent (default: 60)")
+    spawn_parser = commands.add_parser("spawn", help="add and run a child pane in the right stack")
+    tab_option(spawn_parser)
+    spawn_parser.add_argument("--label", help="optional Herdr pane label")
+    spawn_parser.add_argument("--cwd", type=Path, default=Path.cwd(), help="child working directory (default: current directory)")
+    spawn_parser.add_argument("command", nargs=argparse.REMAINDER, help="command after --")
+    promote_parser = commands.add_parser("promote", help="swap a child pane into the left master position")
+    tab_option(promote_parser)
+    promote_parser.add_argument("pane_id", metavar="PANE_ID", help="live pane ID in this tab")
+    status_parser = commands.add_parser("status", help="show master, children, and agent lifecycle states")
+    tab_option(status_parser)
+    return parser
+
+
+def style() -> dict[str, str]:
+    if sys.stdout.isatty():
+        return {"title": "\033[1;36m", "master": "\033[1;32m", "child": "\033[34m", "reset": "\033[0m", "dim": "\033[2m"}
+    return {key: "" for key in ("title", "master", "child", "reset", "dim")}
+
+
+def safe_text(value: Any, fallback: str) -> str:
+    if not isinstance(value, str):
+        return fallback
+    cleaned = "".join(char for char in value if unicodedata.category(char)[0] != "C")
+    return " ".join(cleaned.split()) or fallback
+
+
+def show_status(data: dict[str, Any], tab: dict[str, Any], tab_id: str) -> None:
+    colors = style()
+    layout = layout_for(data, tab_id)
+    pane_data = {pane.get("pane_id"): pane for pane in panes_for(data, tab_id)}
+    tab_label = safe_text(tab.get("label"), tab_id)
+    print(f"{colors['title']}Herdr master layout{colors['reset']}  {tab_label}  {colors['dim']}[{tab_id}]{colors['reset']}")
+    try:
+        master, children = master_and_children(layout)
+    except MasterError:
+        print("  no master layout in this tab")
+        pane_rects = [pane for pane in layout.get("panes", []) if isinstance(pane, dict)]
+        pane_rects.sort(key=lambda pane: (pane.get("rect", {}).get("y", 0), pane.get("rect", {}).get("x", 0)))
+        for pane_rect in pane_rects:
+            pane_id = pane_rect.get("pane_id", "?")
+            details = pane_data.get(pane_id, {})
+            name = safe_text(details.get("agent") or details.get("label") or details.get("terminal_title_stripped"), "shell")
+            state = safe_text(details.get("agent_status"), "unknown")
+            print(f"  PANE   {pane_id:<10} {name}  {colors['dim']}{state}{colors['reset']}")
+        return
+    for label, pane_rect, color in [("MASTER", master, colors["master"]), *[("CHILD", pane, colors["child"]) for pane in children]]:
+        pane_id = pane_rect.get("pane_id", "?")
+        details = pane_data.get(pane_id, {})
+        name = safe_text(details.get("agent") or details.get("label") or details.get("terminal_title_stripped"), "shell")
+        state = safe_text(details.get("agent_status"), "unknown")
+        print(f"  {color}{label:<6}{colors['reset']} {pane_id:<10} {name}  {colors['dim']}{state}{colors['reset']}")
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    try:
+        if args.action == "apply" and not 20 <= args.ratio <= 80:
+            raise MasterError("--ratio must be between 20 and 80 percent")
+        data = snapshot()
+        tab_id, tab = resolve_tab(data, args.tab)
+        if args.action == "status":
+            show_status(data, tab, tab_id)
+            return 0
+        if args.action == "apply":
+            layout = apply_layout(tab_id, args.ratio / 100.0)
+            master, children = master_and_children(layout)
+            print(f"Balanced {tab_id}: {master['pane_id']} master-left, {len(children)} child pane(s) stacked right ({args.ratio:g}%).")
+            return 0
+        if args.action == "promote":
+            layout = layout_for(data, tab_id)
+            master, children = master_and_children(layout)
+            panes = panes_for(data, tab_id)
+            if not any(pane.get("pane_id") == args.pane_id for pane in panes):
+                raise MasterError(f"pane {args.pane_id!r} is not live in tab {tab_id}")
+            if args.pane_id not in {pane.get("pane_id") for pane in children}:
+                raise MasterError("promote requires a child pane; the master is already in the left position")
+            invoke("pane", "swap", "--source-pane", master["pane_id"], "--target-pane", args.pane_id)
+            layout = apply_layout(tab_id, 0.60)
+            print(f"Promoted {args.pane_id} to master-left in {tab_id}.")
+            return 0
+        if args.action == "spawn":
+            command = args.command
+            if command and command[0] == "--":
+                command = command[1:]
+            if not command:
+                raise MasterError("spawn requires a command after --")
+            if not args.cwd.is_dir():
+                raise MasterError(f"working directory does not exist: {args.cwd}")
+            layout = layout_for(data, tab_id)
+            master, children = master_and_children(layout)
+            if not children:
+                result = json_command(
+                    "pane", "split", "--pane", master["pane_id"], "--direction", "right",
+                    "--ratio", "0.60", "--cwd", str(args.cwd), "--no-focus",
+                )
+            else:
+                bottom = children[-1]
+                result = json_command(
+                    "pane", "split", "--pane", bottom["pane_id"], "--direction", "down",
+                    "--ratio", "0.5", "--cwd", str(args.cwd), "--no-focus",
+                )
+            new_pane = result.get("result", {}).get("pane", {})
+            pane_id = new_pane.get("pane_id") if isinstance(new_pane, dict) else None
+            if not isinstance(pane_id, str):
+                raise MasterError("Herdr created a pane but did not return its live pane ID")
+            try:
+                if args.label:
+                    invoke("pane", "rename", pane_id, args.label)
+                invoke("pane", "run", pane_id, shlex.join(command))
+                apply_layout(tab_id, 0.60)
+            except MasterError as exc:
+                raise MasterError(f"{exc}; created pane {pane_id} remains open in tab {tab_id}") from exc
+            print(f"Spawned child {pane_id} in {tab_id}.")
+            return 0
+        raise MasterError("unknown command")
+    except MasterError as exc:
+        print(f"herdr-master: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

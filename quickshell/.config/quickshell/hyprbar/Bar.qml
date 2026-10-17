@@ -42,6 +42,10 @@ PanelWindow {
         anchors.fill: parent
         color: bar.background
 
+        Grain {
+            anchors.fill: parent
+        }
+
         RowLayout {
             id: leftCluster
             anchors {
@@ -51,80 +55,128 @@ PanelWindow {
             }
             spacing: 2
 
-            Repeater {
-                model: 10
+            Item {
+                id: workspaceSegment
+                implicitWidth: WindowApps.showWindows
+                    ? Math.max(23, workspaceWindows.implicitWidth) : workspaceOverview.implicitWidth
+                implicitHeight: 22
 
-                delegate: Rectangle {
-                    id: workspaceButton
+                Row {
+                    id: workspaceOverview
+                    spacing: 2
+                    visible: !WindowApps.showWindows
 
-                    required property int index
-                    readonly property int workspaceId: index + 1
-                    readonly property bool active: bar.hyprMonitor?.activeWorkspace?.id === workspaceId
-                    readonly property var workspaceData: {
-                        const workspaces = Hyprland.workspaces.values
+                    Repeater {
+                        model: 10
 
-                        for (let i = 0; i < workspaces.length; i++) {
-                            if (workspaces[i].id === workspaceId)
-                                return workspaces[i]
+                        delegate: Rectangle {
+                            id: workspaceButton
+
+                            required property int index
+                            readonly property int workspaceId: index + 1
+                            readonly property bool active: bar.hyprMonitor?.activeWorkspace?.id === workspaceId
+                            readonly property var workspaceData: {
+                                const workspaces = Hyprland.workspaces.values
+
+                                for (let i = 0; i < workspaces.length; i++) {
+                                    if (workspaces[i].id === workspaceId)
+                                        return workspaces[i]
+                                }
+
+                                return null
+                            }
+                            readonly property string workspaceName: workspaceNames.nameFor(workspaceId)
+                            readonly property bool occupied: workspaceData?.toplevels.values.length > 0
+
+                            implicitWidth: Math.max(23, Math.min(115, workspaceLabel.implicitWidth + 14))
+                            implicitHeight: 22
+                            radius: 0
+                            color: active ? bar.accent : workspaceMouse.containsMouse ? bar.surfaceHover : "transparent"
+
+                            Behavior on implicitWidth {
+                                NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                            }
+
+                            Behavior on color {
+                                ColorAnimation { duration: 120 }
+                            }
+
+                            Text {
+                                id: workspaceLabel
+                                anchors {
+                                    fill: parent
+                                    leftMargin: 7
+                                    rightMargin: 7
+                                }
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                                text: workspaceButton.workspaceName
+                                color: workspaceButton.active
+                                    ? bar.background
+                                    : workspaceButton.occupied ? bar.foreground : bar.muted
+                                font.family: "Comic Code"
+                                font.pixelSize: 12
+                                font.weight: workspaceButton.active ? Font.DemiBold : Font.Medium
+                            }
+
+                            MouseArea {
+                                id: workspaceMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Hyprland.dispatch(Hyprland.usingLua
+                                    ? "hl.dsp.focus({ workspace = " + workspaceButton.workspaceId + " })"
+                                    : "workspace " + workspaceButton.workspaceId)
+                            }
                         }
-
-                        return null
-                    }
-                    readonly property string workspaceName: workspaceNames.nameFor(workspaceId)
-                    readonly property bool occupied: workspaceData?.toplevels.values.length > 0
-
-                    implicitWidth: Math.max(23, Math.min(115, workspaceLabel.implicitWidth + 14))
-                    implicitHeight: 22
-                    radius: 0
-                    color: active ? bar.accent : workspaceMouse.containsMouse ? bar.surfaceHover : "transparent"
-
-                    Behavior on implicitWidth {
-                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                     }
 
-                    Behavior on color {
-                        ColorAnimation { duration: 120 }
-                    }
+                }
 
-                    Text {
-                        id: workspaceLabel
-                        anchors {
-                            fill: parent
-                            leftMargin: 7
-                            rightMargin: 7
-                        }
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideRight
-                        text: workspaceButton.workspaceName
-                        color: workspaceButton.active
-                            ? bar.background
-                            : workspaceButton.occupied ? bar.foreground : bar.muted
-                        font.family: "Comic Code"
-                        font.pixelSize: 12
-                        font.weight: workspaceButton.active ? Font.DemiBold : Font.Medium
+                // Loaded only in windows mode: each chip owns a tooltip popup
+                // window, which made hidden rebuilds stall workspace switches.
+                Loader {
+                    id: workspaceWindows
+                    active: WindowApps.showWindows
+                    visible: active
+                    sourceComponent: WorkspaceWindows {
+                        panelWindow: bar
                     }
+                }
 
-                    MouseArea {
-                        id: workspaceMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: Hyprland.dispatch(Hyprland.usingLua
-                            ? "hl.dsp.focus({ workspace = " + workspaceButton.workspaceId + " })"
-                            : "workspace " + workspaceButton.workspaceId)
-                    }
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.MiddleButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: WindowApps.showWindows = !WindowApps.showWindows
                 }
             }
 
             Rectangle {
+                visible: !WindowApps.showWindows
                 implicitWidth: 1
                 implicitHeight: 13
                 color: bar.border
                 opacity: 0.8
             }
 
+        }
+
+        Item {
+            id: usageDock
+            width: usageSlot.implicitWidth
+            height: 22
+            anchors.verticalCenter: parent.verticalCenter
+            readonly property real workspaceEdge: leftCluster.x + leftCluster.width + 2
+            readonly property real combinedWidth: width + vitalsDock.width + 2
+            x: WindowApps.showWindows
+                ? Math.max(workspaceEdge, workspaceEdge
+                    + (centerBadge.x - workspaceEdge - combinedWidth) / 2)
+                : workspaceEdge
+
             UsageSlot {
+                id: usageSlot
                 backgroundColor: bar.background
                 foregroundColor: bar.foreground
                 mutedColor: bar.muted
@@ -133,11 +185,11 @@ PanelWindow {
                 panelWindow: bar
                 tooltipBelow: !bar.isTopMonitor
             }
-
         }
 
-        // Vitals follow the AI slot, then glide over to the right-hand cluster
-        // while the slot is expanded. Both separators always take space (only
+        // Vitals follow the AI slot. In the overview, expanding AI usage sends
+        // vitals to the right; window state keeps both in the workspace/title gap.
+        // Both separators always take space (only
         // the inward-facing one is shown) so the width stays put mid-slide.
         // Only the toggle animates; cluster geometry changes (tray icons, workspace
         // names) move the dock instantly. `atRight` is set after `sliding`, so the
@@ -145,7 +197,7 @@ PanelWindow {
         Item {
             id: vitalsDock
 
-            readonly property bool docksRight: UsageSlotState.expanded
+            readonly property bool docksRight: UsageSlotState.expanded && !WindowApps.showWindows
             property bool atRight: false
             property bool sliding: false
 
@@ -154,7 +206,7 @@ PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             x: atRight
                 ? rightCluster.x - width - 2
-                : leftCluster.x + leftCluster.width + 2
+                : usageDock.x + usageDock.width + 2
 
             Behavior on x {
                 enabled: vitalsDock.sliding
@@ -215,6 +267,7 @@ PanelWindow {
         }
 
         Rectangle {
+            id: centerBadge
             anchors.centerIn: parent
             width: Math.min((LayoutState.visible ? layoutText.implicitWidth : titleText.implicitWidth) + 18, bar.width * 0.3)
             height: 22
@@ -311,6 +364,10 @@ PanelWindow {
                     panelWindow: bar
                 }
 
+                NotificationsChip {
+                    panelWindow: bar
+                }
+
                 GameMode {
                     panelWindow: bar
                 }
@@ -331,6 +388,10 @@ PanelWindow {
                     panelWindow: bar
                 }
 
+                Speak {
+                    panelWindow: bar
+                }
+
                 LlamaModel {
                     panelWindow: bar
                 }
@@ -340,6 +401,10 @@ PanelWindow {
                 }
 
                 Tailscale {
+                    panelWindow: bar
+                }
+
+                Bitwarden {
                     panelWindow: bar
                 }
             }
