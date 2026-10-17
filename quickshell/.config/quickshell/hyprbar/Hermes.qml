@@ -13,8 +13,8 @@ BarChip {
         text: "☤"
         color: HermesState.active || HermesState.state === "partial"
             ? root.accentColor : root.mutedColor
-        font.family: "Comic Code"
-        font.pixelSize: 14
+        font.family: "DejaVu Sans"  // has the caduceus; Comic Code falls back small
+        font.pixelSize: 18
         opacity: HermesState.busy ? 0.5 : 1.0
 
         SequentialAnimation on opacity {
